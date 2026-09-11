@@ -15,8 +15,10 @@ function updateSavings(){
   const estimate=valid?estimateSavings(...savingsInputs.map(input=>Number(input.value))):null;
   const set=(id,value)=>document.getElementById(id).textContent=value;
   const money=value=>'LKR '+Math.round(value).toLocaleString('en-LK');
-  if(!estimate){for(const id of ['savings-annual','savings-card','savings-justpay','savings-other'])set(id,'—');set('savings-monthly','Enter valid figures to see your estimate.');set('savings-fee-note','Bill amount must be between LKR 1 and LKR 150,000.');return;}
-  set('savings-annual',(estimate.annual/100000).toLocaleString('en-LK',{maximumFractionDigits:2}));
+  if(!estimate){for(const id of ['savings-annual','savings-card','savings-justpay','savings-other'])set(id,'—');set('savings-unit','LKR');set('savings-monthly','Enter valid figures to see your estimate.');set('savings-fee-note','Bill amount must be between LKR 1 and LKR 150,000.');return;}
+  const inMillions=Math.abs(estimate.annual)>=1000000;
+  set('savings-annual',(inMillions?estimate.annual/1000000:estimate.annual).toLocaleString('en-LK',{maximumFractionDigits:inMillions?2:0}));
+  set('savings-unit',inMillions?'million LKR':'LKR');
   set('savings-monthly',estimate.monthly>=0?money(estimate.monthly)+' less in fees per month':money(-estimate.monthly)+' more in fees per month');
   set('savings-card',money(estimate.card));set('savings-justpay',money(estimate.justpay));set('savings-other',money(estimate.extra));
   set('savings-fee-note','Uses LKR '+estimate.fee+' per JustPay payment at this bill amount.');
