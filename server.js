@@ -5,7 +5,7 @@ import QRCode from 'qrcode';
 const app = express();
 app.use(express.json());
 app.get('/table-demo-qr.svg', async (req,res)=>{
-  const base=process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+  const base=publicBase(req);
   const svg=await QRCode.toString(`${base}/peppermint/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});
   res.type('svg').send(svg);
 });
@@ -14,6 +14,22 @@ app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
 const BASE = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
 const orders = [];
+
+// Prefer a configured public origin, but never send public visitors to localhost.
+function publicBase(req){
+  const localHost = host => ['localhost','127.0.0.1','[::1]'].includes(host);
+  const incoming = new URL(`http://${req.get('host')}`);
+  const configured = process.env.PUBLIC_BASE_URL;
+  if(configured){
+    try{
+      const url = new URL(configured);
+      if(['http:','https:'].includes(url.protocol) && (!localHost(url.hostname) || localHost(incoming.hostname))) return url.origin;
+    }catch{ /* Fall back to the incoming site when configuration is invalid. */ }
+  }
+  const protocol = localHost(incoming.hostname) ? req.protocol : 'https';
+  return `${protocol}://${incoming.host}`;
+}
+
 
 const menu = [
   { id:'m1', category:'Popular', name:'Truffle Chicken Pasta', desc:'Creamy parmesan sauce, mushrooms, grilled chicken.', price:2350, emoji:'🍝' },
@@ -87,7 +103,7 @@ app.post('/api/payments/card', async (req,res)=>{
     customer_last_name:customer.lastName || 'Guest',
     customer_phone_number:customer.phone || '+94770000000',
     customer_email:customer.email || 'demo@punchbook.lk',
-    transaction_redirect_url:`${BASE}/payment-return.html?order=${encodeURIComponent(o.id)}`,
+    transaction_redirect_url:`${publicBase(req)}/payment-return.html?order=${encodeURIComponent(o.id)}`,
     additionalData:JSON.stringify({orderId:o.id,table:o.table})
   };
   try{
@@ -123,7 +139,7 @@ app.post('/api/payments/verify', async (req,res)=>{
 
 app.get('/qr', async (req,res)=>{
   const table=String(req.query.table||'12');
-  const url=`${BASE}/peppermint/t/${encodeURIComponent(table)}`;
+  const url=`${publicBase(req)}/peppermint/t/${encodeURIComponent(table)}`;
   const svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});
   res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;box-shadow:0 14px 60px #0001;text-align:center;max-width:430px}.brand{font-weight:900;font-size:28px}.table{font-size:18px;margin:8px 0 24px;color:#666}.hint{color:#777}svg{max-width:100%;height:auto}</style></head><body><div class="card"><div class="brand">Peppermint Café</div><div class="table">Table ${table}</div>${svg}<h2>Scan to order</h2><div class="hint">No app needed · Powered by Punchbook</div></div></body></html>`);
 });
