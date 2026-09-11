@@ -3,20 +3,13 @@ const table=(location.pathname.match(/\/t\/([^/]+)/)||[])[1]||'12';
 document.getElementById('tablePill').textContent='Table '+table;
 const money=n=>'LKR '+Number(n).toLocaleString('en-LK');
 const iconPaths = {
-  m1: '<path d="M12 34h40c-2 13-10 19-20 19S14 47 12 34Z" fill="#f3caa1"/><path d="M20 33c-9-13 12-14 5-24m7 24c-9-13 12-14 5-24m7 24c-9-13 12-14 5-24"/><path d="M22 42h20"/>',
-  m2: '<path d="M10 35h44c-2 12-10 19-22 19S12 47 10 35Z" fill="#f3caa1"/><path d="M16 35c0-10 7-19 16-19s16 9 16 19" fill="#fffaf0"/><path d="m24 26 2-3m7 6 2-3m5 6 2-3m-18 5 2-3"/><path d="m39 15 8-7m-3 12 9-5"/>',
-  m3: '<path d="M12 27c0-12 9-19 20-19s20 7 20 19Z" fill="#edb970"/><path d="m22 18 2-2m9 1 2-2m7 5 2-2"/><path d="m10 33 8 4 9-4 10 4 9-4 8 4" stroke="#55805b"/><rect x="11" y="40" width="42" height="7" rx="3.5" fill="#996347"/><path d="M12 48h40v2a7 7 0 0 1-7 7H19a7 7 0 0 1-7-7Z" fill="#edb970"/>',
-  m4: '<circle cx="32" cy="32" r="24" fill="#fffaf0"/><circle cx="32" cy="32" r="17"/><path d="m20 27 8-5 4 7-8 5Zm13 9 8-5 4 7-8 5Z" fill="#edb970"/><path d="M31 39c-9 2-12-1-12-7 7-1 11 1 12 7Zm3-15c-1-7 3-10 9-9 1 7-3 10-9 9Z" fill="#7da779"/>',
-  m5: '<path d="m18 20 5 35h18l5-35Z" fill="#e4eab9"/><path d="m34 42 6-33h10M21 31h23"/><circle cx="18" cy="20" r="9" fill="#a8bf7c"/><path d="m14 16 8 8m-8 0 8-8m5 27h10"/>',
-  m6: '<path d="m18 18 5 37h18l5-37Z" fill="#d8b799"/><path d="M16 18h32M20 12h24m-10 6 3-12"/><path d="m21 34 22 0" stroke="#fffaf0"/><path d="m26 24 6 2-2 6-6-2Zm9 14 6 2-2 6-6-2Z" fill="#fffaf0"/>',
-  m7: '<path d="M17 26h30l4 23H13Z" fill="#a8765a"/><ellipse cx="32" cy="26" rx="15" ry="6" fill="#754c3b"/><path d="M26 27v10a4 4 0 0 0 8 0v-8" fill="#754c3b"/><path d="M8 53h48"/><path d="M38 19a8 8 0 1 1 16 0Z" fill="#fffaf0"/>',
   card: '<rect x="8" y="15" width="48" height="34" rx="5"/><path d="M8 26h48M17 39h11"/>',
   bank: '<path d="m8 22 24-13 24 13ZM12 51h40M18 29v16m14-16v16m14-16v16"/>'
 };
-function icon(name){return `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||iconPaths.m2}</svg>`;}
+function icon(name){return `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||''}</svg>`;}
 async function boot(){ data=await fetch('/api/menu').then(r=>r.json()); renderCats(); renderMenu(); }
-function renderCats(){ const cats=['All',...new Set(data.menu.map(x=>x.category))];document.getElementById('cats').innerHTML=cats.map(c=>`<button class="cat ${c===selected?'active':''}" onclick="selected='${c}';renderCats();renderMenu()">${c}</button>`).join(''); }
-function renderMenu(){ const items=data.menu.filter(x=>selected==='All'||x.category===selected); document.getElementById('menu').innerHTML=items.map(x=>`<article class="item"><div><h3>${x.name}</h3><p>${x.desc}</p><div class="row"><span class="price">${money(x.price)}</span><button class="add" onclick="add('${x.id}')">+</button></div></div><div class="food">${icon(x.id)}</div></article>`).join(''); }
+function renderCats(){ const cats=['All',...new Set(data.menu.map(x=>x.category))];document.getElementById('cats').innerHTML=cats.map(c=>`<button data-category="${c}" class="cat ${c===selected?'active':''}" onclick="selected='${c}';renderCats();renderMenu()">${c}</button>`).join(''); }
+function renderMenu(){ const items=data.menu.filter(x=>selected==='All'||x.category===selected); document.getElementById('menu').innerHTML=items.map(x=>`<article class="item" data-category="${x.category}"><div><h3>${x.name}</h3><p>${x.desc}</p><div class="row"><span class="price">${money(x.price)}</span><button class="add" onclick="add('${x.id}')">+</button></div></div><div class="food">${x.emoji}</div></article>`).join(''); }
 function add(id){cart[id]=(cart[id]||0)+1;syncCart();}
 function change(id,d){cart[id]=Math.max(0,(cart[id]||0)+d);if(!cart[id])delete cart[id];syncCart();renderCart();}
 function summary(){const rows=Object.entries(cart).map(([id,qty])=>({...data.menu.find(x=>x.id===id),qty}));const subtotal=rows.reduce((s,x)=>s+x.price*x.qty,0);const service=Math.round(subtotal*.05);return{rows,subtotal,service,total:subtotal+service};}
