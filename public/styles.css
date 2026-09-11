@@ -15,8 +15,8 @@
 .customerMenu{--paper:#fff4e9;--ink:#322c28;--muted:#766154;--line:#eddbcb;--accent:#bf421f;background:var(--paper)}
 .customerMenu .top{background:rgba(255,244,233,.94);border-bottom-color:#eddbcb}
 .customerMenu .pill{background:#e1efdf;border-color:#c7dec3;color:#285d40}
-.customerMenu .hero{position:relative;isolation:isolate;overflow:hidden;background:#fbd8bc;border:1px solid #f1c4a2;border-radius:26px;padding:32px;margin:12px 0 20px}
-.customerMenu .hero::after{content:"";position:absolute;z-index:-1;width:220px;height:220px;right:-80px;top:-90px;border:35px solid #edb68c;border-radius:50%;opacity:.6}
+.customerMenu .hero{position:relative;isolation:isolate;overflow:hidden;background:#fff;border:1px solid #eddbcb;border-radius:26px;padding:32px;margin:12px 0 20px}
+
 .customerMenu .hero h1{color:#365d40}
 .customerMenu .hero .eyebrow{color:#8b411e}
 .customerMenu .hero p{color:#704e3a}
@@ -41,4 +41,4 @@
 .customerMenu .qty button{background:#fff0df;border-color:#eddbcb;color:#91401e}
 .customerMenu .menuFooter{border-top-color:#eddbcb;color:#365d40}
 .customerMenu button:focus-visible,.customerMenu input:focus-visible{outline:3px solid #39704e;outline-offset:3px}
-@media(max-width:650px){.customerMenu .hero{padding:26px 22px}.customerMenu .hero::after{right:-140px}.customerMenu .hero h1{font-size:40px}}
+@media(max-width:650px){.customerMenu .hero{padding:26px 22px}.customerMenu .hero h1{font-size:40px}}
