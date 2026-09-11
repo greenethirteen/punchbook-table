@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Punchbook v2 · Table ordering, but fun</title>
+  <meta name="description" content="A playful Punchbook homepage concept for scan, order and pay at the table.">
+  <style>
+    :root{
+      --ink:#1d1c18;
+      --cream:#fff8e9;
+      --paper:#fffdf7;
+      --tomato:#ff6b55;
+      --butter:#ffd866;
+      --mint:#a8e6c2;
+      --sky:#9fd8ff;
+      --lilac:#cbb8ff;
+      --line:#1d1c18;
+      --shadow:7px 7px 0 var(--ink);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--cream);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}
+    a{color:inherit;text-decoration:none}
+    .shell{width:min(1180px,calc(100% - 36px));margin:auto}
+    .nav{height:86px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{font-size:31px;font-weight:950;letter-spacing:-1.8px}.brand i{color:var(--tomato);font-style:normal}
+    .navlinks{display:flex;align-items:center;gap:24px;font-weight:800;font-size:14px}.navlinks a:not(.btn){opacity:.72}.navlinks a:not(.btn):hover{opacity:1}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--ink);color:#fff;border:2px solid var(--ink);border-radius:15px;padding:14px 20px;font-weight:900;box-shadow:4px 4px 0 var(--tomato);transition:.16s transform,.16s box-shadow}.btn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--tomato)}
+    .btn.alt{background:var(--paper);color:var(--ink);box-shadow:4px 4px 0 var(--butter)}
+    .hero{min-height:690px;display:grid;grid-template-columns:1.03fr .97fr;align-items:center;gap:46px;padding:50px 0 80px;position:relative}
+    .badge{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--ink);background:var(--mint);border-radius:999px;padding:9px 13px;font-weight:900;font-size:12px;transform:rotate(-2deg);box-shadow:3px 3px 0 var(--ink)}
+    .hero h1{font-size:clamp(64px,7.8vw,122px);line-height:.82;letter-spacing:-6px;margin:24px 0 28px;font-weight:950;max-width:760px}.hero h1 .scribble{position:relative;display:inline-block;color:var(--tomato)}.hero h1 .scribble:after{content:"";position:absolute;left:2%;right:-2%;bottom:-12px;height:14px;border-top:5px solid var(--tomato);border-radius:50%;transform:rotate(-2deg)}
+    .lede{font-size:22px;line-height:1.45;max-width:590px;margin:0 0 28px;font-weight:600}.hero-actions{display:flex;gap:14px;flex-wrap:wrap}.micro{font-size:13px;font-weight:750;opacity:.62;margin-top:18px}
+    .scene{position:relative;height:540px}
+    .blob{position:absolute;inset:35px 0 10px 30px;background:var(--sky);border:3px solid var(--ink);border-radius:46% 54% 58% 42% / 42% 48% 52% 58%;transform:rotate(-4deg);box-shadow:var(--shadow)}
+    .phone{position:absolute;right:44px;top:57px;width:260px;height:450px;background:#fff;border:4px solid var(--ink);border-radius:36px;box-shadow:12px 12px 0 rgba(29,28,24,.92);transform:rotate(5deg);padding:15px;z-index:3}
+    .speaker{width:72px;height:8px;border-radius:999px;background:var(--ink);margin:0 auto 14px}.screen{height:390px;background:#fffaf0;border:2px solid var(--ink);border-radius:23px;padding:16px;overflow:hidden}.screen-head{display:flex;justify-content:space-between;align-items:flex-start;font-weight:950;font-size:12px}.table-pill{background:var(--butter);border:2px solid var(--ink);padding:5px 8px;border-radius:999px;font-size:10px}.dish{display:grid;grid-template-columns:56px 1fr;gap:10px;margin-top:14px;align-items:center}.food{height:56px;border:2px solid var(--ink);border-radius:14px;background:var(--mint);display:grid;place-items:center;font-size:28px}.dish b{display:block;font-size:12px}.dish span{font-size:10px;opacity:.6}.orderbar{margin-top:16px;border:2px solid var(--ink);border-radius:12px;padding:11px;background:var(--tomato);color:#fff;font-weight:950;font-size:12px;text-align:center}
+    .qr-card{position:absolute;left:34px;bottom:50px;width:180px;background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ink);padding:16px;text-align:center;transform:rotate(-7deg);z-index:4}.qr-card small{font-weight:900;letter-spacing:.08em}.qr{width:106px;height:106px;margin:12px auto;background:repeating-linear-gradient(45deg,var(--ink) 0 5px,#fff 5px 10px);border:8px solid #fff;outline:3px solid var(--ink)}.qr-card b{font-size:20px;display:block}
+    .plate{position:absolute;left:96px;top:78px;width:170px;height:170px;background:var(--paper);border:3px solid var(--ink);border-radius:50%;box-shadow:7px 8px 0 var(--ink);display:grid;place-items:center;font-size:80px;transform:rotate(-9deg);z-index:2}.spark{position:absolute;font-size:42px;font-weight:950}.spark.a{top:20px;right:10px;transform:rotate(10deg)}.spark.b{bottom:30px;right:6px;color:var(--tomato);transform:rotate(-12deg)}
+    .marquee{border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);background:var(--butter);overflow:hidden;white-space:nowrap}.marquee div{padding:16px 0;font-weight:950;font-size:18px;letter-spacing:.02em;animation:scroll 20s linear infinite}.marquee span{margin-right:36px}@keyframes scroll{to{transform:translateX(-50%)}}
+    .section{padding:110px 0}.kicker{font-size:12px;font-weight:950;letter-spacing:.15em;text-transform:uppercase;opacity:.58}.section h2{font-size:clamp(48px,6vw,88px);line-height:.92;letter-spacing:-4px;margin:10px 0 44px;max-width:850px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.card{border:3px solid var(--ink);border-radius:28px;padding:24px;min-height:365px;box-shadow:var(--shadow);position:relative;overflow:hidden}.card:nth-child(1){background:var(--tomato)}.card:nth-child(2){background:var(--butter)}.card:nth-child(3){background:var(--mint)}.num{font-weight:950;font-size:13px;background:var(--paper);border:2px solid var(--ink);border-radius:999px;padding:7px 10px;display:inline-block}.card h3{font-size:35px;line-height:.97;letter-spacing:-1.5px;margin:25px 0 12px;max-width:250px}.card p{font-size:16px;line-height:1.5;font-weight:650;max-width:260px}.mini-illus{height:130px;margin-top:18px;display:flex;align-items:end;justify-content:center}.tent{width:100px;height:116px;background:var(--paper);border:3px solid var(--ink);border-radius:9px 9px 2px 2px;transform:skew(-5deg) rotate(-3deg);box-shadow:5px 5px 0 var(--ink);display:grid;place-items:center;font-size:46px}.mini-phone{width:78px;height:128px;border:3px solid var(--ink);border-radius:19px;background:var(--paper);box-shadow:5px 5px 0 var(--ink);display:grid;place-items:center;font-size:38px;transform:rotate(6deg)}.ticket{width:125px;background:var(--paper);border:3px solid var(--ink);padding:12px;box-shadow:5px 5px 0 var(--ink);transform:rotate(-4deg);font-weight:900}.ticket hr{border:0;border-top:2px dashed var(--ink)}
+    .merchant{background:var(--ink);color:#fff}.merchant-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:70px;align-items:center}.merchant h2{color:#fff}.merchant p{font-size:20px;line-height:1.5;color:#e6e2d8;max-width:530px}.dash{background:var(--paper);color:var(--ink);border:3px solid #fff;border-radius:28px;padding:20px;box-shadow:10px 10px 0 var(--tomato);transform:rotate(2deg)}.dash-head{display:flex;justify-content:space-between;font-weight:950;padding-bottom:14px}.row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;border:2px solid var(--ink);border-radius:14px;padding:13px;margin-top:10px;background:#fff}.status{border:2px solid var(--ink);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900}.new{background:var(--butter)}.prep{background:var(--sky)}.done{background:var(--mint)}
+    .closing{text-align:center;padding:120px 0 130px}.closing h2{margin-left:auto;margin-right:auto}.closing p{font-size:20px;font-weight:650}.footer{display:flex;justify-content:space-between;gap:24px;align-items:center;border-top:2px solid var(--ink);padding:30px 0 42px;font-size:13px;font-weight:750}
+    .doodle{position:absolute;pointer-events:none;font-weight:950}.d1{left:-28px;top:130px;font-size:52px;transform:rotate(-12deg)}.d2{right:-36px;bottom:60px;font-size:48px;transform:rotate(14deg);color:var(--tomato)}
+    @media(max-width:900px){.navlinks>a:not(.btn){display:none}.hero{grid-template-columns:1fr;padding-top:20px}.hero h1{letter-spacing:-4px}.scene{height:520px}.cards{grid-template-columns:1fr}.merchant-grid{grid-template-columns:1fr}.section{padding:80px 0}.section h2{letter-spacing:-3px}.footer{flex-direction:column;align-items:flex-start}}
+    @media(max-width:560px){.shell{width:min(100% - 24px,1180px)}.nav{height:72px}.brand{font-size:27px}.btn{padding:12px 15px}.hero{gap:12px;padding-bottom:55px}.hero h1{font-size:58px;letter-spacing:-3px}.lede{font-size:18px}.scene{height:430px}.blob{inset:30px 6px 10px 8px}.phone{width:205px;height:354px;right:19px;top:40px;padding:10px;border-radius:29px}.screen{height:302px;padding:11px}.dish{grid-template-columns:44px 1fr}.food{height:44px}.qr-card{left:8px;bottom:34px;width:140px;padding:11px}.qr{width:72px;height:72px}.plate{left:30px;top:63px;width:120px;height:120px;font-size:55px}.cards{gap:16px}.card{min-height:330px}.merchant-grid{gap:40px}.footer{padding-bottom:30px}}
+  </style>
+</head>
+<body>
+  <header class="shell nav">
+    <a class="brand" href="/v2">punchbook<i>.</i></a>
+    <nav class="navlinks" aria-label="V2 navigation">
+      <a href="#how">How it works</a>
+      <a href="#restaurants">For restaurants</a>
+      <a class="btn" href="/peppermint">Try the demo ↗</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="shell hero">
+      <div>
+        <span class="badge">✦ TABLE ORDERING, MINUS THE BORING</span>
+        <h1>Scan.<br>Pick.<br><span class="scribble">Eat.</span></h1>
+        <p class="lede">Turn every table into its own little ordering station. Guests scan, order and pay from their phone. Your team gets on with the good stuff.</p>
+        <div class="hero-actions">
+          <a class="btn" href="/peppermint">Try Table 12 ↗</a>
+          <a class="btn alt" href="#how">Show me how ↓</a>
+        </div>
+        <p class="micro">No download. No awkward waving. No “can we get the bill?”</p>
+      </div>
+      <div class="scene" aria-label="Playful illustration of Punchbook table ordering">
+        <div class="blob"></div>
+        <div class="plate">🍜</div>
+        <div class="qr-card"><small>YOU'RE AT</small><b>Table 12</b><div class="qr"></div><small>SCAN ME</small></div>
+        <div class="phone"><div class="speaker"></div><div class="screen"><div class="screen-head"><span>peppermint café</span><span class="table-pill">TABLE 12</span></div><div class="dish"><div class="food">🍔</div><div><b>Crispy Chicken Burger</b><span>LKR 1,750</span></div></div><div class="dish"><div class="food">🍹</div><div><b>Passion Fruit Mojito</b><span>LKR 790</span></div></div><div class="dish"><div class="food">🍰</div><div><b>Chocolate Lava Cake</b><span>LKR 1,100</span></div></div><div class="orderbar">ORDER & PAY →</div></div></div>
+        <div class="spark a">✦</div><div class="spark b">↗</div>
+      </div>
+    </section>
+
+    <div class="marquee"><div><span>SCAN ✦ ORDER ✦ PAY ✦ EAT ✦ REPEAT ✦</span><span>SCAN ✦ ORDER ✦ PAY ✦ EAT ✦ REPEAT ✦</span><span>SCAN ✦ ORDER ✦ PAY ✦ EAT ✦ REPEAT ✦</span><span>SCAN ✦ ORDER ✦ PAY ✦ EAT ✦ REPEAT ✦</span></div></div>
+
+    <section id="how" class="shell section" style="position:relative">
+      <div class="doodle d1">↘</div>
+      <p class="kicker">How it works</p>
+      <h2>Three tiny steps. One much happier table.</h2>
+      <div class="cards">
+        <article class="card"><span class="num">01 · SCAN</span><h3>Give the little square a scan.</h3><p>The menu opens instantly, already linked to the guest’s table.</p><div class="mini-illus"><div class="tent">▦</div></div></article>
+        <article class="card"><span class="num">02 · PICK</span><h3>Tap in the good stuff.</h3><p>Food, drinks, extras. Guests build their order without flagging anyone down.</p><div class="mini-illus"><div class="mini-phone">🍔</div></div></article>
+        <article class="card"><span class="num">03 · DONE</span><h3>Order lands with the team.</h3><p>Table number, order and payment status arrive together. Nice and tidy.</p><div class="mini-illus"><div class="ticket">TABLE 12<hr>1 × Burger<br>1 × Mojito<hr>✓ PAID</div></div></article>
+      </div>
+    </section>
+
+    <section id="restaurants" class="merchant section">
+      <div class="shell merchant-grid">
+        <div>
+          <p class="kicker">Behind the counter</p>
+          <h2>Your tables, behaving themselves.</h2>
+          <p>See what just came in, what’s being prepared and what’s already sorted. Less running around. More actual hospitality.</p>
+          <p><a class="btn" href="/admin">Open merchant view ↗</a></p>
+        </div>
+        <div class="dash">
+          <div class="dash-head"><span>TABLE ORDERS</span><span>LIVE-ish ●</span></div>
+          <div class="row"><strong>Table 12</strong><span class="status new">NEW</span><span>✓ Paid</span></div>
+          <div class="row"><strong>Table 08</strong><span class="status prep">PREPARING</span><span>✓ Paid</span></div>
+          <div class="row"><strong>Table 03</strong><span class="status done">SERVED</span><span>✓ Paid</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell closing" style="position:relative">
+      <div class="doodle d2">✦</div>
+      <p class="kicker">Go on, poke it</p>
+      <h2>Put Punchbook<br>on the table.</h2>
+      <p>Try the customer flow as if you’re sitting at Peppermint Café.</p>
+      <p><a class="btn" href="/peppermint">Try the restaurant demo ↗</a></p>
+    </section>
+  </main>
+
+  <footer class="shell footer">
+    <a class="brand" href="/v2">punchbook<i>.</i></a>
+    <span>A little less admin. A lot more personality.</span>
+    <a href="/">View original homepage ↗</a>
+  </footer>
+</body>
+</html>
