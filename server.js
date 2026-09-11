@@ -4,6 +4,11 @@ import QRCode from 'qrcode';
 
 const app = express();
 app.use(express.json());
+app.get('/table-demo-qr.svg', async (req,res)=>{
+  const base=process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
+  const svg=await QRCode.toString(`${base}/peppermint/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});
+  res.type('svg').send(svg);
+});
 app.use(express.static('public'));
 
 const PORT = process.env.PORT || 3000;
