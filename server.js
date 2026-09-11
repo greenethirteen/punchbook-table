@@ -118,12 +118,12 @@ app.post('/api/payments/verify', async (req,res)=>{
 
 app.get('/qr', async (req,res)=>{
   const table=String(req.query.table||'12');
-  const url=`${BASE}/r/peppermint/t/${encodeURIComponent(table)}`;
+  const url=`${BASE}/peppermint/t/${encodeURIComponent(table)}`;
   const svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});
   res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;box-shadow:0 14px 60px #0001;text-align:center;max-width:430px}.brand{font-weight:900;font-size:28px}.table{font-size:18px;margin:8px 0 24px;color:#666}.hint{color:#777}svg{max-width:100%;height:auto}</style></head><body><div class="card"><div class="brand">Peppermint Café</div><div class="table">Table ${table}</div>${svg}<h2>Scan to order</h2><div class="hint">No app needed · Powered by Punchbook</div></div></body></html>`);
 });
 
-app.get('/r/:restaurant/t/:table', (_req,res)=>res.sendFile(process.cwd()+'/public/index.html'));
+app.get(['/peppermint', '/peppermint/t/:table', '/r/:restaurant/t/:table'], (_req,res)=>res.sendFile(process.cwd()+'/public/peppermint.html'));
 app.get('/admin', (_req,res)=>res.sendFile(process.cwd()+'/public/admin.html'));
 
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE}`));

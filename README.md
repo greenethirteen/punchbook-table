@@ -13,7 +13,10 @@ npm start
 ```
 
 Open:
-- Customer menu: http://localhost:3000/r/peppermint/t/12
+- Merchant homepage: http://localhost:3000/
+- Customer menu: http://localhost:3000/peppermint
+- Table-specific menu: http://localhost:3000/peppermint/t/12
+- Existing `/r/peppermint/t/12` QR links remain supported.
 - Restaurant dashboard: http://localhost:3000/admin
 - QR poster: http://localhost:3000/qr?table=12
 
