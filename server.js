@@ -9,7 +9,19 @@ app.get('/table-demo-qr.svg', async (req,res)=>{
   const svg=await QRCode.toString(`${base}/peppermint/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});
   res.type('svg').send(svg);
 });
-app.use(express.static('public'));
+
+// Always serve the current homepage from this deployment and prevent stale HTML caches.
+app.get('/', (_req,res)=>{
+  res.set('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma','no-cache');
+  res.set('Expires','0');
+  res.sendFile(process.cwd()+'/public/index.html');
+});
+app.use(express.static('public', {
+  setHeaders(res, path){
+    if(path.endsWith('.html')) res.set('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
+  }
+}));
 
 const PORT = process.env.PORT || 3000;
 const BASE = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
