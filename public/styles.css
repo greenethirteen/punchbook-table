@@ -59,7 +59,7 @@
   color:var(--headerMuted);font-size:16px;font-weight:500;line-height:1.5;
   max-width:32ch;margin:20px 0 0;
 }
-.heroMeta{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin-top:22px}
+.heroMeta{display:flex;align-items:center;flex-wrap:nowrap;gap:14px;margin-top:22px}
 .heroStatus{
   display:inline-flex;align-items:center;gap:9px;
   padding:8px 15px 8px 12px;border-radius:999px;
@@ -95,4 +95,23 @@
   .heroMeta{gap:9px 10px}
   .payMark{width:36px;height:25px}
   .payMark svg{width:24px;height:15px}
+}
+
+/* payment marks stay on the status row, pinned right */
+.heroStatus{flex:0 1 auto;min-width:0;white-space:nowrap}
+.heroPay{margin-left:auto;flex:none}
+@media(max-width:460px){
+  .tillLabel{display:none}
+  .heroMeta{gap:10px}
+  .payMark{width:36px;height:25px}
+  .payMark svg{width:24px;height:15px}
+  .payMark.bank svg{width:16px;height:16px}
+}
+@media(max-width:360px){
+  .heroMeta{gap:8px}
+  .heroStatus{padding:7px 12px 7px 10px;gap:7px;font-size:12px}
+  .heroPay{gap:5px}
+  .payMark{width:32px;height:22px;border-radius:6px}
+  .payMark svg{width:22px;height:14px}
+  .payMark.bank svg{width:14px;height:14px}
 }
