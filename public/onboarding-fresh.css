@@ -1,0 +1,25 @@
+body{background:linear-gradient(180deg,#fff7cf 0,#fffef9 28%,#fffef9 100%)}
+.topbar{background:rgba(255,254,249,.94);border-bottom-color:#efd67e;backdrop-filter:blur(12px)}
+.brand span{color:#ff5f36}
+.shell{width:min(900px,91vw)}
+.hero{padding:54px 0 30px;text-align:center}
+.hero::before{content:'RESTAURANT SIGN UP';display:inline-block;margin-bottom:16px;font-size:.72rem;font-weight:900;letter-spacing:.16em;color:#e05a33}
+.hero h1{color:#123e2b}
+.hero h1 em{color:#ff5f36}
+.form-card{border:0;border-radius:28px;box-shadow:0 22px 70px rgba(18,62,43,.10);background:#fff}
+.form-section{grid-template-columns:140px 1fr;gap:28px;padding:34px;border-bottom:1px solid #edf0e7}
+.section-copy h2{color:#12633d;font-size:1.2rem}
+.form-section:nth-of-type(1){background:#fffaf0}
+.form-section:nth-of-type(2){background:#fff}
+.form-section:nth-of-type(3){background:#f8fff6}
+.form-section:nth-of-type(4){background:#fffdf7}
+input,select,textarea{border-color:#d9e2da;background:#fffefb;padding:13px 14px}
+input:focus,select:focus,textarea:focus{border-color:#28a060;box-shadow:0 0 0 3px rgba(40,160,96,.12)}
+.upload{border-color:#cbdacb;background:#f8fff6}
+.submit-row{background:#fff;padding:26px 34px}
+button,.button{background:#ff5f36;border-radius:12px;padding:15px 24px;box-shadow:0 8px 0 rgba(196,57,21,.12)}
+button:hover,.button:hover{background:#eb4b22;filter:none}
+.check{font-size:.82rem;color:#4e6256}
+.success{border:0;box-shadow:0 20px 60px rgba(18,62,43,.09)}
+.success>span{background:#d9f2ce;color:#12633d}
+@media(max-width:760px){.hero{text-align:left;padding-top:36px}.hero h1{font-size:clamp(2.8rem,15vw,4.5rem)}.form-section{grid-template-columns:1fr;padding:24px}.section-copy h2{margin-bottom:4px}.form-card{border-radius:20px}.submit-row{padding:22px 24px}}
