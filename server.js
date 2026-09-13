@@ -19,7 +19,7 @@ function cleanText(v,max=300){return String(v??'').trim().slice(0,max)}
 function adminAllowed(req){const expected=process.env.PUNCHBOOK_ADMIN_KEY;if(!expected)return false;const supplied=req.get('x-admin-key')||req.query.key||'',a=Buffer.from(String(expected)),b=Buffer.from(String(supplied));return a.length===b.length&&crypto.timingSafeEqual(a,b)}
 function requireAdmin(req,res,next){if(!process.env.PUNCHBOOK_ADMIN_KEY)return res.status(503).json({error:'Admin access is not configured. Set PUNCHBOOK_ADMIN_KEY on the server.'});if(!adminAllowed(req))return res.status(401).json({error:'Invalid admin key.'});next()}
 function validateDocument(doc,label){if(!doc||typeof doc!=='object')return`${label} is required.`;const name=cleanText(doc.name,180),type=cleanText(doc.type,80),data=String(doc.data||'');if(!name||!data)return`${label} is required.`;if(!ALLOWED_DOC_TYPES.has(type))return`${label} must be PDF, JPG or PNG.`;if(Math.floor(data.length*3/4)>MAX_DOC_BYTES)return`${label} must be 3 MB or smaller.`;if(!/^[A-Za-z0-9+/=]+$/.test(data))return`${label} could not be read.`;return''}
-function summariseCompany(c){const{documents,...safe}=c;return{...safe,documents:Object.fromEntries(Object.entries(documents||{}).map(([k,d])=>[k,{name:d.name,type:d.type,size:d.size}]))}}
+function summariseCompany(c){const{documents,...safe}=c;return{...safe,documents:Object.fromEntries(Object.entries(documents||{}).map(([k,d])=>[k,{name:d.name,type:d.type,size:d.size}]))}
 const menu=[
 {id:'m1',category:'Popular',name:'Truffle Chicken Pasta',desc:'Creamy parmesan sauce, mushrooms, grilled chicken.',price:2350,emoji:'🍝'},
 {id:'m2',category:'Popular',name:'Pepper Beef Rice',desc:'Wok-seared beef, black pepper glaze and steamed rice.',price:1980,emoji:'🍛'},
@@ -43,3 +43,41 @@ app.post('/api/payments/verify',async(req,res)=>{const o=orders.find(x=>x.id===r
 app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${publicBase(req)}/peppermint/t/${encodeURIComponent(table)}`,svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;text-align:center;max-width:430px}svg{max-width:100%;height:auto}</style></head><body><div class="card"><h2>Peppermint Café</h2><p>Table ${table}</p>${svg}<h2>Scan to order</h2><p>No app needed · Powered by Punchbook</p></div></body></html>`)});
 app.get(['/peppermint','/peppermint/t/:table','/r/:restaurant/t/:table'],(_q,r)=>r.sendFile(process.cwd()+'/public/peppermint.html'));app.get('/admin',(_q,r)=>r.sendFile(process.cwd()+'/public/admin.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>r.sendFile(process.cwd()+'/public/onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>r.sendFile(process.cwd()+'/public/companies-admin.html'));
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE}`));
+
+const gloungeMenu=[
+{id:'g1',category:'Popular',name:'Chicken Pasta',desc:'Creamy chicken pasta.',price:1550,emoji:'🍝'},
+{id:'g2',category:'Popular',name:'Chocolate Blast',desc:'Rich chocolate waffle creation.',price:1215,emoji:'🍫'},
+{id:'g3',category:'Popular',name:'Chicken Enchilada',desc:'Two tortillas filled with chicken and special sauce, topped with cheese.',price:1850,emoji:'🌯'},
+{id:'g4',category:'Popular',name:'Pistachio Shake',desc:'Rich pistachio milkshake.',price:1360,emoji:'🥤'},
+{id:'g5',category:'Popular',name:'Chicken Slider',desc:'Two crispy chicken sliders with house sauce, cheese and jalapeno.',price:1070,emoji:'🍔'},
+{id:'g6',category:'Bubble Tea',name:'Strawberry Bubble Tea',desc:'Strawberry bubble tea.',price:790,emoji:'🧋'},
+{id:'g7',category:'Bubble Tea',name:'Passion Bubble Tea',desc:'Passion fruit bubble tea.',price:790,emoji:'🧋'},
+{id:'g8',category:'Bubble Tea',name:'Mango Bubble Tea',desc:'Mango bubble tea.',price:790,emoji:'🧋'},
+{id:'g9',category:'Bubble Milkshake',name:'Strawberry Bubble Milkshake',desc:'Strawberry shake with bubbles.',price:930,emoji:'🥤'},
+{id:'g10',category:'Bubble Milkshake',name:'Taro Bubble Milkshake',desc:'Taro shake with bubbles.',price:930,emoji:'🥤'},
+{id:'g11',category:'G Lounge Shakes',name:'Ferrero Rocher Shake',desc:'Ferrero Rocher-inspired shake.',price:1290,emoji:'🥤'},
+{id:'g12',category:'G Lounge Shakes',name:'Kinder Bueno Shake',desc:'Kinder Bueno-inspired shake.',price:1290,emoji:'🥤'},
+{id:'g13',category:'G Lounge Shakes',name:'Lotus Biscoff Shake',desc:'Lotus Biscoff shake.',price:1215,emoji:'🥤'},
+{id:'g14',category:'Frappes',name:'Chocolate Frappe',desc:'Chocolate frappe.',price:1000,emoji:'🧋'},
+{id:'g15',category:'Frappes',name:'Coffee Frappe',desc:'Coffee frappe.',price:1000,emoji:'☕'},
+{id:'g16',category:'Waffle',name:'Chicken Waffle',desc:'Savoury chicken waffle.',price:1215,emoji:'🧇'},
+{id:'g17',category:'Waffle',name:'Waffle on a Stick',desc:'Sweet waffle on a stick.',price:990,emoji:'🧇'},
+{id:'g18',category:'Waffle',name:'Lotus Biscoff Waffle',desc:'Waffle with Lotus Biscoff.',price:1215,emoji:'🧇'},
+{id:'g19',category:'Desserts',name:'Tres Leches Slice',desc:'Tres leches cake slice.',price:1430,emoji:'🍰'},
+{id:'g20',category:'Desserts',name:'Blueberry Cheesecake Slice',desc:'Blueberry cheesecake.',price:1720,emoji:'🍰'},
+{id:'g21',category:'Desserts',name:'Lotus Biscoff Cheesecake Slice',desc:'Lotus Biscoff cheesecake.',price:1720,emoji:'🍰'},
+{id:'g22',category:'Desserts',name:'Mini Pancakes',desc:'12 mini pancakes with Nutella and icing sugar.',price:1290,emoji:'🥞'},
+{id:'g23',category:'Ciabatta',name:'Chicken Ciabatta Sandwich',desc:'Chicken, cheese, lettuce, tomato, onion, mayo and ketchup.',price:1145,emoji:'🥪'},
+{id:'g24',category:'Ciabatta',name:'Beef Ciabatta Sandwich',desc:'Beef, cheese, lettuce, tomato, onion, mayo and ketchup.',price:1290,emoji:'🥪'},
+{id:'g25',category:'Coffee',name:'Cappuccino',desc:'Lavazza cappuccino.',price:760,emoji:'☕'},
+{id:'g26',category:'Coffee',name:'Americano',desc:'Lavazza americano.',price:685,emoji:'☕'},
+{id:'g27',category:'Coffee',name:'Latte Hazelnut',desc:'Lavazza hazelnut latte.',price:999,emoji:'☕'},
+{id:'g28',category:'Cool Coffee',name:'Iced Matcha Latte',desc:'Iced matcha latte.',price:1290,emoji:'🍵'},
+{id:'g29',category:'Enchilada',name:'Beef Enchilada',desc:'Two tortillas filled with beef and special sauce, topped with cheese.',price:2250,emoji:'🌯'},
+{id:'g30',category:'Pasta',name:'Beef Pasta',desc:'Creamy beef pasta.',price:1750,emoji:'🍝'},
+{id:'g31',category:'Fries',name:'Chicken Meat On Fries',desc:'Fries topped with chicken, house sauces and cheese.',price:2410,emoji:'🍟'},
+{id:'g32',category:'Premium Shakes',name:'Faluda Bubble Milkshake',desc:'Large shake with bubbles and jellies, topped with cashew, almond and pistachio.',price:1750,emoji:'🥤'},
+{id:'g33',category:'Sparkling',name:'Passion Sparkling Medium',desc:'Passion fruit sparkling drink.',price:860,emoji:'🥂'},
+{id:'g34',category:'Sparkling',name:'Strawberry Sparkling Large',desc:'Strawberry sparkling drink.',price:1075,emoji:'🥂'}];
+app.get('/api/glounge/menu',(_q,r)=>r.json({restaurant:{name:'G Lounge',area:'Negombo'},menu:gloungeMenu}));
+app.post('/api/glounge/orders',(req,res)=>{const{table='12',items=[],customer={},paymentMethod='card'}=req.body||{};const detailed=items.map(i=>{const p=gloungeMenu.find(m=>m.id===i.id);return p?{...p,qty:Math.max(1,Number(i.qty)||1)}:null}).filter(Boolean);if(!detailed.length)return res.status(400).json({error:'Cart is empty'});const subtotal=detailed.reduce((s,i)=>s+i.price*i.qty,0),service=Math.round(subtotal*.05),total=subtotal+service,order={id:orderId(),table:String(table),restaurant:'G Lounge',items:detailed,subtotal,service,total,customer,paymentMethod,paymentStatus:'pending',orderStatus:'new',createdAt:new Date().toISOString()};orders.push(order);res.json(order)});
