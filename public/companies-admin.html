@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Company applications · Punchbook</title>
+  <link rel="stylesheet" href="/onboarding.css?v=1">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/">punchbook<span>.</span></a><a href="/admin">Orders dashboard ↗</a></header>
+<main class="admin-wrap">
+  <div class="admin-head">
+    <div><p class="eyebrow">PUNCHBOOK ADMIN</p><h1>Companies</h1><p>Review restaurants that have applied to join Punchbook.</p></div>
+    <div class="keybox"><label>Admin key<input id="admin-key" type="password" placeholder="Enter admin key"></label><button id="load">Open dashboard</button></div>
+  </div>
+  <p class="login-note">Company documents contain sensitive business and identity information. This page requires the server-side Punchbook admin key.</p>
+  <div class="filters">
+    <input id="search" type="search" placeholder="Search company, contact or BR number">
+    <select id="status-filter"><option value="">All statuses</option><option>submitted</option><option>under-review</option><option>ipg-submitted</option><option>approved</option><option>live</option><option>rejected</option></select>
+  </div>
+  <p id="message" class="status"></p>
+  <section id="company-list" class="company-list"><div class="empty">Enter your admin key to view applications.</div></section>
+</main>
+
+<div id="drawer" class="drawer" hidden>
+  <section class="drawer-panel">
+    <div class="drawer-top"><div><p class="eyebrow">APPLICATION</p><h2 id="detail-title">Company</h2><p id="detail-ref"></p></div><button id="close" class="close">✕</button></div>
+    <div id="details" class="detail-grid"></div>
+    <h3>Documents</h3><div id="docs" class="docs"></div>
+    <div class="status-editor"><h3>Review status</h3><select id="edit-status"><option>submitted</option><option>under-review</option><option>ipg-submitted</option><option>approved</option><option>live</option><option>rejected</option></select><textarea id="admin-notes" rows="4" placeholder="Internal notes"></textarea><button id="save-status">Save review</button><p id="save-message" class="status"></p></div>
+  </section>
+</div>
+<script src="/companies-admin.js?v=1"></script>
+</body>
+</html>
