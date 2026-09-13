@@ -3,7 +3,8 @@ body{background:#fffefb}
 .brand span{color:#ff5f36}
 .button{background:#ff5f36;box-shadow:0 8px 0 rgba(196,57,21,.12)}
 .button:hover{background:#eb4b22}
-.nav-secondary{font-weight:750;color:#486154}
+.button.secondary{background:#fffefb;color:#123e2b;border:2px solid #123e2b;box-shadow:0 6px 0 rgba(18,62,43,.08)}
+.button.secondary:hover{background:#eef8f0}
 .benefit-strip{background:#fff0a8;border-color:#f0d56b}
 .benefit-strip span::before{color:#ff5f36}
 .peach{background:#ffd8c8}.yellow{background:#fff0a8}.green{background:#d9f2ce}
@@ -20,4 +21,4 @@ body{background:#fffefb}
 .product-scene .menu-preview{background:#fffefb;border-color:#123e2b}
 .graphic-table-tag{background:#d9f2ce;color:#12633d}
 .phone-pay{background:#12633d}
-@media(max-width:650px){.nav nav{gap:10px}.nav-secondary{display:none}.closing-actions{justify-content:center}}
+@media(max-width:650px){.nav nav{gap:8px}.nav .button.small{font-size:11px;padding:11px 12px}.closing-actions{justify-content:center}}
