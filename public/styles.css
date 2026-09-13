@@ -59,8 +59,9 @@
   color:var(--headerMuted);font-size:16px;font-weight:500;line-height:1.5;
   max-width:32ch;margin:20px 0 0;
 }
+.heroMeta{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin-top:22px}
 .heroStatus{
-  display:inline-flex;align-items:center;gap:9px;margin-top:22px;
+  display:inline-flex;align-items:center;gap:9px;
   padding:8px 15px 8px 12px;border-radius:999px;
   background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
   backdrop-filter:blur(8px);font-size:13px;font-weight:700;color:var(--headerInk);
@@ -81,4 +82,17 @@
 @media(max-width:380px){
   .customerMenu .hero h1{font-size:44px}
   .heroStatus{font-size:12px;margin-top:18px}
+}
+
+.heroPay{display:inline-flex;align-items:center;gap:6px}
+.payMark{
+  display:inline-grid;place-items:center;width:40px;height:27px;
+  border-radius:7px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.20);
+}
+.payMark svg{display:block;width:27px;height:16px}
+.payMark.bank svg{width:17px;height:17px}
+@media(max-width:380px){
+  .heroMeta{gap:9px 10px}
+  .payMark{width:36px;height:25px}
+  .payMark svg{width:24px;height:15px}
 }
