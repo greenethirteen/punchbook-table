@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Join Punchbook · Restaurant onboarding</title>
+  <meta name="description" content="Apply to use Punchbook table ordering and submit the business information needed for payment onboarding.">
+  <link rel="stylesheet" href="/onboarding.css?v=1">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/">punchbook<span>.</span></a><a class="back" href="/">← Back to site</a></header>
+<main class="shell">
+  <section class="hero">
+    <p class="eyebrow">RESTAURANT ONBOARDING</p>
+    <h1>Bring your restaurant<br><em>onto Punchbook.</em></h1>
+    <p>Tell us about your business once. We’ll use these details to prepare your Punchbook account and payment-provider onboarding.</p>
+  </section>
+
+  <form id="company-form" class="form-card">
+    <div class="progress"><span class="active">1 Business</span><span>2 Owner</span><span>3 Bank</span><span>4 Documents</span></div>
+
+    <section class="form-section">
+      <div class="section-copy"><span>01</span><div><h2>Business details</h2><p>Details from your business registration.</p></div></div>
+      <div class="grid two">
+        <label>Registered company name<input name="companyName" required autocomplete="organization" placeholder="Peppermint Café (Pvt) Ltd"></label>
+        <label>Business registration number<input name="registrationNumber" required placeholder="PV 123456"></label>
+        <label>Trading / restaurant name<input name="tradingName" required placeholder="Peppermint Café"></label>
+        <label>Business type<select name="businessType" required><option value="">Select</option><option>Private Limited Company</option><option>Sole Proprietorship</option><option>Partnership</option><option>Other</option></select></label>
+        <label class="wide">Registered address<textarea name="registeredAddress" required rows="3" placeholder="Street, city, postal code"></textarea></label>
+        <label>Business category<select name="businessCategory" required><option value="">Select</option><option>Restaurant</option><option>Café</option><option>Bakery</option><option>Hotel / Hospitality</option><option>Other Food & Beverage</option></select></label>
+        <label>Website or social page<input name="website" type="url" placeholder="https://"></label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-copy"><span>02</span><div><h2>Owner / authorised contact</h2><p>The person we can contact about this application.</p></div></div>
+      <div class="grid two">
+        <label>Full name<input name="contactName" required autocomplete="name"></label>
+        <label>NIC or passport number<input name="nicNumber" required></label>
+        <label>Email<input name="email" type="email" required autocomplete="email"></label>
+        <label>Phone<input name="phone" type="tel" required autocomplete="tel" placeholder="+94 77 123 4567"></label>
+        <label>Role / title<input name="contactRole" required placeholder="Director / Owner / Manager"></label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-copy"><span>03</span><div><h2>Settlement bank account</h2><p>The account where restaurant payments should be settled.</p></div></div>
+      <div class="grid two">
+        <label>Bank name<input name="bankName" required placeholder="HNB"></label>
+        <label>Branch<input name="bankBranch" required></label>
+        <label>Account name<input name="bankAccountName" required></label>
+        <label>Account number<input name="bankAccountNumber" required inputmode="numeric"></label>
+        <label>Average transaction value (LKR)<input name="averageTransactionValue" type="number" min="1" required placeholder="2000"></label>
+        <label>Expected monthly payment volume (LKR)<input name="monthlyVolume" type="number" min="0" required placeholder="3000000"></label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-copy"><span>04</span><div><h2>Documents</h2><p>PDF, JPG or PNG. Maximum 3 MB per file.</p></div></div>
+      <div class="uploads">
+        <label class="upload"><span>Business registration certificate <b>Required</b></span><input name="businessRegistration" type="file" accept="application/pdf,image/jpeg,image/png" required><small>Upload BR certificate</small></label>
+        <label class="upload"><span>NIC / passport <b>Required</b></span><input name="identityDocument" type="file" accept="application/pdf,image/jpeg,image/png" required><small>Front/back can be combined into one PDF</small></label>
+        <label class="upload"><span>Bank proof <b>Required</b></span><input name="bankProof" type="file" accept="application/pdf,image/jpeg,image/png" required><small>Bank statement, passbook or confirmation letter</small></label>
+      </div>
+    </section>
+
+    <section class="form-section compact">
+      <label class="check"><input name="declaration" type="checkbox" required><span>I confirm that the information provided is accurate and I am authorised to submit it for this business.</span></label>
+      <label class="check"><input name="consent" type="checkbox" required><span>I consent to Punchbook using these details to review the business and facilitate payment-provider onboarding.</span></label>
+    </section>
+
+    <div class="submit-row"><div><strong>Ready?</strong><p>You can update missing information if we contact you.</p></div><button id="submit-btn" type="submit">Submit application →</button></div>
+    <p id="form-status" class="status" role="status" aria-live="polite"></p>
+  </form>
+
+  <section id="success" class="success" hidden><span>✓</span><p class="eyebrow">APPLICATION RECEIVED</p><h2>We have your details.</h2><p>Your application reference is <strong id="reference"></strong>. We’ll review the documents and contact you if anything else is needed.</p><a href="/">Back to Punchbook →</a></section>
+</main>
+<footer>© Punchbook · Restaurant table ordering and payments</footer>
+<script src="/onboarding.js?v=1"></script>
+</body>
+</html>
