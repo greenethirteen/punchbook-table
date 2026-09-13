@@ -33,12 +33,12 @@ form.addEventListener('submit', async e=>{
     };
     const payload = {};
     for(const [key,value] of fd.entries()){
-      if(value instanceof File || key === 'declaration' || key === 'consent') continue;
+      if(value instanceof File || key === 'declaration') continue;
       payload[key] = String(value).trim();
     }
     payload.documents = docs;
     payload.declaration = fd.get('declaration') === 'on';
-    payload.consent = fd.get('consent') === 'on';
+    payload.consent = payload.declaration;
 
     const res = await fetch('/api/companies', {
       method:'POST',
@@ -46,7 +46,7 @@ form.addEventListener('submit', async e=>{
       body:JSON.stringify(payload)
     });
     const data = await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(data.error || 'Could not submit the application.');
+    if(!res.ok) throw new Error(data.error || 'Could not submit.');
     refEl.textContent = data.reference;
     form.hidden = true;
     success.hidden = false;
@@ -55,6 +55,6 @@ form.addEventListener('submit', async e=>{
     statusEl.textContent = err.message || 'Something went wrong.';
   }finally{
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit application →';
+    submitBtn.textContent = 'Submit →';
   }
 });
