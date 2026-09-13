@@ -1,0 +1,23 @@
+:root{--ink:#123e2b;--paper:#fffefb;--orange:#ff5f36;--muted:#53695d}
+body{background:#fffefb}
+.brand span{color:#ff5f36}
+.button{background:#ff5f36;box-shadow:0 8px 0 rgba(196,57,21,.12)}
+.button:hover{background:#eb4b22}
+.nav-secondary{font-weight:750;color:#486154}
+.benefit-strip{background:#fff0a8;border-color:#f0d56b}
+.benefit-strip span::before{color:#ff5f36}
+.peach{background:#ffd8c8}.yellow{background:#fff0a8}.green{background:#d9f2ce}
+.merchant-section{background:#12633d}
+.merchant-section .eyebrow{color:#c7f0cb}.merchant-section .lede{color:#e3f0e6}
+.cashier-summary{background:#fffef8}
+.summary-new{background:#ffe6a8}.summary-preparing{background:#d9f2ce}
+.savings-section{background:#fff0b8}
+.savings-result{background:#12633d}
+.savings-big>span{color:#ffe28d}
+.closing{background:#ffe8a3}
+.product-scene{background:#f4c979;border-color:#dfad52}
+.cafe-qr-stand{background:#fffef8}
+.product-scene .menu-preview{background:#fffefb;border-color:#123e2b}
+.graphic-table-tag{background:#d9f2ce;color:#12633d}
+.phone-pay{background:#12633d}
+@media(max-width:650px){.nav nav{gap:10px}.nav-secondary{display:none}.closing-actions{justify-content:center}}
