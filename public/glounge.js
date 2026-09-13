@@ -20,7 +20,6 @@ const images={
  pistachio:'https://images.unsplash.com/photo-1530373239216-42518e6b4063?auto=format&fit=crop&w=900&q=80'
 };
 const demoMenu=[
-{id:'g1',category:'Popular',name:'Chicken Pasta',desc:'Creamy chicken pasta.',price:1550,image:images.pasta},
 {id:'g2',category:'Popular',name:'Chocolate Blast',desc:'Rich chocolate waffle creation.',price:1215,image:images.chocolate},
 {id:'g3',category:'Popular',name:'Chicken Enchilada',desc:'Two tortillas filled with chicken and special sauce, topped with cheese.',price:1850,image:images.enchilada},
 {id:'g4',category:'Popular',name:'Pistachio Shake',desc:'Rich pistachio milkshake.',price:1360,image:images.pistachio},
@@ -35,7 +34,8 @@ const demoMenu=[
 {id:'g13',category:'Mains',name:'Chicken Burger',desc:'Crispy chicken burger with cheese and house sauce.',price:1750,image:images.burger},
 {id:'g14',category:'Mains',name:'Chicken Wings',desc:'Crispy chicken wings with house seasoning.',price:1650,image:images.wings},
 {id:'g15',category:'Desserts',name:'Brownie with Ice Cream',desc:'Warm chocolate brownie served with vanilla ice cream.',price:990,image:images.brownie},
-{id:'g16',category:'Desserts',name:'Chocolate Cake',desc:'Rich chocolate cake.',price:950,image:images.cake}
+{id:'g16',category:'Desserts',name:'Chocolate Cake',desc:'Rich chocolate cake.',price:950,image:images.cake},
+{id:'g1',category:'Popular',name:'Chicken Pasta',desc:'Creamy chicken pasta.',price:1550,image:images.pasta}
 ];
 const iconPaths={card:'<rect x="8" y="15" width="48" height="34" rx="5"/><path d="M8 26h48M17 39h11"/>',bank:'<path d="m8 22 24-13 24 13ZM12 51h40M18 29v16m14-16v16m14-16v16"/>'};
 function icon(name){return `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||''}</svg>`}
