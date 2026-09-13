@@ -1,9 +1,11 @@
 import express from 'express';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
+import fs from 'fs/promises';
+import path from 'path';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({limit:'15mb'}));
 app.get('/table-demo-qr.svg', async (req,res)=>{
   const base=publicBase(req);
   const svg=await QRCode.toString(`${base}/peppermint/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});
@@ -18,14 +20,19 @@ app.get('/', (_req,res)=>{
   res.sendFile(process.cwd()+'/public/index.html');
 });
 app.use(express.static('public', {
-  setHeaders(res, path){
-    if(path.endsWith('.html')) res.set('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
+  setHeaders(res, filePath){
+    if(filePath.endsWith('.html')) res.set('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
   }
 }));
 
 const PORT = process.env.PORT || 3000;
 const BASE = process.env.PUBLIC_BASE_URL || `http://localhost:${PORT}`;
 const orders = [];
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(),'data');
+const COMPANIES_FILE = path.join(DATA_DIR,'companies.json');
+const ALLOWED_DOC_TYPES = new Set(['application/pdf','image/jpeg','image/png']);
+const MAX_DOC_BYTES = 3 * 1024 * 1024;
+const COMPANY_STATUSES = new Set(['submitted','under-review','ipg-submitted','approved','live','rejected']);
 
 // Prefer a configured public origin, but never send public visitors to localhost.
 function publicBase(req){
@@ -42,6 +49,43 @@ function publicBase(req){
   return `${protocol}://${incoming.host}`;
 }
 
+async function readCompanies(){
+  try{return JSON.parse(await fs.readFile(COMPANIES_FILE,'utf8'));}
+  catch(err){if(err.code==='ENOENT') return []; throw err;}
+}
+async function writeCompanies(companies){
+  await fs.mkdir(DATA_DIR,{recursive:true});
+  const temp=COMPANIES_FILE+'.tmp';
+  await fs.writeFile(temp,JSON.stringify(companies,null,2),'utf8');
+  await fs.rename(temp,COMPANIES_FILE);
+}
+function cleanText(value,max=300){return String(value??'').trim().slice(0,max);}
+function adminAllowed(req){
+  const expected=process.env.PUNCHBOOK_ADMIN_KEY;
+  if(!expected) return false;
+  const supplied=req.get('x-admin-key') || req.query.key || '';
+  const a=Buffer.from(String(expected)), b=Buffer.from(String(supplied));
+  return a.length===b.length && crypto.timingSafeEqual(a,b);
+}
+function requireAdmin(req,res,next){
+  if(!process.env.PUNCHBOOK_ADMIN_KEY) return res.status(503).json({error:'Admin access is not configured. Set PUNCHBOOK_ADMIN_KEY on the server.'});
+  if(!adminAllowed(req)) return res.status(401).json({error:'Invalid admin key.'});
+  next();
+}
+function validateDocument(doc,label){
+  if(!doc || typeof doc!=='object') return `${label} is required.`;
+  const name=cleanText(doc.name,180), type=cleanText(doc.type,80), data=String(doc.data||'');
+  if(!name || !data) return `${label} is required.`;
+  if(!ALLOWED_DOC_TYPES.has(type)) return `${label} must be PDF, JPG or PNG.`;
+  const estimated=Math.floor(data.length*3/4);
+  if(estimated>MAX_DOC_BYTES) return `${label} must be 3 MB or smaller.`;
+  if(!/^[A-Za-z0-9+/=]+$/.test(data)) return `${label} could not be read.`;
+  return '';
+}
+function summariseCompany(c){
+  const {documents,...safe}=c;
+  return {...safe,documents:Object.fromEntries(Object.entries(documents||{}).map(([k,d])=>[k,{name:d.name,type:d.type,size:d.size}]))};
+}
 
 const menu = [
   { id:'m1', category:'Popular', name:'Truffle Chicken Pasta', desc:'Creamy parmesan sauce, mushrooms, grilled chicken.', price:2350, emoji:'🍝' },
@@ -79,6 +123,83 @@ app.post('/api/orders/:id/status', (req,res)=>{
   if(!o) return res.status(404).json({error:'Order not found'});
   if(req.body.orderStatus) o.orderStatus=req.body.orderStatus;
   res.json(o);
+});
+
+// Company onboarding: collect the information normally requested during Sri Lankan merchant/IPG onboarding.
+app.post('/api/companies', async (req,res)=>{
+  try{
+    const b=req.body||{};
+    const required=['companyName','registrationNumber','tradingName','businessType','registeredAddress','businessCategory','contactName','nicNumber','email','phone','contactRole','bankName','bankBranch','bankAccountName','bankAccountNumber','averageTransactionValue','monthlyVolume'];
+    const missing=required.filter(k=>!cleanText(b[k]));
+    if(missing.length) return res.status(400).json({error:`Missing required fields: ${missing.join(', ')}`});
+    if(!b.declaration || !b.consent) return res.status(400).json({error:'Please accept the declaration and onboarding consent.'});
+    const docErrors=[
+      validateDocument(b.documents?.businessRegistration,'Business registration certificate'),
+      validateDocument(b.documents?.identityDocument,'NIC / passport'),
+      validateDocument(b.documents?.bankProof,'Bank proof')
+    ].filter(Boolean);
+    if(docErrors.length) return res.status(400).json({error:docErrors[0]});
+    if(!/^\S+@\S+\.\S+$/.test(cleanText(b.email,180))) return res.status(400).json({error:'Enter a valid email address.'});
+
+    const companies=await readCompanies();
+    const now=new Date().toISOString();
+    const reference='PBM-'+Date.now().toString(36).toUpperCase()+'-'+crypto.randomBytes(2).toString('hex').toUpperCase();
+    const id=crypto.randomUUID();
+    const docs={};
+    for(const key of ['businessRegistration','identityDocument','bankProof']){
+      const d=b.documents[key];
+      docs[key]={name:cleanText(d.name,180),type:cleanText(d.type,80),size:Number(d.size)||0,data:String(d.data)};
+    }
+    const company={
+      id,reference,status:'submitted',createdAt:now,updatedAt:now,
+      companyName:cleanText(b.companyName,200),registrationNumber:cleanText(b.registrationNumber,100),tradingName:cleanText(b.tradingName,200),businessType:cleanText(b.businessType,100),registeredAddress:cleanText(b.registeredAddress,500),businessCategory:cleanText(b.businessCategory,120),website:cleanText(b.website,300),
+      contactName:cleanText(b.contactName,180),nicNumber:cleanText(b.nicNumber,100),email:cleanText(b.email,180),phone:cleanText(b.phone,80),contactRole:cleanText(b.contactRole,120),
+      bankName:cleanText(b.bankName,120),bankBranch:cleanText(b.bankBranch,120),bankAccountName:cleanText(b.bankAccountName,180),bankAccountNumber:cleanText(b.bankAccountNumber,100),averageTransactionValue:Number(b.averageTransactionValue)||0,monthlyVolume:Number(b.monthlyVolume)||0,
+      declaration:true,consent:true,adminNotes:'',documents:docs
+    };
+    companies.push(company);
+    await writeCompanies(companies);
+    res.status(201).json({ok:true,id,reference,status:company.status});
+  }catch(err){console.error('company onboarding error',err);res.status(500).json({error:'Could not save the application.'});}
+});
+
+app.get('/api/admin/companies', requireAdmin, async (_req,res)=>{
+  try{
+    const companies=(await readCompanies()).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+    res.json({companies:companies.map(summariseCompany)});
+  }catch(err){console.error(err);res.status(500).json({error:'Could not load applications.'});}
+});
+app.get('/api/admin/companies/:id', requireAdmin, async (req,res)=>{
+  try{
+    const company=(await readCompanies()).find(c=>c.id===req.params.id);
+    if(!company) return res.status(404).json({error:'Company not found.'});
+    res.json({company:summariseCompany(company)});
+  }catch(err){console.error(err);res.status(500).json({error:'Could not load application.'});}
+});
+app.patch('/api/admin/companies/:id/status', requireAdmin, async (req,res)=>{
+  try{
+    const status=cleanText(req.body?.status,40);
+    if(!COMPANY_STATUSES.has(status)) return res.status(400).json({error:'Invalid company status.'});
+    const companies=await readCompanies();
+    const company=companies.find(c=>c.id===req.params.id);
+    if(!company) return res.status(404).json({error:'Company not found.'});
+    company.status=status;company.adminNotes=cleanText(req.body?.adminNotes,3000);company.updatedAt=new Date().toISOString();
+    await writeCompanies(companies);
+    res.json({ok:true,company:summariseCompany(company)});
+  }catch(err){console.error(err);res.status(500).json({error:'Could not update application.'});}
+});
+app.get('/api/admin/companies/:id/document/:doc', requireAdmin, async (req,res)=>{
+  try{
+    const company=(await readCompanies()).find(c=>c.id===req.params.id);
+    if(!company) return res.status(404).json({error:'Company not found.'});
+    const doc=company.documents?.[req.params.doc];
+    if(!doc) return res.status(404).json({error:'Document not found.'});
+    const filename=String(doc.name||'document').replace(/[\r\n"\\]/g,'_');
+    res.set('Content-Type',doc.type||'application/octet-stream');
+    res.set('Content-Disposition',`inline; filename="${filename}"`);
+    res.set('Cache-Control','private, no-store');
+    res.send(Buffer.from(doc.data,'base64'));
+  }catch(err){console.error(err);res.status(500).json({error:'Could not open document.'});}
 });
 
 app.post('/api/payments/justpay/simulate', async (req,res)=>{
@@ -158,5 +279,7 @@ app.get('/qr', async (req,res)=>{
 
 app.get(['/peppermint', '/peppermint/t/:table', '/r/:restaurant/t/:table'], (_req,res)=>res.sendFile(process.cwd()+'/public/peppermint.html'));
 app.get('/admin', (_req,res)=>res.sendFile(process.cwd()+'/public/admin.html'));
+app.get(['/signup','/join','/onboarding'], (_req,res)=>res.sendFile(process.cwd()+'/public/onboarding.html'));
+app.get(['/admin/companies','/companies-admin'], (_req,res)=>res.sendFile(process.cwd()+'/public/companies-admin.html'));
 
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE}`));
