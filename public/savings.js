@@ -1,8 +1,5 @@
 // Punchbook labour-savings calculator
-// Estimates how many additional waiter shifts Punchbook could help a restaurant avoid.
 function estimateWaiterSavings(seats, customers, waiterCost) {
-  // Conservative planning assumption: one waiter can handle ~35 customers/day.
-  // The calculator is an estimate, not a staffing recommendation.
   if (![seats, customers, waiterCost].every(Number.isFinite) || seats < 1 || customers < 1 || waiterCost < 0) return null;
   const volumeBased = Math.ceil(customers / 35);
   const seatBased = Math.ceil(seats / 30);
@@ -21,71 +18,88 @@ function installWaiterCalculator() {
   const how = document.getElementById('how-it-works');
   if (!section || !how) return;
 
+  section.className = 'waiter-savings-section';
   section.innerHTML = `
     <div class="shell waiter-savings-shell">
       <div class="waiter-heading">
-        <p class="eyebrow">YOUR DIGITAL WAITER</p>
-        <h2>What could you save<br><em>by not hiring another waiter?</em></h2>
-        <p>Tell us roughly how big your restaurant is and how busy it gets. We'll estimate the monthly labour cost Punchbook could help you avoid.</p>
+        <div class="waiter-heading-copy">
+          <p class="eyebrow">MEET YOUR NEWEST TEAM MEMBER</p>
+          <h2>Your digital waiter<br><em>pays for itself.</em></h2>
+          <p>See what Punchbook could save you in labour each month.</p>
+        </div>
+        <div class="waiter-badge"><span>01</span><b>THE<br>DIGITAL<br>WAITER</b></div>
       </div>
+
       <div class="waiter-calculator">
-        <div class="waiter-result" aria-live="polite">
-          <span class="savings-result-label">ESTIMATED MONTHLY SAVING</span>
-          <div class="waiter-big"><strong id="waiter-monthly">LKR 45,000</strong></div>
-          <p id="waiter-summary">That's the cost of one additional waiter, less Punchbook.</p>
-          <div class="waiter-breakdown"><span>Estimated waiter cost</span><b id="waiter-cost-result">LKR 50,000</b></div>
-          <div class="waiter-breakdown"><span>Punchbook</span><b>LKR 5,000</b></div>
-          <div class="waiter-breakdown"><span>Potential annual saving</span><b id="waiter-annual">LKR 540,000</b></div>
+        <div class="waiter-result" aria-live="polite" aria-atomic="true">
+          <div class="result-top"><span>YOUR POTENTIAL SAVING</span><span class="result-pill">/ MONTH</span></div>
+          <div class="waiter-big"><span>LKR</span><strong id="waiter-monthly">45,000</strong></div>
+          <div class="result-rule"></div>
+          <p id="waiter-summary">Enough to cover most of the cost of one additional waiter.</p>
+          <div class="waiter-compare">
+            <div><span>Extra waiter</span><b id="waiter-cost-result">LKR 50,000</b></div>
+            <div class="minus">−</div>
+            <div><span>Punchbook</span><b>LKR 5,000</b></div>
+            <div class="equals">=</div>
+            <div class="save"><span>You save</span><b id="waiter-annual">LKR 540,000/yr</b></div>
+          </div>
+          <div class="waiter-visual"><i></i><span>Orders in</span><b>Less waiting</b><span>Team freed up</span><b>More serving</b></div>
         </div>
+
         <div class="waiter-inputs">
-          <h3>Try your numbers.</h3>
-          <label>Restaurant seats
-            <input id="waiter-seats" type="number" min="1" max="1000" step="1" value="60" inputmode="numeric">
-          </label>
-          <label>Customers per day
-            <input id="waiter-customers" type="number" min="1" max="10000" step="1" value="120" inputmode="numeric">
-          </label>
-          <label>Monthly cost of one waiter (LKR)
-            <input id="waiter-cost" type="number" min="0" max="1000000" step="1000" value="50000" inputmode="numeric">
-          </label>
-          <p class="waiter-assumption">Estimate uses a conservative planning assumption of around 35 customers per waiter per day and considers your seat count. Actual staffing needs vary by service style, opening hours and layout.</p>
+          <div class="inputs-head"><span>YOUR RESTAURANT</span><strong>Try your numbers</strong></div>
+          <label><span><b>01</b> Seats</span><input id="waiter-seats" type="number" min="1" max="1000" step="1" value="60" inputmode="numeric"></label>
+          <label><span><b>02</b> Customers per day</span><input id="waiter-customers" type="number" min="1" max="10000" step="1" value="120" inputmode="numeric"></label>
+          <label><span><b>03</b> Monthly waiter cost</span><div class="money-input"><small>LKR</small><input id="waiter-cost" type="number" min="0" max="1000000" step="1000" value="50000" inputmode="numeric"></div></label>
+          <div class="input-foot"><span>↳</span><p>We estimate the team you need from your seats and daily customer volume.</p></div>
         </div>
       </div>
-      <p class="waiter-note">Punchbook doesn't replace your team. It takes care of taking orders and payments so your existing team can spend more time preparing and serving.</p>
+      <p class="waiter-note">An estimate, not a staffing recommendation. Actual needs vary by service style, opening hours and layout.</p>
     </div>`;
+
+  // Move the calculator above “How it works”, then put pricing immediately below it.
+  how.before(section);
 
   const pricing = document.createElement('section');
   pricing.className = 'waiter-pricing';
   pricing.innerHTML = `
     <div class="shell pricing-inner">
-      <div><p class="eyebrow">SIMPLE PRICING</p><h2>One digital waiter.<br><em>One simple price.</em></h2></div>
-      <div class="pricing-card">
-        <div class="pricing-price"><span>LKR</span> 5,000 <small>/ month</small></div>
+      <div class="pricing-copy">
+        <p class="eyebrow">SIMPLE PRICING</p>
+        <h2>One digital waiter.<br><em>One simple price.</em></h2>
         <p>Everything you need to let customers order directly from their tables.</p>
+        <div class="price-proof"><span>NO PER-ORDER FEES</span><span>NO LONG CONTRACT</span></div>
+      </div>
+      <div class="pricing-card">
+        <div class="price-kicker">PUNCHBOOK</div>
+        <div class="pricing-price"><span>LKR</span> 5,000 <small>/ month</small></div>
+        <div class="price-divider"></div>
         <ul><li>QR table ordering</li><li>Orders sent to your team</li><li>Table-based order tracking</li><li>Customer payment experience</li><li>No app required for guests</li></ul>
-        <a class="button" href="/signup">Get Punchbook ↗</a>
+        <a class="button" href="/signup">Get your digital waiter ↗</a>
       </div>
     </div>`;
-  section.after(pricing);
+  how.after(pricing);
 
   const style = document.createElement('style');
   style.textContent = `
-    .waiter-savings-shell{padding-top:88px;padding-bottom:88px}.waiter-heading{max-width:680px;margin-bottom:34px}.waiter-heading h2{margin-bottom:18px}.waiter-heading h2 em{font-family:Georgia,serif;font-weight:400;color:var(--orange)}.waiter-heading>p:last-child{max-width:620px;color:var(--muted);line-height:1.75}.waiter-calculator{display:grid;grid-template-columns:1.05fr 1fr;gap:18px}.waiter-result,.waiter-inputs{border-radius:22px;padding:32px}.waiter-result{background:#12633d;color:#fffefb}.waiter-big{font-size:clamp(36px,5vw,62px);font-weight:850;letter-spacing:-3px;margin:12px 0}.waiter-result>p{color:#d9eadf;margin:0 0 24px;line-height:1.6}.waiter-breakdown{display:flex;justify-content:space-between;gap:20px;border-top:1px solid #ffffff2b;padding:15px 0;font-size:14px}.waiter-breakdown b{white-space:nowrap}.waiter-inputs{background:#fffefb;border:1px solid #dedfd5}.waiter-inputs h3{font-size:23px;margin:0 0 24px}.waiter-inputs label{display:block;font-size:13px;font-weight:700;margin-bottom:18px}.waiter-inputs input{display:block;width:100%;margin-top:8px;padding:13px 14px;border:1px solid #ccd5cb;border-radius:9px;background:white;font:inherit;color:var(--ink)}.waiter-assumption,.waiter-note{font-size:12px;line-height:1.65;color:var(--muted)}.waiter-note{margin:20px 0 0}.waiter-pricing{background:#244633;color:#fffdf8;padding:88px 0}.pricing-inner{display:grid;grid-template-columns:1fr 420px;gap:70px;align-items:center}.pricing-inner h2 em{font-family:Georgia,serif;font-weight:400;color:#ffd78e}.pricing-inner .eyebrow{color:#c7f0cb}.pricing-card{background:#fffefb;color:var(--ink);border-radius:22px;padding:34px}.pricing-price{font-size:44px;font-weight:850;letter-spacing:-2px}.pricing-price span{font-size:15px;letter-spacing:0}.pricing-price small{font-size:16px;font-weight:600;letter-spacing:0}.pricing-card>p{color:var(--muted);line-height:1.6}.pricing-card ul{list-style:none;padding:0;margin:24px 0 28px}.pricing-card li{padding:11px 0;border-top:1px solid #e0e2da;font-size:14px}.pricing-card li:before{content:'✓';font-weight:800;margin-right:10px;color:#12633d}.pricing-card .button{width:100%}@media(max-width:650px){.waiter-savings-shell{padding-top:55px;padding-bottom:55px}.waiter-calculator,.pricing-inner{grid-template-columns:1fr;gap:18px}.waiter-result,.waiter-inputs{padding:25px}.waiter-pricing{padding:55px 0}.pricing-inner{gap:30px}.pricing-card{padding:26px}}
+    .waiter-savings-section{background:#f3f0e8;overflow:hidden}.waiter-savings-shell{padding:92px 0 86px}.waiter-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin-bottom:38px}.waiter-heading-copy{max-width:760px}.waiter-heading h2{font-size:clamp(42px,6vw,78px);line-height:.94;letter-spacing:-4px;margin:8px 0 20px}.waiter-heading h2 em{font-family:Georgia,serif;font-weight:400;color:var(--orange);letter-spacing:-3px}.waiter-heading p:not(.eyebrow){font-size:17px;color:var(--muted);margin:0}.waiter-badge{width:112px;height:112px;border:1px solid #c9c7bc;border-radius:50%;display:flex;align-items:center;justify-content:center;gap:9px;transform:rotate(7deg);flex:none}.waiter-badge span{font:700 11px/1 Georgia,serif;color:var(--orange)}.waiter-badge b{font-size:10px;line-height:1.05;letter-spacing:.08em}
+    .waiter-calculator{display:grid;grid-template-columns:1.15fr .85fr;min-height:470px;border-radius:28px;overflow:hidden;box-shadow:0 22px 60px #17251b12}.waiter-result{background:#12633d;color:#fffefb;padding:38px;position:relative;overflow:hidden}.waiter-result:after{content:'';position:absolute;width:300px;height:300px;border:1px solid #ffffff18;border-radius:50%;right:-120px;bottom:-150px}.result-top{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;letter-spacing:.12em}.result-pill{border:1px solid #ffffff38;border-radius:99px;padding:7px 10px;font-size:9px}.waiter-big{display:flex;align-items:baseline;gap:12px;margin:28px 0 12px;position:relative;z-index:1}.waiter-big span{font-size:17px;font-weight:700;letter-spacing:.05em}.waiter-big strong{font-size:clamp(58px,7vw,96px);line-height:.9;letter-spacing:-6px}.result-rule{height:1px;background:#ffffff30;margin:26px 0 18px}.waiter-result>p{color:#d8eadf;max-width:430px;font-size:14px;line-height:1.55;margin:0 0 30px}.waiter-compare{display:grid;grid-template-columns:1fr auto 1fr auto 1.25fr;align-items:end;gap:13px;position:relative;z-index:1}.waiter-compare div:not(.minus):not(.equals){display:flex;flex-direction:column;gap:5px}.waiter-compare span{font-size:10px;color:#c4ddcf;text-transform:uppercase;letter-spacing:.07em}.waiter-compare b{font-size:15px}.waiter-compare .minus,.waiter-compare .equals{color:#9fc2af;padding-bottom:2px}.waiter-compare .save{background:#f5c96c;color:#183e2c;padding:13px 14px;border-radius:10px}.waiter-compare .save span{color:#396148}.waiter-compare .save b{font-size:16px}.waiter-visual{position:absolute;left:38px;bottom:28px;display:flex;align-items:center;gap:9px;font-size:10px;color:#9fc2af}.waiter-visual i{width:7px;height:7px;background:#f5c96c;border-radius:50%;box-shadow:0 0 0 6px #f5c96c20}.waiter-visual b{color:#fff;margin-right:8px}.waiter-inputs{background:#fffefb;padding:38px}.inputs-head{display:flex;flex-direction:column;gap:7px;margin-bottom:30px}.inputs-head span{font-size:10px;letter-spacing:.12em;font-weight:800;color:var(--orange)}.inputs-head strong{font-size:28px;letter-spacing:-1px}.waiter-inputs label{display:block;margin-bottom:21px}.waiter-inputs label>span{display:block;font-size:13px;font-weight:700;margin-bottom:8px}.waiter-inputs label>span b{font-size:9px;color:#a1a79e;letter-spacing:.08em;margin-right:8px}.waiter-inputs input{box-sizing:border-box;width:100%;padding:14px 15px;border:1px solid #d9ddd4;border-radius:10px;background:#fafaf6;font:600 16px inherit;color:var(--ink);outline:none;transition:border .2s,box-shadow .2s}.waiter-inputs input:focus{border-color:#12633d;box-shadow:0 0 0 3px #12633d12}.money-input{position:relative}.money-input small{position:absolute;left:15px;top:15px;font-size:10px;font-weight:800;color:#7e857d}.money-input input{padding-left:52px}.input-foot{border-top:1px solid #e1e3dc;padding-top:17px;display:flex;gap:10px;color:#888f87}.input-foot span{font-size:16px}.input-foot p{font-size:11px;line-height:1.5;margin:0}.waiter-note{font-size:11px;line-height:1.6;color:#858b84;margin:14px 2px 0}
+    .waiter-pricing{background:#244633;color:#fffdf8;padding:88px 0}.pricing-inner{display:grid;grid-template-columns:1fr 430px;gap:90px;align-items:center}.pricing-copy h2{font-size:clamp(42px,5vw,68px);line-height:.98;letter-spacing:-3px;margin:9px 0 20px}.pricing-copy h2 em{font-family:Georgia,serif;font-weight:400;color:#ffd78e}.pricing-copy>p:not(.eyebrow){color:#c8dbce;max-width:430px;line-height:1.65}.price-proof{display:flex;gap:20px;margin-top:32px;font-size:9px;letter-spacing:.1em;color:#a9c4b2}.price-proof span:before{content:'✓';color:#f5c96c;margin-right:7px}.pricing-card{background:#fffefb;color:var(--ink);border-radius:22px;padding:34px;box-shadow:0 20px 50px #10281c25}.price-kicker{font-size:9px;font-weight:800;letter-spacing:.14em;color:#12633d;margin-bottom:12px}.pricing-price{font-size:46px;font-weight:850;letter-spacing:-2.5px}.pricing-price span{font-size:14px;letter-spacing:0}.pricing-price small{font-size:15px;font-weight:600;letter-spacing:0;color:#747a72}.price-divider{height:1px;background:#e0e2da;margin:24px 0 8px}.pricing-card ul{list-style:none;padding:0;margin:0 0 27px}.pricing-card li{padding:10px 0;border-bottom:1px solid #e8e9e3;font-size:13px}.pricing-card li:before{content:'✓';font-weight:800;margin-right:10px;color:#12633d}.pricing-card .button{width:100%;box-sizing:border-box;text-align:center}
+    @media(max-width:760px){.waiter-savings-shell{padding:62px 0}.waiter-heading{align-items:flex-start}.waiter-badge{width:78px;height:78px}.waiter-badge b{font-size:8px}.waiter-heading h2{letter-spacing:-2.5px}.waiter-calculator,.pricing-inner{grid-template-columns:1fr}.waiter-result,.waiter-inputs{padding:27px}.waiter-big strong{letter-spacing:-4px}.waiter-compare{grid-template-columns:1fr auto 1fr;gap:9px}.waiter-compare .equals{display:none}.waiter-compare .save{grid-column:1/-1}.waiter-visual{display:none}.waiter-pricing{padding:62px 0}.pricing-inner{gap:35px}.pricing-card{padding:27px}}
   `;
   document.head.appendChild(style);
 
   const inputs = ['waiter-seats','waiter-customers','waiter-cost'].map(id => document.getElementById(id));
   function update() {
-    const values = inputs.map(i => Number(i.value));
-    const estimate = estimateWaiterSavings(...values);
+    const estimate = estimateWaiterSavings(...inputs.map(i => Number(i.value)));
     if (!estimate) return;
     const money = v => 'LKR ' + Math.round(v).toLocaleString('en-LK');
-    document.getElementById('waiter-monthly').textContent = money(Math.max(0, estimate.net));
+    document.getElementById('waiter-monthly').textContent = Math.max(0, estimate.net).toLocaleString('en-LK');
     document.getElementById('waiter-cost-result').textContent = money(estimate.monthly);
-    document.getElementById('waiter-annual').textContent = money(Math.max(0, estimate.net) * 12);
+    document.getElementById('waiter-annual').textContent = money(Math.max(0, estimate.net) * 12) + '/yr';
     document.getElementById('waiter-summary').textContent = estimate.waiters === 1
-      ? `That's the cost of one additional waiter, less Punchbook.`
-      : `That's the estimated cost of ${estimate.waiters} additional waiter${estimate.waiters === 1 ? '' : 's'}, less Punchbook.`;
+      ? 'Enough to cover most of the cost of one additional waiter.'
+      : `That’s the estimated cost of ${estimate.waiters} additional waiters, less Punchbook.`;
   }
   inputs.forEach(input => input.addEventListener('input', update));
   update();
