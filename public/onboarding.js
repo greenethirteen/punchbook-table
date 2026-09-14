@@ -1,8 +1,6 @@
 const form = document.getElementById('company-form');
 const submitBtn = document.getElementById('submit-btn');
 const statusEl = document.getElementById('form-status');
-const success = document.getElementById('success');
-const refEl = document.getElementById('reference');
 const MAX_FILE = 3 * 1024 * 1024;
 const ALLOWED = ['application/pdf','image/jpeg','image/png'];
 
@@ -47,10 +45,7 @@ form.addEventListener('submit', async e=>{
     });
     const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.error || 'Could not submit.');
-    refEl.textContent = data.reference;
-    form.hidden = true;
-    success.hidden = false;
-    success.scrollIntoView({behavior:'smooth',block:'center'});
+    window.location.href = `/signup-success.html?ref=${encodeURIComponent(data.reference)}`;
   }catch(err){
     statusEl.textContent = err.message || 'Something went wrong.';
   }finally{
