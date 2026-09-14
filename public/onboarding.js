@@ -45,6 +45,8 @@ form.addEventListener('submit', async e=>{
     });
     const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.error || 'Could not submit.');
+
+    // Keep the submitted reference available on the confirmation page.
     window.location.href = `/signup-success.html?ref=${encodeURIComponent(data.reference)}`;
   }catch(err){
     statusEl.textContent = err.message || 'Something went wrong.';
