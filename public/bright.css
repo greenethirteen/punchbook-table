@@ -21,4 +21,5 @@ body{background:#fffefb}
 .product-scene .menu-preview{background:#fffefb;border-color:#123e2b}
 .graphic-table-tag{background:#d9f2ce;color:#12633d}
 .phone-pay{background:#12633d}
+.hero-pay{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:8px;text-decoration-color:currentColor}
 @media(max-width:650px){.nav nav{gap:8px}.nav .button.small{font-size:11px;padding:11px 12px}.closing-actions{justify-content:center}}
