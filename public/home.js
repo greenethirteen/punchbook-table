@@ -2,6 +2,7 @@ const demoScreen = document.getElementById('phone-demo-screen');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let demoStage = 0;
 let demoPaused = reduceMotion.matches;
+let demoStarted = false;
 let demoTimer;
 const demoScreens = [
   `<p class="demo-step-label">01 / SELECT</p><h2>Choose your food.</h2><div class="demo-food-row"><img class="demo-food-photo" src="/images/menu/m3.jpg" alt="Chicken burger" width="36" height="36"><div><b>Chicken Burger</b><small>LKR 1,750</small></div><span class="demo-add">+</span></div><div class="demo-food-row"><img class="demo-food-photo" src="/images/menu/m5.jpg" alt="Passion fruit drink" width="36" height="36"><div><b>Passion Fruit Mojito</b><small>LKR 790</small></div><span class="demo-add">+</span></div><div class="demo-selection">✓ Burger added to your order</div><div class="demo-cta">View order · 1 item →</div>`,
@@ -23,7 +24,7 @@ async function advanceDemo(){
     {opacity:0,transform:'translateX(-18px)'}
   ],{duration:220,easing:'ease-in',fill:'forwards'});
   try { await demoTransition.finished; } catch { return; }
-  if(revision !== demoRevision || demoPaused || document.hidden) return;
+  if(revision !== demoRevision || demoPaused || document.hidden || !demoStarted) return;
   demoStage=(demoStage+1)%demoScreens.length;
   renderDemo();
   demoTransition=demoScreen.firstElementChild.animate([
@@ -35,7 +36,12 @@ async function advanceDemo(){
 }
 function scheduleDemo(){
   clearTimeout(demoTimer);
-  if(!demoPaused && !document.hidden) demoTimer=setTimeout(advanceDemo,4000);
+  if(demoStarted && !demoPaused && !document.hidden) demoTimer=setTimeout(advanceDemo,4000);
+}
+function startDemoPlayback(){
+  if(demoStarted) return;
+  demoStarted=true;
+  scheduleDemo();
 }
 function resetDemoPlayback(){
   demoRevision++;
@@ -48,6 +54,14 @@ reduceMotion.addEventListener('change',event=>{
   demoPaused=event.matches;
   resetDemoPlayback();
 });
-document.addEventListener('visibilitychange',resetDemoPlayback);
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden) resetDemoPlayback();
+});
 renderDemo();
-scheduleDemo();
+const demoObserver = new IntersectionObserver(entries=>{
+  if(entries.some(entry=>entry.isIntersecting)){
+    startDemoPlayback();
+    demoObserver.disconnect();
+  }
+},{threshold:0.35});
+demoObserver.observe(demoScreen);
