@@ -1,15 +1,19 @@
-let cardStream=null,cardScannerOpen=false;
+let cardStream=null,cardScannerOpen=false,cardOCRPromise=null;
 
 function loadCardOCR(){
-  return new Promise((resolve,reject)=>{
+  if(cardOCRPromise)return cardOCRPromise;
+  cardOCRPromise=new Promise((resolve,reject)=>{
     if(window.Tesseract)return resolve(window.Tesseract);
     const script=document.createElement('script');
     script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
     script.onload=()=>resolve(window.Tesseract);
-    script.onerror=()=>reject(new Error('OCR unavailable'));
+    script.onerror=()=>{cardOCRPromise=null;reject(new Error('OCR unavailable'));};
     document.head.appendChild(script);
   });
+  return cardOCRPromise;
 }
+
+function preloadCardOCR(){loadCardOCR().catch(()=>{});}
 
 function scannerStatus(message){const el=document.getElementById('cardScanStatus');if(el)el.textContent=message;}
 
@@ -73,6 +77,7 @@ function openCardScanner(){
     <canvas id="cardCanvas" style="display:none"></canvas>
   </div>`;
   document.body.appendChild(modal);
+  preloadCardOCR();
   startCardCamera().then(ok=>{
     const retry=document.getElementById('retryCameraBtn');
     if(retry)retry.style.display=ok?'none':'block';
@@ -92,9 +97,18 @@ async function captureCard(){
   if(!video||!canvas||video.readyState<2){scannerStatus('Camera is not ready yet.');return;}
   button.disabled=true;
   scannerStatus('Reading card…');
-  canvas.width=video.videoWidth;
-  canvas.height=video.videoHeight;
-  canvas.getContext('2d').drawImage(video,0,0);
+  // OCR only the card-shaped centre region, downscaled for much faster recognition.
+  const vw=video.videoWidth, vh=video.videoHeight;
+  const aspect=1.586;
+  let cropW=Math.min(vw*0.92,vh*aspect*0.92);
+  let cropH=cropW/aspect;
+  if(cropH>vh*0.92){cropH=vh*0.92;cropW=cropH*aspect;}
+  const sx=(vw-cropW)/2, sy=(vh-cropH)/2;
+  const maxW=1200, scale=Math.min(1,maxW/cropW);
+  canvas.width=Math.round(cropW*scale);
+  canvas.height=Math.round(cropH*scale);
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(video,sx,sy,cropW,cropH,0,0,canvas.width,canvas.height);
   try{
     const Tesseract=await loadCardOCR();
     const result=await Tesseract.recognize(canvas,'eng',{logger:m=>{if(m.status==='recognizing text')scannerStatus('Reading card… '+Math.round((m.progress||0)*100)+'%');}});
