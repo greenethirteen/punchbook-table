@@ -7,7 +7,7 @@ const iconPaths = {
   bank: '<path d="m8 22 24-13 24 13ZM12 51h40M18 29v16m14-16v16m14-16v16"/>'
 };
 function icon(name){return `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||''}</svg>`;}
-async function boot(){ data=await fetch('/api/menu').then(r=>r.json()); renderCats(); renderMenu(); }
+async function boot(){ data=await fetch(location.pathname.startsWith('/amraleaf-v3')?'/api/menu?restaurant=amra':'/api/menu').then(r=>r.json()); renderCats(); renderMenu(); }
 function renderCats(){ const cats=['All',...new Set(data.menu.map(x=>x.category))];document.getElementById('cats').innerHTML=cats.map(c=>`<button data-category="${c}" class="cat ${c===selected?'active':''}" onclick="selected='${c}';renderCats();renderMenu()">${c}</button>`).join(''); }
 function renderMenu(){ const items=data.menu.filter(x=>selected==='All'||x.category===selected); document.getElementById('menu').innerHTML=items.map(x=>`<article class="item" data-category="${x.category}"><div><h3>${x.name}</h3><p>${x.desc}</p><div class="row"><span class="price">${money(x.price)}</span><button class="add" aria-label="Add ${x.name}" onclick="add('${x.id}')">+</button></div></div><div class="food"><img src="/images/menu/${x.id}.jpg" alt="${x.name}" width="600" height="600" loading="lazy" decoding="async"></div></article>`).join(''); }
 function add(id){cart[id]=(cart[id]||0)+1;syncCart();}
