@@ -114,7 +114,7 @@ async function captureCard(){
 }
 
 function parseCardOCR(raw){
-  const lines=raw.split(/\r?\n/).map(x=>x.replace(/[^A-Za-z0-9\/- ]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+  const lines=raw.split(/\r?\n/).map(x=>x.replace(/[^A-Za-z0-9/ -]/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
   let number='';
   const candidates=lines.map(x=>x.replace(/[OoQqDd]/g,'0').replace(/[Il|]/g,'1').replace(/\D/g,'')).filter(x=>x.length>=13&&x.length<=19);
   if(candidates.length)number=candidates.sort((a,b)=>Math.abs(a.length-16)-Math.abs(b.length-16))[0];
