@@ -19,6 +19,7 @@ Open:
 - Existing `/r/peppermint/t/12` QR links remain supported.
 - Restaurant dashboard: http://localhost:3000/admin
 - QR poster: http://localhost:3000/qr?table=12
+- Pickup order board (for the Android app in `mobile/`): http://localhost:3000/pickup-admin
 
 ## Payments
 

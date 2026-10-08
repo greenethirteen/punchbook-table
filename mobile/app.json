@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "Punchbook Pickup",
+    "slug": "punchbook-pickup",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "online.punchbook.pickup"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F4F2EB",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "online.punchbook.pickup",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image",
+      "expo-web-browser"
+    ],
+    "scheme": "punchbook",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -47,7 +47,7 @@ async function load(){
   try{
     const response=await fetch('/api/orders');if(!response.ok)throw Error('Unable to load live orders.');
     const data=await response.json();if(!Array.isArray(data))throw Error('Unexpected orders response.');
-    const changed=JSON.stringify(data)!==JSON.stringify(live);live=data;
+    const tableOrders=data.filter(o=>o.orderType!=='pickup'),changed=JSON.stringify(tableOrders)!==JSON.stringify(live);live=tableOrders;
     $('connection').textContent='Connected · Refreshes every 5 seconds';
     if($('error').dataset.kind==='connection'){$('error').hidden=true;$('error').textContent='';}
     if(changed&&mode==='live')render();

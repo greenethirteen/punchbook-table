@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pickup orders · Punchbook</title><link rel="stylesheet" href="/admin.css?v=baa4925be238"><link rel="stylesheet" href="/pickup-admin.css?v=12acbd3bc1f1"></head><body>
+<header class="topbar"><a class="brand" href="/">punchbook<span>.</span></a><div class="restaurant">Pickup orders <span>From the Punchbook Pickup app</span></div><a class="link" href="/admin">Table orders ↗</a></header>
+<main class="dashboard"><div class="heading"><div><p class="eyebrow">ORDER AHEAD, COLLECT AT THE COUNTER</p><h1>Pickup</h1><p class="intro">Accept it. Make it. Mark it ready.</p></div></div>
+<div class="modebar"><div id="restaurants" class="filters" role="group" aria-label="Restaurant"></div><span id="connection" role="status">Connecting…</span></div>
+<p id="error" class="error" role="alert" hidden></p>
+<section class="stats" aria-label="Order summary"><div><span>New</span><strong id="new-count">0</strong></div><div><span>Preparing</span><strong id="preparing-count">0</strong></div><div><span>Ready for pickup</span><strong id="ready-count">0</strong></div><div><span>Paid total</span><strong id="paid-total">LKR 0</strong></div></section>
+<div class="toolbar"><div><h2 class="board-title">Pickup board</h2><p class="board-help">Start preparing → Mark ready (the customer is told) → Hand over and mark collected</p></div></div><p id="order-update" class="sr-only" role="status" aria-live="polite"></p>
+<section id="orders" class="orders pickup-orders" aria-label="Pickup orders"></section>
+<footer>Powered by Punchbook <span>Pickup ordering, made simple.</span></footer></main><script src="/pickup-admin.js?v=d7e920cb1551"></script></body></html>
