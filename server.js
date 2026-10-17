@@ -34,6 +34,7 @@ const PICKUP_STATUSES=['new','preparing','ready','collected'];
 function pickupRestaurant(r,withMenu){const{menu,...info}=r;return{...info,itemCount:menu.length,...(withMenu?{menu}:{})}}
 app.get('/api/pickup/restaurants',(_req,res)=>res.json({restaurants:restaurants.map(r=>pickupRestaurant(r,false))}));
 app.get('/api/pickup/restaurants/:id',(req,res)=>{const r=restaurants.find(x=>x.id===req.params.id);if(!r)return res.status(404).json({error:'Restaurant not found.'});res.json({restaurant:pickupRestaurant(r,true)})});
+const DELIVERY_FEE=250;
 app.post('/api/pickup/orders',(req,res)=>{
   const b=req.body||{},r=restaurants.find(x=>x.id===b.restaurantId);if(!r)return res.status(400).json({error:'Choose a restaurant.'});
   const items=(Array.isArray(b.items)?b.items:[]).map(i=>{const m=r.menu.find(x=>x.id===i.id);return m?{id:m.id,name:m.name,price:m.price,qty:Math.min(50,Math.max(1,Math.floor(Number(i.qty))||1))}:null}).filter(Boolean);
@@ -41,10 +42,13 @@ app.post('/api/pickup/orders',(req,res)=>{
   const name=cleanText(b.customer?.name,80),phone=cleanText(b.customer?.phone,30);
   if(!name)return res.status(400).json({error:'Enter your name so the restaurant can call it out.'});
   if(phone.replace(/\D/g,'').length<9)return res.status(400).json({error:'Enter a valid mobile number.'});
+  const a=b.customer?.address,lat=Number(a?.lat),lng=Number(a?.lng),address=a&&Math.abs(lat)<=90&&Math.abs(lng)<=180&&(lat||lng)?{line:cleanText(a.line,200),details:cleanText(a.details,160),lat,lng}:undefined;
+  const delivery=b.fulfilment==='delivery',deliveryFee=delivery?DELIVERY_FEE:0;
+  if(delivery&&!address)return res.status(400).json({error:'Add your delivery address.'});
   const earliest=Date.now()+r.prepMinutes*60000,requested=b.pickupAt==='asap'?NaN:Date.parse(b.pickupAt);
   if(!Number.isNaN(requested)&&requested>Date.now()+24*3600000)return res.status(400).json({error:'Pickup must be within the next 24 hours.'});
   const pickupAt=new Date(Number.isNaN(requested)?earliest:Math.max(requested,earliest)).toISOString(),subtotal=items.reduce((s,i)=>s+i.price*i.qty,0);
-  const order={id:orderId(),orderType:'pickup',restaurantId:r.id,restaurantName:r.name,restaurantArea:r.area,table:null,items,subtotal,service:0,total:subtotal,customer:{name,phone},note:cleanText(b.note,240),pickupAt,asap:b.pickupAt==='asap',paymentMethod:b.paymentMethod==='justpay'?'justpay':'card',paymentStatus:'pending',orderStatus:'new',createdAt:new Date().toISOString()};
+  const order={id:orderId(),orderType:'pickup',fulfilment:delivery?'delivery':'pickup',deliveryFee,restaurantId:r.id,restaurantName:r.name,restaurantArea:r.area,table:null,items,subtotal,service:0,total:subtotal+deliveryFee,customer:{name,phone,...(delivery?{address}:{})},note:cleanText(b.note,240),pickupAt,asap:b.pickupAt==='asap',paymentMethod:b.paymentMethod==='justpay'?'justpay':'card',paymentStatus:'pending',orderStatus:'new',createdAt:new Date().toISOString()};
   orders.push(order);res.status(201).json(order);
 });
 app.get('/api/pickup/orders/:id',(req,res)=>{const o=orders.find(x=>x.id===req.params.id&&x.orderType==='pickup');if(!o)return res.status(404).json({error:'Order not found. Orders reset when the demo server restarts.'});res.json(o)});
