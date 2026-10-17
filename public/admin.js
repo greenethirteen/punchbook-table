@@ -1,7 +1,12 @@
 const $=id=>document.getElementById(id);
 const money=n=>'LKR '+Number(n).toLocaleString('en-LK');
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const statusNames={new:'New',preparing:'Preparing',served:'Served'};
+const statusNames={new:'New',preparing:'Preparing',served:'Ready & served'};
+// App (pickup/delivery) orders use their own statuses; ready and collected share the last lane.
+const laneOf=o=>o.orderType==='pickup'?({new:'new',preparing:'preparing',ready:'served',collected:'served'}[o.orderStatus]||'new'):(statusNames[o.orderStatus]?o.orderStatus:'new');
+const title=o=>o.orderType==='pickup'?`${o.fulfilment==='delivery'?'Delivery':'Pickup'} · ${o.customer?.name||'Guest'}`:`Table ${o.table}`;
+const pickupNext={new:['preparing','Start preparing →'],preparing:['ready','Mark ready ✓'],ready:['collected',o=>o.fulfilment==='delivery'?'Mark delivered ✓':'Mark collected ✓']};
+const pickupNames={new:'New',preparing:'Preparing',ready:'Ready',collected:'Collected'};
 function sampleOrders(){
   return [
     [12,'new','paid','card',2,[['Crispy Chicken Burger',1750,2],['Passion Fruit Mojito',790,1]]],
@@ -24,19 +29,23 @@ function render(){
   $('notice').textContent=mode==='sample'?'You’re viewing sample orders. Try the status buttons; no restaurant data will change.':'Live orders · Updates automatically.';
   $('reset-samples').hidden=mode!=='sample';
   $('paid-label').textContent=mode==='sample'?'Sample paid total':'Paid order total';
-  for(const key of ['new','preparing','served'])$(key+'-count').textContent=rows.filter(o=>o.orderStatus===key).length;
+  for(const key of ['new','preparing','served'])$(key+'-count').textContent=rows.filter(o=>laneOf(o)===key).length;
   $('paid-total').textContent=money(rows.filter(o=>o.paymentStatus==='paid').reduce((n,o)=>n+o.total,0));
-  const descriptions={new:'Received · waiting to be started',preparing:'Being made · not yet delivered',served:'Delivered to the guest’s table'};
+  const descriptions={new:'Received · waiting to be started',preparing:'Being made · not yet delivered',served:'Served at the table · ready for pickup'};
   const emptyMessages={new:'No new orders waiting.',preparing:'Nothing being prepared.',served:'Served orders will appear here.'};
   const card=o=>{
-    const status=statusNames[o.orderStatus]?o.orderStatus:'new';
+    const status=laneOf(o),pickup=o.orderType==='pickup';
     const pending=o.paymentStatus!=='paid';const busy=saving.has(o.id);
-    const next=status==='new'?'preparing':'served';
-    const label=busy?'Updating…':status==='served'?'✓ Served':pending?'Awaiting payment':status==='new'?'Start preparing →':'Mark as served ✓';
-    return `<article class="order ${status}"><div class="order-head"><h2>Table ${escapeHtml(o.table)}</h2><span class="status">${statusNames[status]}</span></div><p class="meta">${escapeHtml(o.id)} · ${escapeHtml(new Date(o.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}))}${mode==='sample'?' · Sample':''}</p><ul class="items">${o.items.map(i=>`<li><span><b>${escapeHtml(i.qty)} ×</b> ${escapeHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')}</ul><div class="order-total"><span>Total</span><span>${money(o.total)}</span></div><p class="payment ${pending?'pending':''}">${pending?'Payment pending':'✓ Paid'} · ${o.paymentMethod==='justpay'?'JustPay':'Card'}</p>${status==='served'?'<div class="served-note">✓ Delivered to the table</div>':`<button type="button" data-id="${escapeHtml(o.id)}" data-next="${next}" ${busy||pending?'disabled':''}>${label}</button>`}</article>`;
+    const step=pickup?pickupNext[o.orderStatus]:null;
+    const next=pickup?step?.[0]:status==='new'?'preparing':'served';
+    const stepLabel=step&&(typeof step[1]==='function'?step[1](o):step[1]);
+    const label=busy?'Updating…':pending?'Awaiting payment':pickup?stepLabel:status==='new'?'Start preparing →':'Mark as served ✓';
+    const done=pickup?!step:status==='served',doneNote=pickup?`✓ ${o.fulfilment==='delivery'?'Delivered':'Collected'} · ${escapeHtml(o.customer?.phone||'')}`:'✓ Delivered to the table';
+    const extra=pickup?`<p class="meta">${o.fulfilment==='delivery'?'Deliver to '+escapeHtml(o.customer?.address?.line||'—'):'Pickup '+(o.asap?'ASAP':escapeHtml(new Date(o.pickupAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})))} · ${escapeHtml(o.restaurantName||'')} · <b>${pickupNames[o.orderStatus]||'New'}</b>${o.note?' · “'+escapeHtml(o.note)+'”':''}</p>`:'';
+    return `<article class="order ${status}"><div class="order-head"><h2>${escapeHtml(title(o))}</h2><span class="status">${statusNames[status]}</span></div><p class="meta">${escapeHtml(o.id)} · ${escapeHtml(new Date(o.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}))}${mode==='sample'?' · Sample':''}</p>${extra}<ul class="items">${o.items.map(i=>`<li><span><b>${escapeHtml(i.qty)} ×</b> ${escapeHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')}</ul><div class="order-total"><span>Total</span><span>${money(o.total)}</span></div><p class="payment ${pending?'pending':''}">${pending?'Payment pending':'✓ Paid'} · ${o.paymentMethod==='justpay'?'JustPay':'Card'}</p>${done?`<div class="served-note">${doneNote}</div>`:`<button type="button" data-id="${escapeHtml(o.id)}" data-next="${next}" ${busy||pending?'disabled':''}>${label}</button>`}</article>`;
   };
   $('orders').innerHTML=Object.keys(statusNames).map(status=>{
-    const group=rows.filter(o=>(statusNames[o.orderStatus]?o.orderStatus:'new')===status)
+    const group=rows.filter(o=>laneOf(o)===status)
       .sort((a,b)=>status==='served'?new Date(b.createdAt)-new Date(a.createdAt):new Date(a.createdAt)-new Date(b.createdAt));
     return `<section class="order-lane lane-${status}" aria-labelledby="lane-${status}"><header class="lane-header"><div><h2 id="lane-${status}">${statusNames[status]} <span>${group.length}</span></h2><p>${descriptions[status]}</p></div></header><div class="lane-cards">${group.length?group.map(card).join(''):`<div class="lane-empty">${emptyMessages[status]}</div>`}</div></section>`;
   }).join('');
@@ -47,7 +56,7 @@ async function load(){
   try{
     const response=await fetch('/api/orders');if(!response.ok)throw Error('Unable to load live orders.');
     const data=await response.json();if(!Array.isArray(data))throw Error('Unexpected orders response.');
-    const tableOrders=data.filter(o=>o.orderType!=='pickup'),changed=JSON.stringify(tableOrders)!==JSON.stringify(live);live=tableOrders;
+    const changed=JSON.stringify(data)!==JSON.stringify(live);live=data;
     $('connection').textContent='Connected · Refreshes every 5 seconds';
     if($('error').dataset.kind==='connection'){$('error').hidden=true;$('error').textContent='';}
     if(changed&&mode==='live')render();
@@ -59,7 +68,7 @@ $('orders').addEventListener('click',async event=>{
   const {id,next}=button.dataset;
   if(mode==='sample'){const order=samples.find(o=>o.id===id);if(order){order.orderStatus=next;$('order-update').textContent=`Table ${order.table} moved to ${statusNames[next]}.`;}render();return;}
   saving.add(id);render();
-  try{const response=await fetch('/api/orders/'+encodeURIComponent(id)+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderStatus:next})});if(!response.ok)throw Error('Update failed');const updated=await response.json();live=live.map(o=>o.id===id?updated:o);$('order-update').textContent=`Table ${updated.table} moved to ${statusNames[next]}.`;$('error').hidden=true;}
+  try{const response=await fetch('/api/orders/'+encodeURIComponent(id)+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderStatus:next})});if(!response.ok)throw Error('Update failed');const updated=await response.json();live=live.map(o=>o.id===id?updated:o);$('order-update').textContent=`${title(updated)} moved to ${updated.orderType==='pickup'?pickupNames[next]:statusNames[next]}.`;$('error').hidden=true;}
   catch(error){$('error').dataset.kind='update';$('error').textContent='Couldn’t update this order. Please try again.';$('error').hidden=false;}
   finally{saving.delete(id);render();}
 });
