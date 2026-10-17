@@ -69,11 +69,11 @@ export function Stepper({ qty, onAdd, onRemove, label }: { qty: number; onAdd: (
   );
 }
 
-export function Notice({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function Notice({ message, onRetry, retryLabel = 'Try again' }: { message: string; onRetry?: () => void; retryLabel?: string }) {
   return (
     <View style={styles.notice}>
       <Text style={styles.noticeText}>{message}</Text>
-      {onRetry && <Button label="Try again" variant="secondary" onPress={onRetry} style={{ marginTop: 12 }} />}
+      {onRetry && <Button label={retryLabel} variant="secondary" onPress={onRetry} style={{ marginTop: 12 }} />}
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { MenuItem, Restaurant } from '@/lib/api';
+import type { Fulfilment, MenuItem, Restaurant } from '@/lib/api';
 
 type CartRestaurant = Pick<Restaurant, 'id' | 'name' | 'area' | 'prepMinutes'>;
 type Line = { item: MenuItem; qty: number };
@@ -16,6 +16,9 @@ type Cart = {
   startNew: (restaurant: CartRestaurant, item: MenuItem) => void;
   remove: (itemId: string) => void;
   clear: () => void;
+  /** Pickup or delivery, chosen on the home screen and confirmed at checkout. */
+  fulfilment: Fulfilment;
+  setFulfilment: (f: Fulfilment) => void;
 };
 
 const CartContext = createContext<Cart | null>(null);
@@ -23,6 +26,7 @@ const CartContext = createContext<Cart | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [restaurant, setRestaurant] = useState<CartRestaurant | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
+  const [fulfilment, setFulfilment] = useState<Fulfilment>('pickup');
 
   const value = useMemo<Cart>(() => {
     const count = lines.reduce((n, l) => n + l.qty, 0);
@@ -53,8 +57,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setLines([]);
         setRestaurant(null);
       },
+      fulfilment,
+      setFulfilment,
     };
-  }, [restaurant, lines]);
+  }, [restaurant, lines, fulfilment]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

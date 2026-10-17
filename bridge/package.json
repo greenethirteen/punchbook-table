@@ -1,0 +1,14 @@
+{
+  "name": "punchbook-sambapos-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pushes Punchbook orders into SambaPOS V5 as tickets and reports kitchen progress back to Punchbook.",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "test-connection": "node test-connection.js",
+    "simulate": "node simulate-pos.js"
+  }
+}

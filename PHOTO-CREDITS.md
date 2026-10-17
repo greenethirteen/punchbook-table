@@ -28,3 +28,13 @@ Photos for Kade Hoppers and Sunrise Bakehouse (fictional demo restaurants) in `p
 - `s3.jpg` — Sourdough Loaf: “Sourdough Bread Loaf.jpg” by Agelaia, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Sourdough_Bread_Loaf.jpg
 - `s4.jpg` — Banana Bread: “Banana bread slices.jpg” by Shisma, CC BY 4.0 — https://commons.wikimedia.org/wiki/File:Banana_bread_slices.jpg
 - `s5.jpg` — Chocolate Chip Cookies: “Chocolate chip cookies on cutting board.jpg” by Mshuang2, CC0 — https://commons.wikimedia.org/wiki/File:Chocolate_chip_cookies_on_cutting_board.jpg
+
+# Pickup app restaurant covers
+
+Wide cover photos bundled with the Android app in `mobile/assets/covers/`, from Wikimedia Commons, resized to 1200 px. Illustrative only, not photographs of these restaurants' dishes.
+
+- `peppermint.jpg`: “Pollo Funghi - Bella Italia 2025-07-11.jpg” by Andy Li, CC0. https://commons.wikimedia.org/wiki/File:Pollo_Funghi_-_Bella_Italia_2025-07-11.jpg
+- `amra.jpg`: “Kottu.jpg” by Janice99999999999, CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Kottu.jpg
+- `glounge.jpg`: “"triple chocolate" waffle - Wafflemeister 2024-08-25.jpg” by Andy Li, CC0. https://commons.wikimedia.org/wiki/File:%22triple_chocolate%22_waffle_-_Wafflemeister_2024-08-25.jpg
+- `kade.jpg`: “Egg Hopper - The Coconut Island 2025-10-05.jpg” by Andy Li, CC0. https://commons.wikimedia.org/wiki/File:Egg_Hopper_-_The_Coconut_Island_2025-10-05.jpg
+- `sunrise.jpg`: “Arsicault Bakery croissants (24690473276).jpg” by Willis Lam, CC BY-SA 2.0. https://commons.wikimedia.org/wiki/File:Arsicault_Bakery_croissants_(24690473276).jpg

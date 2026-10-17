@@ -9,7 +9,9 @@ const PROFILE_KEY = 'punchbook.pickup.profile';
 const MAX_ORDERS = 30;
 const POLL_MS = 5000;
 
-export type Profile = { name: string; phone: string };
+/** A spot picked on the map. `line` comes from reverse geocoding; `details` is what the customer types. */
+export type Address = { line: string; area: string; details: string; lat: number; lng: number; accuracy: number | null };
+export type Profile = { name: string; phone: string; address?: Address };
 
 type Store = {
   ready: boolean;
@@ -19,7 +21,8 @@ type Store = {
   activeOrders: PickupOrder[];
   profile: Profile;
   saveOrder: (order: PickupOrder) => void;
-  saveProfile: (profile: Profile) => void;
+  /** Merges the given fields into the saved profile. */
+  saveProfile: (patch: Partial<Profile>) => void;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -53,9 +56,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const saveProfile = useCallback((p: Profile) => {
-    setProfile(p);
-    AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(p)).catch(() => {});
+  const saveProfile = useCallback((patch: Partial<Profile>) => {
+    setProfile(prev => {
+      const next = { ...prev, ...patch };
+      AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
   }, []);
 
   // Keep unfinished orders fresh so the home banner and order screen show the kitchen's progress.

@@ -6,3 +6,8 @@ node_modules/
 npm-debug.log*
 data/companies.json
 data/companies.json.tmp
+data/square.json
+data/square.json.tmp
+data/orders.json
+data/orders.json.tmp
+data/orders.json.unreadable-*

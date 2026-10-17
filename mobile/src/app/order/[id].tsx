@@ -8,11 +8,19 @@ import { clock, dayAndClock, money } from '@/lib/format';
 import { colors, radius } from '@/lib/theme';
 import { useOrders } from '@/state/orders';
 
-const steps: { status: PickupStatus; label: string }[] = [
+const pickupSteps: { status: PickupStatus; label: string }[] = [
   { status: 'new', label: 'Order received' },
   { status: 'preparing', label: 'Being prepared' },
   { status: 'ready', label: 'Ready at the counter' },
   { status: 'collected', label: 'Collected' },
+];
+
+// Delivery orders move through the same statuses; "ready" means it has left the kitchen.
+const deliverySteps: { status: PickupStatus; label: string }[] = [
+  { status: 'new', label: 'Order received' },
+  { status: 'preparing', label: 'Being prepared' },
+  { status: 'ready', label: 'Out for delivery' },
+  { status: 'collected', label: 'Delivered' },
 ];
 
 export default function OrderScreen() {
@@ -36,22 +44,36 @@ export default function OrderScreen() {
       </View>
     );
 
+  const delivery = order.fulfilment === 'delivery';
+  const steps = delivery ? deliverySteps : pickupSteps;
   const current = steps.findIndex(s => s.status === order.orderStatus);
-  const copy = statusCopy[order.orderStatus];
-  const headline = {
+  const copy = delivery
+    ? { ...statusCopy[order.orderStatus], title: { new: 'Order received', preparing: 'Being prepared', ready: 'On its way', collected: 'Delivered' }[order.orderStatus] }
+    : statusCopy[order.orderStatus];
+  const headline = delivery
+    ? {
+        new: `Waiting for ${order.restaurantName} to start your order.`,
+        preparing: `The kitchen is on it. Arriving around ${clock(order.pickupAt)}.`,
+        ready: 'Your order has left the kitchen and is on its way to you.',
+        collected: 'Enjoy your food! Thanks for ordering with Punchbook.',
+      }[order.orderStatus]
+    : {
     new: `Waiting for ${order.restaurantName} to start your order.`,
     preparing: `The kitchen is on it. Pickup around ${clock(order.pickupAt)}.`,
     ready: `Head to the counter at ${order.restaurantName} and show your code.`,
-    collected: 'Enjoy your food! Thanks for ordering ahead.',
-  }[order.orderStatus];
+        collected: 'Enjoy your food! Thanks for ordering ahead.',
+      }[order.orderStatus];
 
   return (
     <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 30 }]}>
       <View style={[styles.hero, { backgroundColor: copy.bg }]}>
         <Text style={[styles.heroTitle, { color: order.orderStatus === 'ready' ? '#fff' : colors.ink }]}>{copy.title}</Text>
         <Text style={[styles.heroText, { color: order.orderStatus === 'ready' ? '#e3f3ea' : '#4d4c45' }]}>{headline}</Text>
+        {order.pos?.status === 'synced' && ['new', 'preparing'].includes(order.orderStatus) && (
+          <Text style={styles.kitchen}>✓ Sent to the kitchen{order.pos.ticketNumber ? ` · ticket #${order.pos.ticketNumber}` : ''}</Text>
+        )}
         <View style={styles.codeBox}>
-          <Text style={styles.codeLabel}>Pickup code</Text>
+          <Text style={styles.codeLabel}>{delivery ? 'Order code' : 'Pickup code'}</Text>
           <Text style={styles.code} selectable>
             {order.id}
           </Text>
@@ -84,9 +106,15 @@ export default function OrderScreen() {
         <Text style={styles.cardTitle}>{order.restaurantName}</Text>
         <Text style={styles.muted}>{order.restaurantArea}</Text>
         <Text style={[styles.muted, { marginTop: 8 }]}>
-          Pickup {order.asap ? 'ASAP · ' : ''}
+          {delivery ? 'Delivery' : 'Pickup'} {order.asap ? 'ASAP · ' : ''}
           {dayAndClock(order.pickupAt)}
         </Text>
+        {delivery && order.customer.address && (
+          <Text style={[styles.muted, { marginTop: 4 }]}>
+            To {order.customer.address.line}
+            {order.customer.address.details ? ` · ${order.customer.address.details}` : ''}
+          </Text>
+        )}
         <View style={styles.divider} />
         {order.items.map(i => (
           <View key={i.id} style={styles.row}>
@@ -96,6 +124,12 @@ export default function OrderScreen() {
             <Text style={styles.rowText}>{money(i.price * i.qty)}</Text>
           </View>
         ))}
+        {!!order.deliveryFee && (
+          <View style={styles.row}>
+            <Text style={styles.rowText}>Delivery</Text>
+            <Text style={styles.rowText}>{money(order.deliveryFee)}</Text>
+          </View>
+        )}
         {!!order.note && <Text style={styles.note}>“{order.note}”</Text>}
         <View style={styles.divider} />
         <View style={styles.row}>
@@ -114,6 +148,7 @@ const styles = StyleSheet.create({
   hero: { borderRadius: radius.lg, padding: 22 },
   heroTitle: { fontSize: 30, fontWeight: '900', letterSpacing: -1 },
   heroText: { fontSize: 15, lineHeight: 21, marginTop: 6 },
+  kitchen: { fontSize: 13, fontWeight: '800', color: colors.green, marginTop: 8 },
   codeBox: { backgroundColor: '#fff', borderRadius: radius.md, padding: 16, marginTop: 18, alignItems: 'center' },
   codeLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase', color: colors.muted },
   code: { fontSize: 32, fontWeight: '900', letterSpacing: 2, color: colors.ink, marginTop: 4 },

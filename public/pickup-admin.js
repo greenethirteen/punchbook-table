@@ -6,10 +6,19 @@ const lanes={new:'New',preparing:'Preparing',ready:'Ready for pickup',collected:
 const descriptions={new:'Paid and waiting to be accepted',preparing:'Being made in the kitchen',ready:'Waiting at the counter · customer notified',collected:'Handed over to the customer'};
 const emptyMessages={new:'No new pickup orders.',preparing:'Nothing being prepared.',ready:'Nothing waiting at the counter.',collected:'Collected orders will appear here.'};
 const actions={new:['preparing','Start preparing →'],preparing:['ready','Mark ready for pickup ✓'],ready:['collected','Handed over ✓']};
-let orders=[],restaurants=[],restaurant=new URLSearchParams(location.search).get('restaurant')||'all',loading=false;
+let orders=[],restaurants=[],bridges={},restaurant=new URLSearchParams(location.search).get('restaurant')||'all',loading=false;
 const saving=new Set();
 function renderFilters(){
   $('restaurants').innerHTML=[{id:'all',name:'All restaurants'},...restaurants].map(r=>`<button type="button" data-restaurant="${escapeHtml(r.id)}" aria-pressed="${r.id===restaurant}">${escapeHtml(r.name)}</button>`).join('');
+}
+// Orders sent to a local POS (e.g. SambaPOS) through the bridge; see pos-bridge.js.
+const posNames={sambapos:'SambaPOS',simulator:'POS simulator'};
+function posLine(o){
+  const p=o.pos||{},bridge=bridges[o.restaurantId],name=posNames[p.provider]||'POS';
+  if(p.provider==='square'||(!p.status&&!bridge)||o.paymentStatus!=='paid')return'';
+  if(p.status==='synced')return`<p class="pos-status ok">🧾 In ${name}${p.ticketNumber?` · ticket #${escapeHtml(p.ticketNumber)}`:''}${o.statusSource==='timer'?' · auto-marked ready (Ready wasn’t pressed)':''}</p>`;
+  if(p.status==='error')return`<p class="pos-status err">⚠ Not in ${name}: ${escapeHtml(p.error)} <button type="button" class="pos-retry" data-retry="${escapeHtml(o.id)}">Retry</button></p>`;
+  return`<p class="pos-status wait">⏳ Sending to the POS…${bridge.online?'':' · bridge offline'}</p>`;
 }
 function render(){
   const rows=orders.filter(o=>restaurant==='all'||o.restaurantId===restaurant);
@@ -21,10 +30,11 @@ function render(){
     return `<article class="order ${status}"><div class="order-head"><h2>${escapeHtml(o.customer?.name||'Guest')}</h2></div>
 <p class="meta">${escapeHtml(o.id)} · ${escapeHtml(o.restaurantName)}</p>
 <p class="who"><a href="tel:${escapeHtml(o.customer?.phone)}">${escapeHtml(o.customer?.phone)}</a></p>
-<span class="pickup-at">Pickup ${o.asap?'ASAP · ':''}${escapeHtml(time(o.pickupAt))}</span>
+<span class="pickup-at">${o.fulfilment==='delivery'?'Delivery':'Pickup'} ${o.asap?'ASAP · ':''}${escapeHtml(time(o.pickupAt))}</span>
+${o.fulfilment==='delivery'&&o.customer?.address?`<p class="note">📍 ${escapeHtml(o.customer.address.line)}${o.customer.address.details?` · ${escapeHtml(o.customer.address.details)}`:''}<br><a href="https://www.google.com/maps/search/?api=1&query=${Number(o.customer.address.lat)},${Number(o.customer.address.lng)}" target="_blank" rel="noopener">Open in Google Maps</a></p>`:''}
 ${o.note?`<p class="note">“${escapeHtml(o.note)}”</p>`:''}
-<ul class="items">${o.items.map(i=>`<li><span><b>${escapeHtml(i.qty)} ×</b> ${escapeHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')}</ul>
-<div class="order-total"><span>Total</span><span>${money(o.total)}</span></div><p class="payment ${pending?'pending':''}">${pending?'Payment pending':'✓ Paid'} · ${o.paymentMethod==='justpay'?'JustPay':'Card'}</p>${button}</article>`;
+<ul class="items">${o.items.map(i=>`<li><span><b>${escapeHtml(i.qty)} ×</b> ${escapeHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')}${o.deliveryFee?`<li><span>Delivery</span><span>${money(o.deliveryFee)}</span></li>`:''}</ul>
+<div class="order-total"><span>Total</span><span>${money(o.total)}</span></div><p class="payment ${pending?'pending':''}">${pending?'Payment pending':'✓ Paid'} · ${o.paymentMethod==='justpay'?'JustPay':'Card'}</p>${posLine(o)}${button}</article>`;
   };
   $('orders').innerHTML=Object.keys(lanes).map(status=>{
     const group=rows.filter(o=>(lanes[o.orderStatus]?o.orderStatus:'new')===status)
@@ -37,8 +47,11 @@ async function load(){
   try{
     const response=await fetch('/api/orders');if(!response.ok)throw Error('Unable to load orders.');
     const data=await response.json();if(!Array.isArray(data))throw Error('Unexpected orders response.');
-    const pickup=data.filter(o=>o.orderType==='pickup'),changed=JSON.stringify(pickup)!==JSON.stringify(orders);orders=pickup;
-    $('connection').textContent='Connected · Refreshes every 5 seconds';
+    const health=await fetch('/api/bridge/health').then(r=>r.ok?r.json():{restaurants:[]}).catch(()=>({restaurants:[]}));
+    const nextBridges=Object.fromEntries((health.restaurants||[]).map(b=>[b.id,b]));
+    const pickup=data.filter(o=>o.orderType==='pickup'),changed=JSON.stringify(pickup)!==JSON.stringify(orders)||JSON.stringify(nextBridges)!==JSON.stringify(bridges);orders=pickup;bridges=nextBridges;
+    const bridge=bridges[restaurant];
+    $('connection').textContent='Connected · Refreshes every 5 seconds'+(bridge?` · POS bridge ${bridge.online?'online':'offline'}`:'');
     if($('error').dataset.kind==='connection'){$('error').hidden=true;$('error').textContent='';}
     if(changed)render();
   }catch(error){$('connection').textContent='Connection unavailable';$('error').dataset.kind='connection';$('error').textContent='Couldn’t refresh pickup orders. Retrying automatically.';$('error').hidden=false;}
@@ -49,6 +62,8 @@ $('restaurants').addEventListener('click',event=>{
   restaurant=button.dataset.restaurant;history.replaceState(null,'',restaurant==='all'?location.pathname:'?restaurant='+encodeURIComponent(restaurant));renderFilters();render();
 });
 $('orders').addEventListener('click',async event=>{
+  const retry=event.target.closest('button[data-retry]');
+  if(retry){retry.disabled=true;try{const response=await fetch('/api/orders/'+encodeURIComponent(retry.dataset.retry)+'/pos-retry',{method:'POST'});if(!response.ok)throw Error('Retry failed');const updated=await response.json();orders=orders.map(o=>o.id===updated.id?updated:o);render();}catch{$('error').dataset.kind='update';$('error').textContent='Couldn’t resend this order to the POS. Please try again.';$('error').hidden=false;retry.disabled=false;}return;}
   const button=event.target.closest('button[data-id]');if(!button||button.disabled)return;
   const {id,next}=button.dataset;
   saving.add(id);render();

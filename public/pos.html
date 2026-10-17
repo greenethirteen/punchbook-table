@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>POS bridge · Punchbook</title><link rel="stylesheet" href="/admin.css?v=baa4925be238"><link rel="stylesheet" href="/pos.css?v=88d3cdb9f8ea"></head><body>
+<header class="topbar"><a class="brand" href="/">punchbook<span>.</span></a><div class="restaurant">POS bridge <span>Punchbook ⇄ Square</span></div><a class="link" href="/admin">Table orders ↗</a><a class="link" href="/pickup-admin">Pickup orders ↗</a></header>
+<main class="dashboard">
+<div class="heading"><div><p class="eyebrow">POS INTEGRATION · TEST CONSOLE</p><h1>Square POS</h1><p class="intro">Paid Punchbook orders land in Square. Staff updates in Square flow back to Punchbook.</p></div><span id="connection" class="pill">Checking…</span></div>
+<p id="error" class="error" role="alert" hidden></p>
+
+<section id="setup" class="panel setup" hidden>
+<h2>Connect a free Square Sandbox</h2>
+<ol>
+<li>Create a free account at <a href="https://developer.squareup.com/signup" target="_blank" rel="noopener">developer.squareup.com</a> (no business or card needed).</li>
+<li>In the Developer Console, create an application, open it and switch to <b>Sandbox</b>. Copy the <b>Sandbox access token</b>.</li>
+<li>Add it to <code>.env</code> and restart the server:<pre>SQUARE_ACCESS_TOKEN=EAAA…your sandbox token…
+SQUARE_ENVIRONMENT=sandbox</pre></li>
+<li>To see orders in the POS: Developer Console → <b>Sandbox test accounts</b> → <b>Open in Square Dashboard</b> → Orders.</li>
+</ol>
+</section>
+
+<section class="cards" aria-label="Integration settings">
+<div class="panel"><h2>Connection</h2><dl id="conn-details"></dl></div>
+<div class="panel"><h2>Menu → Square catalog</h2>
+<label class="field">Punchbook restaurant linked to this Square location<select id="restaurant"></select></label>
+<p id="catalog-status" class="hint"></p><button type="button" id="sync" class="primary">Sync menu to Square</button></div>
+<div class="panel"><h2>Status updates from Square</h2><dl id="return-details"></dl>
+<a id="dashboard" class="link" href="https://developer.squareup.com/console/en/sandbox-test-accounts" target="_blank" rel="noopener">Open the Square Sandbox Dashboard ↗</a></div>
+</section>
+
+<section class="panel" aria-labelledby="test-title">
+<div class="panel-head"><div><h2 id="test-title">Place a test order</h2><p class="hint">Goes through the real Punchbook order and payment endpoints (payment is simulated), then on to Square.</p></div></div>
+<div id="menu" class="menu-picks"></div>
+<div class="test-bar">
+<div class="segmented" role="group" aria-label="Order type"><button type="button" data-type="pickup" aria-pressed="true">Pickup</button><button type="button" data-type="table" aria-pressed="false">Table</button></div>
+<div class="segmented" role="group" aria-label="Payment"><button type="button" data-pay="card" aria-pressed="true">Card</button><button type="button" data-pay="justpay" aria-pressed="false">JustPay</button></div>
+<span id="test-total" class="test-total">Pick items</span>
+<button type="button" id="place" class="primary" disabled>Place &amp; pay order</button>
+</div>
+</section>
+
+<section class="columns">
+<div class="panel"><div class="panel-head"><div><h2>In Punchbook</h2><p class="hint">Orders for the linked restaurant</p></div></div><div id="pb-orders" class="rows"></div></div>
+<div class="panel"><div class="panel-head"><div><h2>In Square</h2><p class="hint">Read live from the Square Orders API. “Advance” does what staff would do on the POS.</p></div></div><div id="sq-orders" class="rows"></div></div>
+</section>
+
+<section class="panel"><h2>Activity</h2><ol id="log" class="log"></ol></section>
+<footer>Powered by Punchbook <span>Your POS, now taking QR orders.</span></footer>
+</main><script src="/pos.js?v=0b2228e2fe22"></script></body></html>

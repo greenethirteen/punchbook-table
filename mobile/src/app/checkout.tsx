@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Notice, Stepper } from '@/components/ui';
-import { payByCard, payByJustPay, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
+import { DELIVERY_FEE, payByCard, payByJustPay, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
 import { clock, money } from '@/lib/format';
 import { colors, radius } from '@/lib/theme';
 import { useCart } from '@/state/cart';
@@ -27,6 +27,7 @@ export default function Checkout() {
   const [note, setNote] = useState('');
   const [pickupAt, setPickupAt] = useState<'asap' | string>('asap');
   const [payment, setPayment] = useState<PaymentMethod>('card');
+  const { fulfilment, setFulfilment } = cart;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // If payment fails after the order is created, retrying pays for the same order.
@@ -39,7 +40,7 @@ export default function Checkout() {
   }, [profile]);
 
   // Any change to the order means the next attempt places a fresh one.
-  useEffect(() => setUnpaid(null), [cart.lines, pickupAt, note]);
+  useEffect(() => setUnpaid(null), [cart.lines, pickupAt, note, fulfilment, profile.address]);
 
   const restaurant = cart.restaurant;
   const slots = useMemo(() => (restaurant ? pickupSlots(restaurant.prepMinutes) : []), [restaurant]);
@@ -53,22 +54,39 @@ export default function Checkout() {
       </View>
     );
 
+  const delivery = fulfilment === 'delivery';
+  const total = cart.total + (delivery ? DELIVERY_FEE : 0);
+
+  const chooseDelivery = () => {
+    setFulfilment('delivery');
+    // Straight to the map the first time, so the address is set before paying.
+    if (!profile.address) router.push('/address');
+  };
+
   const submit = async () => {
     setError('');
     if (!name.trim()) return setError('Enter your name so the restaurant can call it out.');
     if (phone.replace(/\D/g, '').length < 9) return setError('Enter a valid mobile number.');
+    if (delivery && !profile.address) return setError('Add your delivery address.');
     setBusy(true);
     try {
       saveProfile({ name: name.trim(), phone: phone.trim() });
+      const address = delivery && profile.address ? {
+        line: profile.address.line,
+        details: profile.address.details,
+        lat: profile.address.lat,
+        lng: profile.address.lng,
+      } : undefined;
       const order =
         unpaid ??
         (await placeOrder({
           restaurantId: restaurant.id,
           items: cart.lines.map(l => ({ id: l.item.id, qty: l.qty })),
-          customer: { name: name.trim(), phone: phone.trim() },
+          customer: { name: name.trim(), phone: phone.trim(), address },
           pickupAt,
           note: note.trim(),
           paymentMethod: payment,
+          fulfilment,
         }));
       setUnpaid(order);
 
@@ -94,7 +112,7 @@ export default function Checkout() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.restaurant}>{restaurant.name}</Text>
-        <Text style={styles.muted}>Pickup from {restaurant.area}</Text>
+        <Text style={styles.muted}>{restaurant.area}</Text>
 
         <View style={styles.card}>
           {cart.lines.map(({ item, qty }) => (
@@ -116,7 +134,7 @@ export default function Checkout() {
           </Pressable>
         </View>
 
-        <Text style={styles.label}>Pickup time</Text>
+        <Text style={styles.label}>{delivery ? 'Delivery time' : 'Pickup time'}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           <Choice selected={pickupAt === 'asap'} onPress={() => setPickupAt('asap')} title="ASAP" sub={`~${restaurant.prepMinutes} min`} />
           {slots.map(s => (
@@ -157,6 +175,25 @@ export default function Checkout() {
           />
         </View>
 
+        <Text style={styles.label}>Pickup or delivery</Text>
+        <View style={{ gap: 8 }}>
+          <Choice wide selected={!delivery} onPress={() => setFulfilment('pickup')} title="Pickup" sub={`Collect from ${restaurant.area} · Free`} />
+          <Choice wide selected={delivery} onPress={chooseDelivery} title="Delivery" sub={`To your door · ${money(DELIVERY_FEE)}`} />
+        </View>
+        {delivery && (
+          <Pressable accessibilityRole="button" onPress={() => router.push('/address')} style={[styles.card, styles.addressRow]}>
+            <View style={{ flex: 1 }}>
+              <Text style={profile.address ? styles.lineName : styles.addressEmpty} numberOfLines={2}>
+                {profile.address ? profile.address.line : 'Add your delivery address'}
+              </Text>
+              <Text style={styles.muted} numberOfLines={1}>
+                {profile.address ? profile.address.details || 'Tap to add house no. or landmark' : 'Use your location in one tap'}
+              </Text>
+            </View>
+            <Text style={styles.addressAction}>{profile.address ? 'Change' : 'Add'}</Text>
+          </Pressable>
+        )}
+
         <Text style={styles.label}>Payment</Text>
         <View style={{ gap: 8 }}>
           <Choice wide selected={payment === 'card'} onPress={() => setPayment('card')} title="Card" sub="Visa · Mastercard" />
@@ -165,15 +202,15 @@ export default function Checkout() {
 
         <View style={[styles.card, { marginTop: 22 }]}>
           <Row label="Subtotal" value={money(cart.total)} />
-          <Row label="Service charge" value="None for pickup" />
+          {delivery ? <Row label="Delivery" value={money(DELIVERY_FEE)} /> : <Row label="Service charge" value="None for pickup" />}
           <View style={styles.divider} />
-          <Row label="Total" value={money(cart.total)} strong />
+          <Row label="Total" value={money(total)} strong />
         </View>
         <Text style={styles.demo}>This is a demo. Payments are simulated and no money is charged.</Text>
         {!!error && <Notice message={error} />}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
-        <Button label={`Pay ${money(cart.total)}`} onPress={submit} loading={busy} />
+        <Button label={`Pay ${money(total)}`} onPress={submit} loading={busy} />
       </View>
     </KeyboardAvoidingView>
   );
@@ -245,6 +282,9 @@ const styles = StyleSheet.create({
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#c9c5b9' },
   radioOn: { borderColor: colors.ink, borderWidth: 6 },
   input: { fontSize: 16, color: colors.ink, paddingVertical: 10 },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
+  addressEmpty: { fontSize: 16, color: colors.ink },
+  addressAction: { color: colors.green, fontWeight: '800' },
   divider: { height: 1, backgroundColor: colors.line, marginVertical: 6 },
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
   rowText: { fontSize: 14, color: colors.muted },

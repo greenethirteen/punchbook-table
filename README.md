@@ -20,6 +20,7 @@ Open:
 - Restaurant dashboard: http://localhost:3000/admin
 - QR poster: http://localhost:3000/qr?table=12
 - Pickup order board (for the Android app in `mobile/`): http://localhost:3000/pickup-admin
+- POS bridge test console (Square): http://localhost:3000/pos
 
 ## Payments
 
@@ -42,6 +43,18 @@ The server generates the required SHA-256 hash and POSTs to OnePay's documented 
 
 ### JustPay
 The JustPay flow is intentionally simulated because a public DirectPay/OnePay merchant API contract for initiating JustPay was not available in the documentation used to build this prototype. The app isolates this behind a payment adapter so it can be replaced once merchant sandbox/API credentials and the provider contract are supplied.
+
+## POS integration (Square)
+
+`pos-square.js` connects Punchbook to Square's free Sandbox. Open `/pos` to test it.
+
+- When a Punchbook order is paid, it is created in Square as a PICKUP order (dine-in orders show as "Table N · dine-in"). An EXTERNAL payment is recorded on it, so it appears in the Square Dashboard.
+- "Sync menu" upserts the linked restaurant's menu as Square catalog items, so order lines map to real POS items.
+- Status changes in Punchbook (preparing → ready/served → collected) step the Square fulfillment through PROPOSED → RESERVED → PREPARED → COMPLETED.
+- Changes made in Square flow back by webhook (`POST /api/pos/square/webhook`, needs `SQUARE_WEBHOOK_SIGNATURE_KEY` and a public HTTPS URL), or by polling every 10s otherwise.
+- Square has no LKR, so prices are converted at `SQUARE_LKR_PER_UNIT` (default 300).
+
+Setup: create a free account at developer.squareup.com, create an app, copy its **Sandbox** access token into `SQUARE_ACCESS_TOKEN`, and restart. To see orders, open Developer Console → Sandbox test accounts → Open in Square Dashboard → Orders.
 
 ## Prototype notes
 - In-memory orders reset when the server restarts.

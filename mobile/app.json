@@ -2,7 +2,7 @@
   "expo": {
     "name": "Punchbook Pickup",
     "slug": "punchbook-pickup",
-    "version": "1.0.2",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "order.punchbook.com",
-      "versionCode": 3
+      "versionCode": 8
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,7 +27,13 @@
     "plugins": [
       "expo-router",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Punchbook uses your location to fill in your address."
+        }
+      ]
     ],
     "scheme": "punchbook",
     "experiments": {

@@ -21,6 +21,12 @@ export type Restaurant = {
 
 export type PickupStatus = 'new' | 'preparing' | 'ready' | 'collected';
 export type PaymentMethod = 'card' | 'justpay';
+export type Fulfilment = 'pickup' | 'delivery';
+
+/** Flat delivery charge in LKR. The server applies the same amount. */
+export const DELIVERY_FEE = 250;
+
+export type CustomerAddress = { line: string; details: string; lat: number; lng: number };
 
 export type PickupOrder = {
   id: string;
@@ -29,13 +35,18 @@ export type PickupOrder = {
   restaurantArea: string;
   items: { id: string; name: string; price: number; qty: number }[];
   total: number;
-  customer: { name: string; phone: string };
+  /** Missing on orders placed before delivery existed, which were all pickup. */
+  fulfilment?: Fulfilment;
+  deliveryFee?: number;
+  customer: { name: string; phone: string; address?: CustomerAddress };
   note: string;
   pickupAt: string;
   asap: boolean;
   paymentMethod: PaymentMethod;
   paymentStatus: 'pending' | 'paid';
   orderStatus: PickupStatus;
+  /** Set when the restaurant's POS has the order (e.g. a SambaPOS kitchen ticket). */
+  pos?: { provider?: string; status?: 'synced' | 'error'; ticketNumber?: string };
   createdAt: string;
 };
 
@@ -74,10 +85,11 @@ export const getRestaurant = (id: string) =>
 export const placeOrder = (body: {
   restaurantId: string;
   items: { id: string; qty: number }[];
-  customer: { name: string; phone: string };
+  customer: { name: string; phone: string; address?: CustomerAddress };
   pickupAt: 'asap' | string;
   note: string;
   paymentMethod: PaymentMethod;
+  fulfilment: Fulfilment;
 }) => request<PickupOrder>('/api/pickup/orders', { method: 'POST', body: JSON.stringify(body) });
 
 export const getOrder = (id: string) => request<PickupOrder>(`/api/pickup/orders/${encodeURIComponent(id)}`);
