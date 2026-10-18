@@ -11,3 +11,5 @@ data/square.json.tmp
 data/orders.json
 data/orders.json.tmp
 data/orders.json.unreadable-*
+data/accounts.json
+data/accounts.json.tmp

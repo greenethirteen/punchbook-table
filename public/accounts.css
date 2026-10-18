@@ -1,0 +1,39 @@
+.day-nav{display:flex;align-items:center;gap:6px}
+.day-nav button,.day-nav input{min-height:44px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:15px}
+.day-nav button{min-width:44px;font-size:20px;font-weight:700}
+.day-nav input{padding:8px 10px}
+.day-nav .today{font-size:13px;font-weight:750;padding:0 14px}
+.error{margin:18px 0 0}
+.unpaid{background:#f4e8c8;color:#725529;border-radius:12px;padding:14px 16px;margin:20px 0 0;font-size:13px;line-height:1.6}
+.unpaid b{display:block;margin-bottom:4px}
+.unpaid button{border:0;background:none;padding:0;text-decoration:underline;font-weight:700;color:inherit;min-height:28px}
+.stats{margin-top:20px}
+.keep-note{font-size:11px;color:var(--muted);margin:8px 2px 0;text-align:right}
+.rows{display:grid;gap:12px}
+.row{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(4,minmax(0,1fr)) minmax(220px,1.6fr);gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.row.sent{background:#f3f7ee}
+.row h3{font-size:17px;margin:0;letter-spacing:-.3px}
+.row .sub{font-size:11px;color:var(--muted);margin-top:4px}
+.cell span{display:block;font-size:10px;letter-spacing:.8px;font-weight:800;color:var(--muted);margin-bottom:4px;text-transform:uppercase}
+.cell b{font-size:15px;white-space:nowrap}
+.cell.owed b{font-size:19px;color:var(--ink)}
+.cell.minus b{color:#a35a20}
+.pay{display:flex;gap:8px}
+.pay input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:14px;min-height:44px}
+.pay button{background:#244633;color:#fff;border:0;border-radius:9px;min-height:44px;padding:0 14px;font-size:12px;font-weight:750;white-space:nowrap}
+.sent-note{font-size:12px;color:#24603d;line-height:1.5}
+.sent-note b{display:block;font-size:13px}
+.sent-note button{border:0;background:none;padding:0;color:var(--muted);text-decoration:underline;font-size:11px;min-height:28px}
+.empty-day{text-align:center;padding:44px 20px;background:#fff;border:1px dashed #d1d9c8;border-radius:16px;color:var(--muted);font-size:14px}
+.settings{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:28px;font-size:13px}
+.settings label{font-weight:700}
+.settings input{width:80px;border:1px solid var(--line);border-radius:9px;padding:9px;font-size:15px;min-height:44px}
+.settings button{background:#fff;border:1px solid #cad5c2;border-radius:9px;min-height:44px;padding:0 14px;font-weight:750;font-size:12px}
+#settings-msg{color:var(--muted);font-size:12px}
+.fine{font-size:11px;color:var(--muted);line-height:1.6;margin-top:14px;max-width:720px}
+.key-form{max-width:380px;margin:40px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;display:grid;gap:10px}
+.key-form h2{margin:0}.key-form p{margin:0;font-size:13px;color:var(--muted)}
+.key-form input{border:1px solid var(--line);border-radius:10px;padding:12px;font-size:16px;min-height:48px}
+.key-form button{background:#244633;color:#fff;border:0;border-radius:10px;min-height:48px;font-weight:750}
+@media(max-width:1000px){.row{grid-template-columns:repeat(2,minmax(0,1fr))}.row>div:first-child,.row .pay,.row .sent-note{grid-column:1/-1}}
+@media(max-width:650px){.day-nav{width:100%}.day-nav input{flex:1;min-width:0}.keep-note{text-align:left}.row{padding:14px}}
