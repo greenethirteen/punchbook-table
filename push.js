@@ -1,6 +1,7 @@
 // Notifications that reach people when their screen is off or the page is closed.
 // - Restaurants (/admin, /pickup-admin) and riders (/rider) subscribe with browser web push.
 //   VAPID keys come from VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY, or are made once and kept in DATA_DIR/push.json.
+// - The Punchbook Rider app (rider-app/) registers a Firebase (FCM) token for new-job alerts.
 // - Customers' app phones register a Firebase (FCM) token per order. Sending needs
 //   FIREBASE_SERVICE_ACCOUNT: the service account JSON from Firebase → Project settings → Service accounts.
 // Rather than hooking every place an order changes, a short timer compares each order with what
@@ -15,7 +16,7 @@ const money = n => 'LKR ' + Number(n).toLocaleString('en-LK');
 
 export async function createPush({orders, dataDir, staff, riderAuth}) {
   const file = path.join(dataDir, 'push.json');
-  let state = {vapid: null, web: [], app: {}};
+  let state = {vapid: null, web: [], app: {}, riders: []};
   try { state = {...state, ...JSON.parse(await fs.readFile(file, 'utf8'))}; } catch (e) { if (e.code !== 'ENOENT') throw e; }
   const vapid = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
     ? {publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY}
@@ -58,20 +59,25 @@ export async function createPush({orders, dataDir, staff, riderAuth}) {
     fcmAuth = {token: data.access_token, expires: Date.now() + data.expires_in * 1000};
     return fcmAuth.token;
   }
-  async function sendApp(order, title, body) {
-    const tokens = state.app[order.id] || [], sa = serviceAccount();
+  /** Sends to each token; calls drop(token) for tokens Firebase says are no longer valid. */
+  async function sendFcm(tokens, {title, body, data, channel, tag}, drop) {
+    const sa = serviceAccount();
     if (!tokens.length || !sa) return;
     try {
       const auth = await fcmToken(sa);
       await Promise.all(tokens.map(async token => {
         const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
           method: 'POST', headers: {Authorization: `Bearer ${auth}`, 'Content-Type': 'application/json'},
-          body: JSON.stringify({message: {token, notification: {title, body}, data: {orderId: order.id}, android: {priority: 'high', notification: {channel_id: 'orders', tag: order.id}}}}),
+          body: JSON.stringify({message: {token, notification: {title, body}, data, android: {priority: 'high', notification: {channel_id: channel, tag}}}}),
         });
-        if (res.status === 404 || res.status === 400) { state.app[order.id] = (state.app[order.id] || []).filter(t => t !== token); dirty = true; }
+        if (res.status === 404 || res.status === 400) { drop(token); dirty = true; }
         else if (!res.ok) console.error('FCM send failed:', res.status, (await res.text()).slice(0, 200));
       }));
     } catch (e) { console.error('FCM failed:', e.message); }
+  }
+  async function sendApp(order, title, body) {
+    await sendFcm(state.app[order.id] || [], {title, body, data: {orderId: order.id}, channel: 'orders', tag: order.id},
+      token => { state.app[order.id] = (state.app[order.id] || []).filter(t => t !== token); });
   }
 
   // ---- What changed since the last scan
@@ -96,8 +102,11 @@ export async function createPush({orders, dataDir, staff, riderAuth}) {
         const who = o.orderType === 'pickup' ? `${o.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'} · ${o.customer?.name || 'Guest'}` : `Table ${o.table}`;
         await sendWeb(s => s.role === 'restaurant' && (!s.restaurantId || s.restaurantId === o.restaurantId),
           {title: `New order · ${o.restaurantName || ''}`, body: `${who} · ${money(o.total)}`, url: '/admin', tag: o.id});
-        if (o.fulfilment === 'delivery') await sendWeb(s => s.role === 'rider',
-          {title: 'New delivery job 🛵', body: `${o.restaurantName} → ${o.customer?.address?.line || 'customer'} · fee ${money(o.deliveryFee || 0)}`, url: '/rider', tag: 'job-' + o.id});
+        if (o.fulfilment === 'delivery') {
+          const job = {title: 'New delivery job 🛵', body: `${o.restaurantName} → ${o.customer?.address?.line || 'customer'} · fee ${money(o.deliveryFee || 0)}`};
+          await sendWeb(s => s.role === 'rider', {...job, url: '/rider', tag: 'job-' + o.id});
+          await sendFcm(state.riders, {...job, data: {orderId: o.id}, channel: 'jobs', tag: 'job-' + o.id}, token => { state.riders = state.riders.filter(t => t !== token); });
+        }
       }
       if (o.orderType === 'pickup' && before) {
         const msg = customerMessage(o, before);
@@ -126,6 +135,15 @@ export async function createPush({orders, dataDir, staff, riderAuth}) {
     app.post('/api/push/unsubscribe', (req, res) => {
       const endpoint = req.body?.endpoint;
       state.web = state.web.filter(s => s.subscription.endpoint !== endpoint);
+      dirty = true;
+      res.json({ok: true});
+    });
+
+    // The Punchbook Rider app registers its phone for new-job alerts.
+    app.post('/api/push/rider-app', riderAuth, (req, res) => {
+      const token = String(req.body?.token || '').trim();
+      if (!token || token.length > 4096) return res.status(400).json({error: 'Invalid token.'});
+      state.riders = [...state.riders.filter(t => t !== token), token].slice(-200);
       dirty = true;
       res.json({ok: true});
     });

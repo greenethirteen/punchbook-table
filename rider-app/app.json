@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Punchbook Rider",
+    "slug": "punchbook-rider",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#244633"
+    },
+    "android": {
+      "package": "com.punchbook.rider",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "backgroundColor": "#244633",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      ["expo-notifications", { "icon": "./assets/android-icon-monochrome.png", "color": "#244633" }]
+    ]
+  }
+}

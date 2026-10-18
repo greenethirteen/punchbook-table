@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "409626942418",
+    "firebase_url": "https://punchy-b1ed0-default-rtdb.firebaseio.com",
+    "project_id": "punchy-b1ed0",
+    "storage_bucket": "punchy-b1ed0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409626942418:android:5861f71fe9f31fbecd460b",
+        "android_client_info": {
+          "package_name": "com.punchbook.rider"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4m1eNU3Qd8bO76mWHKdJVYPwyh0u2nXU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409626942418:android:4b6151a4182628f1cd460b",
+        "android_client_info": {
+          "package_name": "order.punchbook.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4m1eNU3Qd8bO76mWHKdJVYPwyh0u2nXU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
