@@ -65,10 +65,12 @@ export const sunriseMenu = [
   {id:'s7',category:'Coffee',name:'Iced Latte',desc:'Double shot over ice with fresh milk.',price:820,image:unsplash('photo-1509042239860-f550ce710b93')}
 ];
 
+// lat/lng are the centre of each area, not the shop itself. Replace them with each restaurant's exact
+// pin (Google Maps → long-press → copy the numbers): they set the delivery radius and the riders' map.
 export const restaurants = [
-  {id:'peppermint',name:'Peppermint Café',area:'Colombo 03',cuisine:'Café · Pasta · Burgers',prepMinutes:15,accent:'#244633',cover:'/images/menu/m1.jpg',menu:peppermintMenu},
-  {id:'amra',name:'Amra Leaf',area:'Negombo · Chilaw Road',cuisine:'Sri Lankan · Kottu · Seafood',prepMinutes:20,accent:'#2f5d3a',cover:amraMenu[1].image,menu:amraMenu},
-  {id:'glounge',name:'G Lounge',area:'Negombo',cuisine:'Waffles · Bubble tea · Coffee',prepMinutes:10,accent:'#3b2a4d',cover:gloungeMenu[10].image,menu:gloungeMenu},
-  {id:'kade',name:'Kade Hoppers',area:'Wellawatte',cuisine:'Hoppers · Kottu · Street food',prepMinutes:15,accent:'#9a3b12',cover:'/images/pickup/k1.jpg',menu:kadeMenu},
-  {id:'sunrise',name:'Sunrise Bakehouse',area:'Nugegoda',cuisine:'Bakery · Coffee',prepMinutes:10,accent:'#8a5a14',cover:'/images/pickup/s2.jpg',menu:sunriseMenu}
+  {id:'peppermint',name:'Peppermint Café',area:'Colombo 03',cuisine:'Café · Pasta · Burgers',lat:6.9103,lng:79.8513,prepMinutes:15,accent:'#244633',cover:'/images/menu/m1.jpg',menu:peppermintMenu},
+  {id:'amra',name:'Amra Leaf',area:'Negombo · Chilaw Road',cuisine:'Sri Lankan · Kottu · Seafood',lat:7.216,lng:79.84,prepMinutes:20,accent:'#2f5d3a',cover:amraMenu[1].image,menu:amraMenu},
+  {id:'glounge',name:'G Lounge',area:'Negombo',cuisine:'Waffles · Bubble tea · Coffee',lat:7.2083,lng:79.8358,prepMinutes:10,accent:'#3b2a4d',cover:gloungeMenu[10].image,menu:gloungeMenu},
+  {id:'kade',name:'Kade Hoppers',area:'Wellawatte',cuisine:'Hoppers · Kottu · Street food',lat:6.8747,lng:79.8605,prepMinutes:15,accent:'#9a3b12',cover:'/images/pickup/k1.jpg',menu:kadeMenu},
+  {id:'sunrise',name:'Sunrise Bakehouse',area:'Nugegoda',cuisine:'Bakery · Coffee',lat:6.8728,lng:79.889,prepMinutes:10,accent:'#8a5a14',cover:'/images/pickup/s2.jpg',menu:sunriseMenu}
 ];

@@ -4,13 +4,13 @@ const money=n=>'LKR '+Number(n).toLocaleString('en-LK',{maximumFractionDigits:2}
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nice=d=>new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'});
 const shift=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
-let key='';try{key=sessionStorage.getItem('pb-admin-key')||''}catch{}
 let data=null,date=new URLSearchParams(location.search).get('date')||'';
 
 async function api(path,body){
-  const res=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json','x-admin-key':key},body:body&&JSON.stringify(body)});
+  const res=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},body:body&&JSON.stringify(body)});
   const out=await res.json().catch(()=>({}));
-  if(res.status===401){$('page').hidden=true;$('key-form').hidden=false;if(key){$('key-error').textContent='That key didn’t work.';$('key-error').hidden=false}throw Error('auth')}
+  if(res.status===401)throw Error('auth');
+  if(res.status===403){$('page').hidden=false;throw Error('Only the Punchbook admin can see accounts.')}
   if(!res.ok)throw Error(out.error||'Something went wrong.');
   return out;
 }
@@ -18,7 +18,7 @@ async function api(path,body){
 async function load(){
   try{
     data=await api('/api/accounts'+(date?'?date='+date:''));date=data.date;
-    $('key-form').hidden=true;$('page').hidden=false;$('error').hidden=true;render();
+    $('page').hidden=false;$('error').hidden=true;render();
   }catch(e){if(e.message!=='auth'){$('error').textContent='Couldn’t load accounts: '+e.message;$('error').hidden=false;$('page').hidden=false}}
 }
 
@@ -27,8 +27,8 @@ function render(){
   $('date').value=data.date;$('date').max=data.today;$('next').disabled=data.date>=data.today;
   history.replaceState(null,'',data.date===data.today?'/accounts':'/accounts?date='+data.date);
   $('s-orders').textContent=sum('orders');$('s-food').textContent=money(sum('food'));$('s-owed').textContent=money(sum('owed'));
-  $('s-keep').textContent=money(sum('commission')+sum('deliveryFees'));
-  $('keep-note').textContent=rows.length?`Commission ${money(sum('commission'))} + delivery fees ${money(sum('deliveryFees'))}, before rider/PickMe and card costs`:'';
+  $('s-keep').textContent=money(sum('commission')+sum('deliveryFees')-sum('cardFees')-sum('courierCosts'));
+  $('keep-note').textContent=rows.length?`Commission ${money(sum('commission'))} + delivery fees ${money(sum('deliveryFees'))} − card fees ${money(sum('cardFees'))} − rider/PickMe ${money(sum('courierCosts'))}`:'';
   if(document.activeElement!==$('pct'))$('pct').value=data.commissionPct;
 
   $('unpaid').hidden=!data.unpaid.length;
@@ -67,11 +67,10 @@ $('settings').addEventListener('submit',async e=>{
   try{await api('/api/accounts/settings',{commissionPct:Number($('pct').value)});$('settings-msg').textContent='Saved';$('pct').blur();await load()}
   catch(err){if(err.message!=='auth')$('settings-msg').textContent=err.message}
 });
-$('key-form').addEventListener('submit',e=>{e.preventDefault();key=$('key').value;try{sessionStorage.setItem('pb-admin-key',key)}catch{}load()});
 $('csv').addEventListener('click',()=>{
-  const head=['Date','Restaurant','Paid orders','Food sales','Service charge','Delivery fees (Punchbook)','Commission %','Commission','Send restaurant','Sent','Reference'];
-  const lines=data.rows.map(r=>[data.date,r.name,r.orders,r.food,r.service,r.deliveryFees,r.commissionPct,r.commission,r.owed,r.payout?'yes':'no',r.payout?.reference||'']);
+  const head=['Date','Restaurant','Paid orders','Food sales','Service charge','Delivery fees (Punchbook)','Card fees (Punchbook)','Rider/PickMe costs (Punchbook)','Commission %','Commission','Send restaurant','Sent','Reference'];
+  const lines=data.rows.map(r=>[data.date,r.name,r.orders,r.food,r.service,r.deliveryFees,r.cardFees,r.courierCosts,r.commissionPct,r.commission,r.owed,r.payout?'yes':'no',r.payout?.reference||'']);
   const csv=[head,...lines].map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`punchbook-payouts-${data.date}.csv`;a.click();URL.revokeObjectURL(a.href);
 });
-load();setInterval(()=>{if(!document.hidden&&!$('page').hidden&&!$('rows').contains(document.activeElement))load()},30000);
+window.staffReady.then(me=>{if(me)load()});setInterval(()=>{if(!document.hidden&&!$('page').hidden&&!$('rows').contains(document.activeElement))load()},30000);

@@ -2,23 +2,26 @@
 // A rider accepts it, either to ride it themselves or to book a courier (PickMe Flash) by hand,
 // then marks it picked up and delivered. Progress is kept on order.dispatch and mirrored onto
 // orderStatus so the customer's app and the admin board follow along.
-// Set RIDER_KEY to require a shared access code on the rider page; empty leaves it open for testing.
+// RIDER_KEY is the riders' shared access code; the Punchbook admin key works too. With neither set the
+// page is open for testing.
 import crypto from 'crypto';
 
 const text = (v, max) => String(v ?? '').trim().slice(0, max);
 const DONE_VISIBLE_MS = 12 * 3600000;
 const METHODS = new Set(['own', 'pickme']);
 
-export function createRider({orders, restaurants}) {
+export function createRider({orders, restaurants, staff}) {
   function auth(req, res, next) {
-    const key = process.env.RIDER_KEY || '';
-    if (!key) return next();
-    const supplied = Buffer.from(req.get('x-rider-key') || ''), expected = Buffer.from(key);
-    if (supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected)) return next();
+    const key = process.env.RIDER_KEY || '', supplied = req.get('x-rider-key') || '';
+    if (!key && staff.isOpen()) return next();
+    const expected = Buffer.from(key), given = Buffer.from(supplied);
+    if (key && given.length === expected.length && crypto.timingSafeEqual(given, expected)) return next();
+    const asStaff = staff.identify({get: h => h === 'x-staff-key' ? supplied : ''});
+    if (asStaff?.role === 'admin') return next();
     res.status(401).json({error: 'Wrong rider access code.'});
   }
 
-  const isJob = o => o.orderType === 'pickup' && o.fulfilment === 'delivery' && o.paymentStatus === 'paid';
+  const isJob = o => o.orderType === 'pickup' && o.fulfilment === 'delivery' && o.paymentStatus === 'paid' && o.orderStatus !== 'cancelled';
   const visible = o => o.dispatch?.status !== 'delivered' || Date.now() - Date.parse(o.dispatch.deliveredAt) < DONE_VISIBLE_MS;
 
   // The shape the rider page sees.
@@ -26,7 +29,7 @@ export function createRider({orders, restaurants}) {
     const r = restaurants.find(x => x.id === o.restaurantId);
     return {
       id: o.id,
-      restaurant: {id: o.restaurantId, name: o.restaurantName, area: o.restaurantArea, ...(r?.phone ? {phone: r.phone} : {})},
+      restaurant: {id: o.restaurantId, name: o.restaurantName, area: o.restaurantArea, ...(r?.phone ? {phone: r.phone} : {}), ...(r?.lat ? {lat: r.lat, lng: r.lng} : {})},
       customer: o.customer,
       items: o.items.map(({name, qty}) => ({name, qty})),
       total: o.total,
@@ -34,7 +37,9 @@ export function createRider({orders, restaurants}) {
       note: o.note || '',
       readyAt: o.pickupAt,
       asap: o.asap,
-      foodStatus: o.orderStatus,
+      foodStatus: o.kitchenReadyAt && o.orderStatus === 'preparing' ? 'ready' : o.orderStatus,
+      deliverBy: o.deliverBy || null,
+      distanceKm: o.distanceKm ?? null,
       dispatch: o.dispatch || {status: 'open'},
       createdAt: o.createdAt,
     };
@@ -65,13 +70,15 @@ export function createRider({orders, restaurants}) {
       switch (req.params.action) {
         case 'accept': {
           const method = METHODS.has(b.method) ? b.method : 'own';
-          o.dispatch = {...d, status: d?.status || 'assigned', method, rider, courierRef: text(b.courierRef, 60), assignedAt: d?.assignedAt || now};
+          const cost = Number(b.courierCost);
+          o.dispatch = {...d, status: d?.status || 'assigned', method, rider, courierRef: text(b.courierRef, 60), ...(cost >= 0 && cost < 100000 ? {courierCost: Math.round(cost)} : {}), assignedAt: d?.assignedAt || now};
           break;
         }
         case 'pickup':
           if (!d) return res.status(409).json({error: 'Accept the job first.'});
           o.dispatch = {...d, status: 'picked_up', pickedUpAt: now};
           // The customer's app shows "ready" as "On the way" for delivery orders.
+          o.kitchenReadyAt ||= now;
           if (['new', 'preparing'].includes(o.orderStatus)) o.orderStatus = 'ready';
           break;
         case 'deliver':

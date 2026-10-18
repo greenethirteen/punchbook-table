@@ -83,10 +83,11 @@ export const statusCopy: Record<PickupStatus, { label: string; title: string; to
   preparing: { label: 'Preparing', title: 'Being prepared', tone: '#3f5a2e', bg: colors.greenSoft },
   ready: { label: 'Ready', title: 'Ready for pickup', tone: '#fff', bg: colors.green },
   collected: { label: 'Collected', title: 'Collected', tone: colors.muted, bg: '#eceae3' },
+  cancelled: { label: 'Cancelled', title: 'Order cancelled', tone: colors.error, bg: colors.errorSoft },
 };
 
 export function StatusPill({ status, pending }: { status: PickupStatus; pending?: boolean }) {
-  const s = pending ? { label: 'Unpaid', tone: colors.error, bg: colors.errorSoft } : statusCopy[status];
+  const s = pending ? { label: 'Unpaid', tone: colors.error, bg: colors.errorSoft } : statusCopy[status] ?? statusCopy.new;
   return (
     <View style={[styles.pill, { backgroundColor: s.bg }]}>
       <Text style={[styles.pillText, { color: s.tone }]}>{s.label}</Text>

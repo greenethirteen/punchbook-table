@@ -61,7 +61,7 @@ async function load(){
 }
 
 const mapsTo=j=>`https://www.google.com/maps/dir/?api=1&destination=${j.customer.address.lat},${j.customer.address.lng}`;
-const mapsFrom=j=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(j.restaurant.name+' '+j.restaurant.area)}`;
+const mapsFrom=j=>j.restaurant.lat?`https://www.google.com/maps/dir/?api=1&destination=${j.restaurant.lat},${j.restaurant.lng}`:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(j.restaurant.name+' '+j.restaurant.area)}`;
 const dropText=j=>[j.customer.address.line,j.customer.address.details,`${j.customer.name} ${j.customer.phone}`].filter(Boolean).join(', ');
 const pickText=j=>`${j.restaurant.name}, ${j.restaurant.area} (order ${j.id})`;
 
@@ -69,13 +69,14 @@ function card(j){
   const d=j.dispatch,isMine=mine(j),open=d.status==='open',done=d.status==='delivered',b=busy.has(j.id);
   const pills=[`<span class="pill ${['ready','collected'].includes(j.foodStatus)?'ok':'wait'}">${foodNames[j.foodStatus]||foodNames.new}</span>`,
     `<span class="pill">${j.asap?'ASAP · ':''}Ready ~${clock(j.readyAt)}</span>`];
+  if(j.deliverBy)pills.push(`<span class="pill">Arrive ~${clock(j.deliverBy)}${j.distanceKm!=null?' · '+j.distanceKm+' km':''}</span>`);
   if(!open)pills.push(`<span class="pill rider">${d.method==='pickme'?'PickMe':'Rider'}: ${isMine?'you':esc(d.rider.name)}${d.courierRef?' · '+esc(d.courierRef):''}</span>`);
   const a=j.customer.address||{};
   let actions='';
   if(open)actions=`<div class="actions two"><button class="primary" data-act="accept" data-method="own" ${b?'disabled':''}>I’ll ride it</button><button class="secondary" data-act="accept" data-method="pickme" ${b?'disabled':''}>Book PickMe</button></div>`;
   else if(done)actions=`<p class="done-note">✓ Delivered ${clock(d.deliveredAt)}</p>`;
   else if(isMine){
-    const courier=d.method==='pickme'?`<div class="courier"><p>Book a PickMe Flash from the restaurant to the customer, then save the trip or rider details here.</p><div class="copy-row"><button class="icon-btn" data-copy="pick">Copy pickup</button><button class="icon-btn" data-copy="drop">Copy drop-off</button></div><form data-ref><input name="ref" value="${esc(d.courierRef)}" placeholder="Trip ID or rider name/number" aria-label="PickMe trip or rider details"><button class="icon-btn" ${b?'disabled':''}>Save</button></form></div>`:'';
+    const courier=d.method==='pickme'?`<div class="courier"><p>Book a PickMe Flash from the restaurant to the customer, then save the trip or rider details here.</p><div class="copy-row"><button class="icon-btn" data-copy="pick">Copy pickup</button><button class="icon-btn" data-copy="drop">Copy drop-off</button></div><form data-ref><input name="ref" value="${esc(d.courierRef)}" placeholder="Trip ID or rider name/number" aria-label="PickMe trip or rider details"><input name="cost" type="number" inputmode="numeric" min="0" value="${d.courierCost??''}" placeholder="Fare LKR" aria-label="PickMe fare in rupees" style="flex:0 0 96px"><button class="icon-btn" ${b?'disabled':''}>Save</button></form></div>`:'';
     const step=d.status==='assigned'?`<button class="primary" data-act="pickup" ${b?'disabled':''}>${d.method==='pickme'?'PickMe picked it up':'Picked up the food'}</button>`:`<button class="primary go" data-act="deliver" ${b?'disabled':''}>Delivered ✓</button>`;
     const release=d.status==='assigned'?`<button class="ghost" data-act="release" ${b?'disabled':''}>${armed===j.id?'Tap again to give this job back':'Give this job back'}</button>`:'';
     actions=courier+`<div class="actions">${step}${release}</div>`;
@@ -104,7 +105,7 @@ document.querySelector('.tabs').addEventListener('click',e=>{const t=e.target.cl
 
 async function act(id,action,extra){
   busy.add(id);$('error').hidden=true;render();
-  try{const {job}=await api(`/api/rider/jobs/${encodeURIComponent(id)}/${action}`,extra||{});jobs=jobs.map(j=>j.id===id?job:j);if(action==='accept'&&!extra?.courierRef){tab='mine';store.set('tab',tab)}}
+  try{const {job}=await api(`/api/rider/jobs/${encodeURIComponent(id)}/${action}`,extra||{});jobs=jobs.map(j=>j.id===id?job:j);if(action==='accept'&&extra?.courierRef===undefined){tab='mine';store.set('tab',tab)}}
   catch(e){if(e.message!=='auth'){$('error').dataset.kind='action';$('error').textContent=e.message;$('error').hidden=false}}
   finally{busy.delete(id);render()}
 }
@@ -121,7 +122,7 @@ $('jobs').addEventListener('click',async e=>{
 $('jobs').addEventListener('submit',e=>{
   const f=e.target.closest('form[data-ref]');if(!f)return;e.preventDefault();
   const j=jobs.find(x=>x.id===f.closest('.job').dataset.id);
-  act(j.id,'accept',{method:j.dispatch.method,courierRef:f.ref.value});
+  act(j.id,'accept',{method:j.dispatch.method,courierRef:f.ref.value,...(f.cost.value!==''?{courierCost:Number(f.cost.value)}:{})});
 });
 
 if(me)showBoard();else showSetup();

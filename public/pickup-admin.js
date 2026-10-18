@@ -6,6 +6,10 @@ const lanes={new:'New',preparing:'Preparing',ready:'Ready for pickup',collected:
 const descriptions={new:'Paid and waiting to be accepted',preparing:'Being made in the kitchen',ready:'Waiting at the counter · customer notified',collected:'Handed over to the customer'};
 const emptyMessages={new:'No new pickup orders.',preparing:'Nothing being prepared.',ready:'Nothing waiting at the counter.',collected:'Collected orders will appear here.'};
 const actions={new:['preparing','Start preparing →'],preparing:['ready','Mark ready for pickup ✓'],ready:['collected','Handed over ✓']};
+// Delivery: "food ready" waits for a rider (ready lane); "ready" means the rider has it.
+const deliveryActions=o=>({new:['preparing','Start preparing →'],preparing:o.kitchenReadyAt?['ready','Handed to rider →']:['food_ready','Food ready ✓'],ready:['collected','Mark delivered ✓']}[o.orderStatus]);
+const laneOf=o=>o.orderStatus==='cancelled'?'collected':o.fulfilment==='delivery'&&o.kitchenReadyAt&&o.orderStatus==='preparing'?'ready':lanes[o.orderStatus]?o.orderStatus:'new';
+let seen=null;
 let orders=[],restaurants=[],bridges={},restaurant=new URLSearchParams(location.search).get('restaurant')||'all',loading=false;
 const saving=new Set();
 function renderFilters(){
@@ -22,11 +26,11 @@ function posLine(o){
 }
 function render(){
   const rows=orders.filter(o=>restaurant==='all'||o.restaurantId===restaurant);
-  for(const key of ['new','preparing','ready'])$(key+'-count').textContent=rows.filter(o=>o.orderStatus===key).length;
-  $('paid-total').textContent=money(rows.filter(o=>o.paymentStatus==='paid').reduce((n,o)=>n+o.total,0));
+  for(const key of ['new','preparing','ready'])$(key+'-count').textContent=rows.filter(o=>laneOf(o)===key).length;
+  $('paid-total').textContent=money(rows.filter(o=>o.paymentStatus==='paid'&&o.orderStatus!=='cancelled').reduce((n,o)=>n+o.total,0));
   const card=o=>{
-    const status=lanes[o.orderStatus]?o.orderStatus:'new',pending=o.paymentStatus!=='paid',busy=saving.has(o.id),[next,label]=actions[status]||[];
-    const button=status==='collected'?'<div class="served-note">✓ Collected</div>':`<button type="button" data-id="${escapeHtml(o.id)}" data-next="${next}" ${busy||pending?'disabled':''}>${busy?'Updating…':pending?'Awaiting payment':label}</button>`;
+    const status=laneOf(o),pending=o.paymentStatus==='pending',busy=saving.has(o.id),cancelled=o.orderStatus==='cancelled',[next,label]=(o.fulfilment==='delivery'?deliveryActions(o):actions[o.orderStatus])||[];
+    const button=cancelled?`<div class="served-note">✕ Cancelled · ${o.paymentStatus==='refunded'?'refunded':'refund on its way'}</div>`:!next?`<div class="served-note">✓ ${o.fulfilment==='delivery'?'Delivered':'Collected'}</div>`:`<button type="button" data-id="${escapeHtml(o.id)}" data-next="${next}" ${busy||pending?'disabled':''}>${busy?'Updating…':pending?'Awaiting payment':label}</button>`;
     return `<article class="order ${status}"><div class="order-head"><h2>${escapeHtml(o.customer?.name||'Guest')}</h2></div>
 <p class="meta">${escapeHtml(o.id)} · ${escapeHtml(o.restaurantName)}</p>
 <p class="who"><a href="tel:${escapeHtml(o.customer?.phone)}">${escapeHtml(o.customer?.phone)}</a></p>
@@ -37,7 +41,7 @@ ${o.note?`<p class="note">“${escapeHtml(o.note)}”</p>`:''}
 <div class="order-total"><span>Total</span><span>${money(o.total)}</span></div><p class="payment ${pending?'pending':''}">${pending?'Payment pending':'✓ Paid'} · ${o.paymentMethod==='justpay'?'JustPay':'Card'}</p>${posLine(o)}${button}</article>`;
   };
   $('orders').innerHTML=Object.keys(lanes).map(status=>{
-    const group=rows.filter(o=>(lanes[o.orderStatus]?o.orderStatus:'new')===status)
+    const group=rows.filter(o=>laneOf(o)===status)
       .sort((a,b)=>status==='collected'?new Date(b.pickupAt)-new Date(a.pickupAt):new Date(a.pickupAt)-new Date(b.pickupAt));
     return `<section class="order-lane lane-${status}" aria-labelledby="lane-${status}"><header class="lane-header"><div><h2 id="lane-${status}">${lanes[status]} <span>${group.length}</span></h2><p>${descriptions[status]}</p></div></header><div class="lane-cards">${group.length?group.map(card).join(''):`<div class="lane-empty">${emptyMessages[status]}</div>`}</div></section>`;
   }).join('');
@@ -49,7 +53,9 @@ async function load(){
     const data=await response.json();if(!Array.isArray(data))throw Error('Unexpected orders response.');
     const health=await fetch('/api/bridge/health').then(r=>r.ok?r.json():{restaurants:[]}).catch(()=>({restaurants:[]}));
     const nextBridges=Object.fromEntries((health.restaurants||[]).map(b=>[b.id,b]));
-    const pickup=data.filter(o=>o.orderType==='pickup'),changed=JSON.stringify(pickup)!==JSON.stringify(orders)||JSON.stringify(nextBridges)!==JSON.stringify(bridges);orders=pickup;bridges=nextBridges;
+    const pickup=data.filter(o=>o.orderType==='pickup'&&(o.paymentStatus!=='pending'||Date.now()-Date.parse(o.createdAt)<30*60000));
+    const fresh=pickup.filter(o=>o.paymentStatus==='paid'&&o.orderStatus==='new').map(o=>o.id);if(seen&&fresh.some(id=>!seen.has(id)))window.staffAlert?.();seen=new Set([...(seen||[]),...fresh]);
+    const changed=JSON.stringify(pickup)!==JSON.stringify(orders)||JSON.stringify(nextBridges)!==JSON.stringify(bridges);orders=pickup;bridges=nextBridges;
     const bridge=bridges[restaurant];
     $('connection').textContent='Connected · Refreshes every 5 seconds'+(bridge?` · POS bridge ${bridge.online?'online':'offline'}`:'');
     if($('error').dataset.kind==='connection'){$('error').hidden=true;$('error').textContent='';}
@@ -67,7 +73,7 @@ $('orders').addEventListener('click',async event=>{
   const button=event.target.closest('button[data-id]');if(!button||button.disabled)return;
   const {id,next}=button.dataset;
   saving.add(id);render();
-  try{const response=await fetch('/api/orders/'+encodeURIComponent(id)+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderStatus:next})});if(!response.ok)throw Error('Update failed');const updated=await response.json();orders=orders.map(o=>o.id===id?updated:o);$('order-update').textContent=`${updated.customer?.name||'Order'} moved to ${lanes[next]}.`;$('error').hidden=true;}
+  try{const response=await fetch('/api/orders/'+encodeURIComponent(id)+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderStatus:next})});if(!response.ok)throw Error('Update failed');const updated=await response.json();orders=orders.map(o=>o.id===id?updated:o);$('order-update').textContent=`${updated.customer?.name||'Order'} updated.`;$('error').hidden=true;}
   catch(error){$('error').dataset.kind='update';$('error').textContent='Couldn’t update this order. Please try again.';$('error').hidden=false;}
   finally{saving.delete(id);render();}
 });

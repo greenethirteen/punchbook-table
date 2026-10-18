@@ -77,6 +77,11 @@ export default function RestaurantScreen() {
         <View style={styles.pickupRow}>
           <Text style={styles.pickupText}>🛍  Pickup · ready in about {restaurant.prepMinutes} min</Text>
         </View>
+        {restaurant.accepting === false && (
+          <View style={{ marginTop: 12 }}>
+            <Notice message={`${restaurant.name} isn’t taking orders right now. Please check back later.`} />
+          </View>
+        )}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cats}>
         {categories.map(c => (

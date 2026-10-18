@@ -16,10 +16,12 @@ export type Restaurant = {
   accent: string;
   cover: string;
   itemCount: number;
+  /** False while the restaurant has paused new orders. Missing on older servers. */
+  accepting?: boolean;
   menu?: MenuItem[];
 };
 
-export type PickupStatus = 'new' | 'preparing' | 'ready' | 'collected';
+export type PickupStatus = 'new' | 'preparing' | 'ready' | 'collected' | 'cancelled';
 export type PaymentMethod = 'card' | 'justpay';
 export type Fulfilment = 'pickup' | 'delivery';
 
@@ -43,8 +45,13 @@ export type PickupOrder = {
   pickupAt: string;
   asap: boolean;
   paymentMethod: PaymentMethod;
-  paymentStatus: 'pending' | 'paid';
+  paymentStatus: 'pending' | 'paid' | 'refunded' | 'refund_pending';
   orderStatus: PickupStatus;
+  /** Delivery only: the food is packed and waiting for the rider. */
+  kitchenReadyAt?: string;
+  /** Delivery only: when the rider should arrive. */
+  deliverBy?: string;
+  cancelReason?: string;
   /** Set when the restaurant's POS has the order (e.g. a SambaPOS kitchen ticket). */
   pos?: { provider?: string; status?: 'synced' | 'error'; ticketNumber?: string };
   createdAt: string;

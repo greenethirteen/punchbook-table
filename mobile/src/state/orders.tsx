@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { getOrder, type PickupOrder } from '@/lib/api';
 
-// The server keeps orders in memory, so the phone keeps its own copy of each order
-// and the customer's contact details between launches.
+// The phone keeps its own copy of each order and the customer's contact details between launches,
+// so order history shows even when offline.
 const ORDERS_KEY = 'punchbook.pickup.orders';
 const PROFILE_KEY = 'punchbook.pickup.profile';
 const MAX_ORDERS = 30;
@@ -16,7 +16,7 @@ export type Profile = { name: string; phone: string; address?: Address };
 type Store = {
   ready: boolean;
   orders: PickupOrder[];
-  /** IDs the server no longer knows (the demo server keeps orders in memory). */
+  /** IDs the server no longer knows. */
   stale: Set<string>;
   activeOrders: PickupOrder[];
   profile: Profile;
@@ -27,7 +27,7 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null);
 
-export const isActive = (o: PickupOrder) => o.paymentStatus === 'paid' && o.orderStatus !== 'collected';
+export const isActive = (o: PickupOrder) => o.paymentStatus === 'paid' && o.orderStatus !== 'collected' && o.orderStatus !== 'cancelled';
 
 export function OrdersProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);

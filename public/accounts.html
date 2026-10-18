@@ -1,18 +1,17 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Accounts · Punchbook</title><link rel="stylesheet" href="/admin.css?v=rider2"><link rel="stylesheet" href="/accounts.css?v=1"></head><body>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Accounts · Punchbook</title><link rel="stylesheet" href="/admin.css?v=1c319ecea7e2"><link rel="stylesheet" href="/accounts.css?v=70ce6749d739"></head><body>
 <header class="topbar"><a class="brand" href="/">punchbook<span>.</span></a><div class="restaurant">Accounts <span>Daily restaurant payouts</span></div><a class="link" href="/admin">Orders ↗</a></header>
 <main class="dashboard">
-  <form id="key-form" class="key-form" hidden><h2>Admin key</h2><p>Enter the PUNCHBOOK_ADMIN_KEY set on the server.</p><input id="key" type="password" autocomplete="current-password" aria-label="Admin key" required><button type="submit">Open accounts</button><p id="key-error" class="error" role="alert" hidden></p></form>
   <div id="page" hidden>
     <div class="heading"><div><p class="eyebrow">END OF DAY</p><h1>Accounts</h1><p class="intro">What each restaurant earned, your cut, and what to send them.</p></div>
       <div class="day-nav"><button id="prev" type="button" aria-label="Previous day">‹</button><input id="date" type="date" aria-label="Day"><button id="next" type="button" aria-label="Next day">›</button><button id="today" type="button" class="today">Today</button></div></div>
     <p id="error" class="error" role="alert" hidden></p>
     <div id="unpaid" class="unpaid" hidden></div>
-    <section class="stats" aria-label="Day summary"><div><span>Paid orders</span><strong id="s-orders">0</strong></div><div><span>Food sales</span><strong id="s-food">LKR 0</strong></div><div><span>To send restaurants</span><strong id="s-owed">LKR 0</strong></div><div><span>Punchbook keeps</span><strong id="s-keep">LKR 0</strong></div></section>
+    <section class="stats" aria-label="Day summary"><div><span>Paid orders</span><strong id="s-orders">0</strong></div><div><span>Food sales</span><strong id="s-food">LKR 0</strong></div><div><span>To send restaurants</span><strong id="s-owed">LKR 0</strong></div><div><span>Punchbook keeps (after costs)</span><strong id="s-keep">LKR 0</strong></div></section>
     <p class="keep-note" id="keep-note"></p>
     <div class="toolbar"><div><h2 class="board-title">Payouts</h2><p class="board-help">Send each restaurant its amount by bank transfer, then mark it sent.</p></div><button id="csv" class="link" type="button">Download CSV</button></div>
     <div id="rows" class="rows"></div>
     <form id="settings" class="settings"><label for="pct">Commission on food sales</label><input id="pct" type="number" min="0" max="50" step="0.5" required><span>%</span><button type="submit">Save</button><span id="settings-msg" role="status"></span></form>
-    <p class="fine">Days run midnight to midnight, Sri Lanka time. Only paid orders count. Delivery fees stay with Punchbook to pay riders or PickMe, and Punchbook covers card fees. Changing the commission doesn’t change payouts already marked sent.</p>
+    <p class="fine">Days run midnight to midnight, Sri Lanka time. Only paid orders count. Delivery fees stay with Punchbook to pay riders or PickMe, and Punchbook covers card fees. Cancelled and refunded orders are left out. Rider/PickMe costs are what riders enter on the rider page. Changing the commission doesn’t change payouts already marked sent.</p>
   </div>
-</main><script src="/accounts.js?v=1"></script></body></html>
+</main><script src="/staff-auth.js?v=90bb8576f198"></script><script src="/accounts.js?v=2ba67d3e836c"></script></body></html>

@@ -175,18 +175,20 @@ function LiveOrder({ order: o }: { order: PickupOrder }) {
   const delivery = o.fulfilment === 'delivery';
   const labels = delivery ? ['Received', 'Preparing', 'On the way', 'Delivered'] : ['Received', 'Preparing', 'Ready', 'Collected'];
   const current = steps.indexOf(o.orderStatus);
+  const waitingForRider = delivery && o.orderStatus === 'preparing' && !!o.kitchenReadyAt;
   const title = {
     new: `Order received by ${o.restaurantName}`,
-    preparing: `Being prepared at ${o.restaurantName}`,
+    preparing: waitingForRider ? `Packed at ${o.restaurantName}` : `Being prepared at ${o.restaurantName}`,
     ready: delivery ? `On its way from ${o.restaurantName}` : `Ready at ${o.restaurantName}`,
     collected: 'Enjoy your food',
+    cancelled: 'Order cancelled',
   }[o.orderStatus];
   const sub =
     o.orderStatus === 'ready'
       ? delivery
-        ? 'Your order has left the kitchen'
+        ? `The rider is on the way · arriving around ${clock(o.deliverBy || o.pickupAt)}`
         : `Show ${o.id} at the counter`
-      : `${delivery ? 'Arriving' : 'Ready'} around ${clock(o.pickupAt)}${o.pos?.status === 'synced' ? ' · Sent to the kitchen ✓' : ''}`;
+      : `${waitingForRider ? 'Waiting for the rider · ' : ''}${delivery ? 'Arriving' : 'Ready'} around ${clock(delivery && o.deliverBy ? o.deliverBy : o.pickupAt)}${o.pos?.status === 'synced' && !waitingForRider ? ' · Sent to the kitchen ✓' : ''}`;
 
   return (
     <Pressable
@@ -234,6 +236,7 @@ function RestaurantCard({ restaurant: r, delivery }: { restaurant: Restaurant; d
           <Text style={styles.cardArea} numberOfLines={1}>
             {r.area}
           </Text>
+          {r.accepting === false && <Text style={styles.closed}>Not taking orders right now</Text>}
         </View>
         <View style={styles.minutes}>
           <Text style={styles.minutesValue}>{r.prepMinutes}</Text>
@@ -246,6 +249,7 @@ function RestaurantCard({ restaurant: r, delivery }: { restaurant: Restaurant; d
 
 const styles = StyleSheet.create({
   list: { paddingHorizontal: 18, gap: 14 },
+  closed: { marginTop: 4, fontSize: 12, fontWeight: '800', color: colors.error },
   brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brand: { fontSize: 24, fontWeight: '900', letterSpacing: -0.8, color: colors.ink },
   ordersButton: {

@@ -45,23 +45,33 @@ export default function OrderScreen() {
     );
 
   const delivery = order.fulfilment === 'delivery';
+  const cancelled = order.orderStatus === 'cancelled';
+  const waitingForRider = delivery && order.orderStatus === 'preparing' && !!order.kitchenReadyAt;
+  const arrive = clock(order.deliverBy || order.pickupAt);
   const steps = delivery ? deliverySteps : pickupSteps;
   const current = steps.findIndex(s => s.status === order.orderStatus);
-  const copy = delivery
-    ? { ...statusCopy[order.orderStatus], title: { new: 'Order received', preparing: 'Being prepared', ready: 'On its way', collected: 'Delivered' }[order.orderStatus] }
-    : statusCopy[order.orderStatus];
-  const headline = delivery
+  const copy = cancelled
+    ? statusCopy.cancelled
+    : delivery
+      ? { ...statusCopy[order.orderStatus], title: { new: 'Order received', preparing: waitingForRider ? 'Packed and ready' : 'Being prepared', ready: 'On its way', collected: 'Delivered', cancelled: '' }[order.orderStatus] }
+      : statusCopy[order.orderStatus];
+  const refundNote = order.paymentStatus === 'refunded' ? 'Your payment has been refunded.' : 'Your refund is on its way and usually reaches your account within a few working days.';
+  const headline = cancelled
+    ? `${order.restaurantName} couldn’t take this order${order.cancelReason && order.cancelReason !== 'Cancelled by the restaurant' ? ` (${order.cancelReason})` : ''}. ${refundNote}`
+    : delivery
     ? {
-        new: `Waiting for ${order.restaurantName} to start your order.`,
-        preparing: `The kitchen is on it. Arriving around ${clock(order.pickupAt)}.`,
-        ready: 'Your order has left the kitchen and is on its way to you.',
+        new: `Waiting for ${order.restaurantName} to start your order. Arriving around ${arrive}.`,
+        preparing: waitingForRider ? `Your food is packed and waiting for the rider. Arriving around ${arrive}.` : `The kitchen is on it. Arriving around ${arrive}.`,
+        ready: `The rider has your order and is on the way. Arriving around ${arrive}.`,
         collected: 'Enjoy your food! Thanks for ordering with Punchbook.',
+        cancelled: '',
       }[order.orderStatus]
     : {
-    new: `Waiting for ${order.restaurantName} to start your order.`,
-    preparing: `The kitchen is on it. Pickup around ${clock(order.pickupAt)}.`,
-    ready: `Head to the counter at ${order.restaurantName} and show your code.`,
+        new: `Waiting for ${order.restaurantName} to start your order.`,
+        preparing: `The kitchen is on it. Pickup around ${clock(order.pickupAt)}.`,
+        ready: `Head to the counter at ${order.restaurantName} and show your code.`,
         collected: 'Enjoy your food! Thanks for ordering ahead.',
+        cancelled: '',
       }[order.orderStatus];
 
   return (
@@ -81,13 +91,13 @@ export default function OrderScreen() {
         </View>
       </View>
 
-      {stale.has(order.id) && order.orderStatus !== 'collected' && (
+      {stale.has(order.id) && order.orderStatus !== 'collected' && !cancelled && (
         <View style={{ marginTop: 14 }}>
-          <Notice message="Live updates stopped because the demo server restarted. This is the last status we saw." />
+          <Notice message={`We can’t get updates for this order right now. This is the last status we saw. Call ${order.restaurantName} if you need help.`} />
         </View>
       )}
 
-      <View style={styles.card}>
+      {!cancelled && <View style={styles.card}>
         {steps.map((s, i) => {
           const done = i <= current;
           return (
@@ -100,14 +110,14 @@ export default function OrderScreen() {
             </View>
           );
         })}
-      </View>
+      </View>}
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{order.restaurantName}</Text>
         <Text style={styles.muted}>{order.restaurantArea}</Text>
         <Text style={[styles.muted, { marginTop: 8 }]}>
           {delivery ? 'Delivery' : 'Pickup'} {order.asap ? 'ASAP · ' : ''}
-          {dayAndClock(order.pickupAt)}
+          {dayAndClock(delivery && order.deliverBy ? order.deliverBy : order.pickupAt)}
         </Text>
         {delivery && order.customer.address && (
           <Text style={[styles.muted, { marginTop: 4 }]}>

@@ -206,7 +206,7 @@ export default function Checkout() {
           <View style={styles.divider} />
           <Row label="Total" value={money(total)} strong />
         </View>
-        <Text style={styles.demo}>This is a demo. Payments are simulated and no money is charged.</Text>
+        <Text style={styles.payNote}>You’ll pay on a secure payment page. Your card details never reach Punchbook.</Text>
         {!!error && <Notice message={error} />}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
   rowText: { fontSize: 14, color: colors.muted },
   rowStrong: { fontSize: 17, fontWeight: '900', color: colors.ink },
-  demo: { fontSize: 12, color: colors.muted, textAlign: 'center', marginVertical: 14 },
+  payNote: { fontSize: 12, color: colors.muted, textAlign: 'center', marginVertical: 14 },
   footer: { paddingHorizontal: 18, paddingTop: 12, backgroundColor: colors.paper, borderTopWidth: 1, borderTopColor: colors.line },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
   emptyTitle: { fontSize: 22, fontWeight: '900', color: colors.ink, marginBottom: 4 },

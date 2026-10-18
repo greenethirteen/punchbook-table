@@ -5,12 +5,12 @@
 import crypto from 'crypto';
 
 const RANK = {pickup: ['new', 'preparing', 'ready', 'collected'], table: ['new', 'preparing', 'served']};
-const DONE = new Set(['collected', 'served']);
+const DONE = new Set(['collected', 'served', 'cancelled']);
 const ONLINE_MS = 60000;
 const kind = o => o.orderType === 'pickup' ? 'pickup' : 'table';
 const text = (v, max) => String(v ?? '').trim().slice(0, max);
 
-export function createPosBridge({orders, restaurants}) {
+export function createPosBridge({orders, restaurants, staff}) {
   const seen = {}; // restaurantId -> {at, pos, version}
   const env = n => process.env[n] || '';
 
@@ -56,6 +56,12 @@ export function createPosBridge({orders, restaurants}) {
   function setStatus(o, next, source) {
     const rank = RANK[kind(o)];
     if (!rank.includes(next)) return `"${next}" is not a valid status for ${kind(o)} orders.`;
+    if (o.orderStatus === 'cancelled') return '';
+    // A delivery order the kitchen calls ready is waiting for its rider; the rider page moves it on.
+    if (o.fulfilment === 'delivery' && next === 'ready') {
+      o.kitchenReadyAt ||= new Date().toISOString();
+      next = 'preparing';
+    }
     if (rank.indexOf(next) > rank.indexOf(o.orderStatus)) {
       o.orderStatus = next;
       o.statusSource = source;
@@ -110,9 +116,9 @@ export function createPosBridge({orders, restaurants}) {
     });
 
     // Send a failed order to the POS again (from the pickup admin screen).
-    app.post('/api/orders/:id/pos-retry', (req, res) => {
+    app.post('/api/orders/:id/pos-retry', staff.requireStaff, (req, res) => {
       const o = orders.find(x => x.id === req.params.id);
-      if (!o || handledElsewhere(o)) return res.status(404).json({error: 'Order not found.'});
+      if (!o || handledElsewhere(o) || !staff.canSee(req.staff, o)) return res.status(404).json({error: 'Order not found.'});
       if (o.pos?.status === 'error') o.pos = {};
       res.json(o);
     });
@@ -126,7 +132,7 @@ export function createPosBridge({orders, restaurants}) {
     const graceMs = (Number(setting) || 10) * 60000, now = Date.now();
     for (const o of orders) {
       if (o.orderType === 'pickup' && o.pos?.status === 'synced' && !handledElsewhere(o)
-        && ['new', 'preparing'].includes(o.orderStatus) && now > Date.parse(o.pickupAt) + graceMs) {
+        && ['new', 'preparing'].includes(o.orderStatus) && !o.kitchenReadyAt && now > Date.parse(o.pickupAt) + graceMs) {
         setStatus(o, 'ready', 'timer');
       }
     }
