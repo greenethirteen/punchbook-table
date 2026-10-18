@@ -7,6 +7,7 @@ import {restaurants,peppermintMenu,amraMenu} from './restaurants.js';
 import {createSquareBridge} from './pos-square.js';
 import {createPosBridge} from './pos-bridge.js';
 import {createOrderStore} from './order-store.js';
+import {createRider} from './rider.js';
 
 // Load .env locally when present; hosted env vars (e.g. Railway) are left untouched.
 try{process.loadEnvFile?.()}catch(e){if(e.code!=='ENOENT')throw e}
@@ -80,10 +81,12 @@ app.post('/api/pos/square/push/:id',needSquare,async(req,res)=>{const o=orders.f
 app.post('/api/pos/square/webhook',async(req,res)=>{const url=process.env.SQUARE_WEBHOOK_URL||`${publicBase(req)}/api/pos/square/webhook`,r=await pos.webhook(req,url);res.status(r.status).json(r.error?{error:r.error}:{ok:true})});
 // Local POS bridges (e.g. SambaPOS via bridge/). See pos-bridge.js.
 posBridge.mount(app);
+// Delivery riders (page at /rider). See rider.js.
+createRider({orders,restaurants}).mount(app);
 app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${publicBase(req)}/peppermint/t/${encodeURIComponent(table)}`,svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;text-align:center;max-width:430px}svg{max-width:100%;height:auto}</style></head><body><div class="card"><h2>Peppermint Café</h2><p>Table ${table}</p>${svg}<h2>Scan to order</h2><p>No app needed · Powered by Punchbook</p></div></html>`)});
 app.get('/api/public/companies',async(_q,res)=>{try{const companies=(await readCompanies()).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));res.json({companies:companies.map(publicCompany)})}catch{res.status(500).json({error:'Could not load applications.'})}});
 app.get('/api/public/companies/:id',async(req,res)=>{const c=(await readCompanies()).find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});res.json({company:publicCompany(c)})});
 app.patch('/api/public/companies/:id/status',async(req,res)=>{const status=cleanText(req.body?.status,40);if(!COMPANY_STATUSES.has(status))return res.status(400).json({error:'Invalid company status.'});const companies=await readCompanies(),c=companies.find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});c.status=status;c.adminNotes=cleanText(req.body?.adminNotes,3000);c.updatedAt=new Date().toISOString();await writeCompanies(companies);res.json({ok:true,company:publicCompany(c)})});
-app.get(['/peppermint','/peppermint/t/:table','/r/:restaurant/t/:table'],(_q,r)=>sendPage(r,'peppermint.html'));app.get(['/amraleaf-v3','/amraleaf-v3/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'));app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>sendPage(r,'pos.html'));
+app.get(['/peppermint','/peppermint/t/:table','/r/:restaurant/t/:table'],(_q,r)=>sendPage(r,'peppermint.html'));app.get(['/amraleaf-v3','/amraleaf-v3/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'));app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>sendPage(r,'pos.html'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE} · ${orderStore.count()} saved orders loaded`));
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>orderStore.flush().then(orderStore.flush).finally(()=>process.exit(0)));

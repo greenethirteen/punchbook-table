@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244633"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>Rider · Punchbook</title><link rel="stylesheet" href="/rider.css?v=1"></head><body>
+<header class="bar"><a class="brand" href="/rider">punchbook<span>.</span> <small>rider</small></a><button id="who" class="who" type="button" hidden></button></header>
+<main class="wrap">
+  <form id="setup" class="setup" hidden>
+    <h1>Who’s riding?</h1>
+    <p>Your name and number are shown to the restaurant and the customer when you take a job.</p>
+    <label>Your name<input id="name" autocomplete="name" required maxlength="60"></label>
+    <label>Mobile number<input id="phone" type="tel" autocomplete="tel" inputmode="tel" required maxlength="30" placeholder="07X XXX XXXX"></label>
+    <label id="key-row" hidden>Rider access code<input id="key" autocomplete="off" maxlength="80"></label>
+    <p id="setup-error" class="error" role="alert" hidden></p>
+    <button class="primary" type="submit">Start</button>
+  </form>
+  <section id="board" hidden>
+    <div class="tabs" role="tablist" aria-label="Jobs">
+      <button role="tab" data-tab="open" aria-selected="true">Open <span id="open-count">0</span></button>
+      <button role="tab" data-tab="mine" aria-selected="false">Mine <span id="mine-count">0</span></button>
+      <button role="tab" data-tab="all" aria-selected="false">All <span id="all-count">0</span></button>
+    </div>
+    <p id="status" class="status" role="status">Connecting…</p>
+    <p id="error" class="error" role="alert" hidden></p>
+    <div id="jobs" class="jobs"></div>
+  </section>
+</main>
+<script src="/rider-app.js?v=1"></script></body></html>

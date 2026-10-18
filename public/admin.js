@@ -6,6 +6,8 @@ const statusNames={new:'New',preparing:'Preparing',served:'Ready & served'};
 const laneOf=o=>o.orderType==='pickup'?({new:'new',preparing:'preparing',ready:'served',collected:'served'}[o.orderStatus]||'new'):(statusNames[o.orderStatus]?o.orderStatus:'new');
 const title=o=>o.orderType==='pickup'?`${o.fulfilment==='delivery'?'Delivery':'Pickup'} · ${o.customer?.name||'Guest'}`:`Table ${o.table}`;
 const pickupNext={new:['preparing','Start preparing →'],preparing:['ready','Mark ready ✓'],ready:['collected',o=>o.fulfilment==='delivery'?'Mark delivered ✓':'Mark collected ✓']};
+const riderStages={assigned:'heading to pick up',picked_up:'on the way',delivered:'delivered'};
+const riderLine=o=>o.fulfilment!=='delivery'?'':o.dispatch?`<br>${o.dispatch.method==='pickme'?'PickMe':'Rider'}: ${escapeHtml(o.dispatch.rider?.name)}${o.dispatch.courierRef?' ('+escapeHtml(o.dispatch.courierRef)+')':''} · ${riderStages[o.dispatch.status]||''}`:o.paymentStatus==='paid'?'<br>Waiting for a rider':'';
 const pickupNames={new:'New',preparing:'Preparing',ready:'Ready',collected:'Collected'};
 function sampleOrders(){
   return [
@@ -41,7 +43,7 @@ function render(){
     const stepLabel=step&&(typeof step[1]==='function'?step[1](o):step[1]);
     const label=busy?'Updating…':pending?'Awaiting payment':pickup?stepLabel:status==='new'?'Start preparing →':'Mark as served ✓';
     const done=pickup?!step:status==='served',doneNote=pickup?`✓ ${o.fulfilment==='delivery'?'Delivered':'Collected'} · ${escapeHtml(o.customer?.phone||'')}`:'✓ Delivered to the table';
-    const extra=pickup?`<p class="meta">${o.fulfilment==='delivery'?'Deliver to '+escapeHtml(o.customer?.address?.line||'—'):'Pickup '+(o.asap?'ASAP':escapeHtml(new Date(o.pickupAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})))} · ${escapeHtml(o.restaurantName||'')} · <b>${pickupNames[o.orderStatus]||'New'}</b>${o.note?' · “'+escapeHtml(o.note)+'”':''}</p>`:'';
+    const extra=pickup?`<p class="meta">${o.fulfilment==='delivery'?'Deliver to '+escapeHtml(o.customer?.address?.line||'—'):'Pickup '+(o.asap?'ASAP':escapeHtml(new Date(o.pickupAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})))} · ${escapeHtml(o.restaurantName||'')} · <b>${pickupNames[o.orderStatus]||'New'}</b>${o.note?' · “'+escapeHtml(o.note)+'”':''}${riderLine(o)}</p>`:'';
     return `<article class="order ${status}"><div class="order-head"><h2>${escapeHtml(title(o))}</h2><span class="status">${statusNames[status]}</span></div><p class="meta">${escapeHtml(o.id)} · ${escapeHtml(new Date(o.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}))}${mode==='sample'?' · Sample':''}</p>${extra}<ul class="items">${o.items.map(i=>`<li><span><b>${escapeHtml(i.qty)} ×</b> ${escapeHtml(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')}</ul><div class="order-total"><span>Total</span><span>${money(o.total)}</span></div><p class="payment ${pending?'pending':''}">${pending?'Payment pending':'✓ Paid'} · ${o.paymentMethod==='justpay'?'JustPay':'Card'}</p>${done?`<div class="served-note">${doneNote}</div>`:`<button type="button" data-id="${escapeHtml(o.id)}" data-next="${next}" ${busy||pending?'disabled':''}>${label}</button>`}</article>`;
   };
   $('orders').innerHTML=Object.keys(statusNames).map(status=>{
