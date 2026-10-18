@@ -114,9 +114,17 @@ export default function Home() {
         })}
       </View>
 
-      {activeOrders.map(o => (
-        <LiveOrder key={o.id} order={o} />
-      ))}
+      {/* Newest live order only; the rest are a tap away so the menu isn't pushed off screen. */}
+      {activeOrders[0] && <LiveOrder order={activeOrders[0]} />}
+      {activeOrders.length > 1 && (
+        <Link href="/orders" asChild>
+          <Pressable accessibilityRole="link" style={styles.liveMore}>
+            <Text style={styles.liveMoreText}>
+              +{activeOrders.length - 1} more live order{activeOrders.length > 2 ? 's' : ''} →
+            </Text>
+          </Pressable>
+        </Link>
+      )}
 
       {chips.length > 0 && (
         <>
@@ -290,6 +298,8 @@ const styles = StyleSheet.create({
   liveCode: { fontSize: 12, color: '#c9c7bd' },
   liveTitle: { fontSize: 21, fontWeight: '900', letterSpacing: -0.5, color: '#fff', marginTop: 8 },
   liveSub: { fontSize: 14, color: '#d8d6cc', marginTop: 4 },
+  liveMore: { alignSelf: 'flex-start', paddingVertical: 10, paddingHorizontal: 4, minHeight: 44, justifyContent: 'center' },
+  liveMoreText: { fontSize: 14, fontWeight: '800', color: colors.green },
   progress: { flexDirection: 'row', gap: 6, marginTop: 14 },
   bar: { height: 6, borderRadius: 3, backgroundColor: '#4a4a43' },
   barDone: { backgroundColor: '#3fd18b' },

@@ -6,6 +6,10 @@ import { getOrder, type PickupOrder } from '@/lib/api';
 // so order history shows even when offline.
 const ORDERS_KEY = 'punchbook.pickup.orders';
 const PROFILE_KEY = 'punchbook.pickup.profile';
+// Orders the server no longer has; kept so they don't come back as live after a restart.
+const GONE_KEY = 'punchbook.pickup.gone';
+// Nobody waits a day for a pickup or delivery, so older orders are never shown as live.
+const LIVE_FOR_MS = 12 * 3600000;
 const MAX_ORDERS = 30;
 const POLL_MS = 5000;
 
@@ -27,18 +31,24 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null);
 
-export const isActive = (o: PickupOrder) => o.paymentStatus === 'paid' && o.orderStatus !== 'collected' && o.orderStatus !== 'cancelled';
+export const isActive = (o: PickupOrder) =>
+  o.paymentStatus === 'paid' &&
+  o.orderStatus !== 'collected' &&
+  o.orderStatus !== 'cancelled' &&
+  Date.now() - Date.parse(o.createdAt) < LIVE_FOR_MS;
 
 export function OrdersProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [orders, setOrders] = useState<PickupOrder[]>([]);
   const [profile, setProfile] = useState<Profile>({ name: '', phone: '' });
+  const [stale, setStale] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    AsyncStorage.multiGet([ORDERS_KEY, PROFILE_KEY])
-      .then(([[, o], [, p]]) => {
+    AsyncStorage.multiGet([ORDERS_KEY, PROFILE_KEY, GONE_KEY])
+      .then(([[, o], [, p], [, g]]) => {
         if (o) setOrders(JSON.parse(o));
         if (p) setProfile(JSON.parse(p));
+        if (g) setStale(new Set(JSON.parse(g)));
       })
       .catch(() => {})
       .finally(() => setReady(true));
@@ -65,7 +75,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Keep unfinished orders fresh so the home banner and order screen show the kitchen's progress.
-  const [stale, setStale] = useState<Set<string>>(new Set());
   const activeIds = orders.filter(o => isActive(o) && !stale.has(o.id)).map(o => o.id).join(',');
   useEffect(() => {
     if (!activeIds) return;
@@ -74,7 +83,12 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         getOrder(id)
           .then(saveOrder)
           .catch(e => {
-            if (e.status === 404) setStale(prev => new Set(prev).add(id));
+            if (e.status === 404)
+              setStale(prev => {
+                const next = new Set(prev).add(id);
+                AsyncStorage.setItem(GONE_KEY, JSON.stringify([...next].slice(-100))).catch(() => {});
+                return next;
+              });
           }),
       );
     refresh();
