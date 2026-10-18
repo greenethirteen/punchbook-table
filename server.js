@@ -12,6 +12,7 @@ import {createAccounts} from './accounts.js';
 import {createStaff} from './staff.js';
 import {createPayments} from './payments.js';
 import {createKitchen} from './kitchen.js';
+import {createPush} from './push.js';
 
 // Load .env locally when present; hosted env vars (e.g. Railway) are left untouched.
 try{process.loadEnvFile?.()}catch(e){if(e.code!=='ENOENT')throw e}
@@ -98,7 +99,9 @@ app.post('/api/pos/square/webhook',async(req,res)=>{const url=process.env.SQUARE
 // Local POS bridges (e.g. SambaPOS via bridge/). See pos-bridge.js.
 posBridge.mount(app);
 // Delivery riders (page at /rider). See rider.js.
-createRider({orders,restaurants,staff}).mount(app);
+const rider=createRider({orders,restaurants,staff});rider.mount(app);
+// Web push for restaurants and riders, Firebase for the customer app. See push.js.
+(await createPush({orders,dataDir:DATA_DIR,staff,riderAuth:rider.auth})).mount(app);
 // Daily restaurant payouts (page at /accounts). See accounts.js.
 (await createAccounts({orders,restaurants,dataDir:DATA_DIR,staff})).mount(app);
 app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${publicBase(req)}/peppermint/t/${encodeURIComponent(table)}`,svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;text-align:center;max-width:430px}svg{max-width:100%;height:auto}</style></head><body><div class="card"><h2>Peppermint Café</h2><p>Table ${table}</p>${svg}<h2>Scan to order</h2><p>No app needed · Powered by Punchbook</p></div></html>`)});

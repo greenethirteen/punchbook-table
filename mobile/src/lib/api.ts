@@ -101,6 +101,10 @@ export const placeOrder = (body: {
 
 export const getOrder = (id: string) => request<PickupOrder>(`/api/pickup/orders/${encodeURIComponent(id)}`);
 
+/** Asks the server to notify this phone about the order's progress. */
+export const registerOrderPush = (orderId: string, token: string) =>
+  request<{ ok: true }>(`/api/pickup/orders/${encodeURIComponent(orderId)}/push`, { method: 'POST', body: JSON.stringify({ token }) });
+
 type PaymentResult = { ok: boolean; simulated?: boolean; redirectUrl?: string; order: PickupOrder };
 
 export const payByCard = (orderId: string) =>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244633"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>Rider · Punchbook</title><link rel="stylesheet" href="/rider.css?v=2f462de60315"></head><body>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244633"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><title>Rider · Punchbook</title><link rel="stylesheet" href="/rider.css?v=e6d39e70deb0"></head><body>
 <header class="bar"><a class="brand" href="/rider">punchbook<span>.</span> <small>rider</small></a><button id="who" class="who" type="button" hidden></button></header>
 <main class="wrap">
   <form id="setup" class="setup" hidden>
@@ -17,9 +17,10 @@
       <button role="tab" data-tab="mine" aria-selected="false">Mine <span id="mine-count">0</span></button>
       <button role="tab" data-tab="all" aria-selected="false">All <span id="all-count">0</span></button>
     </div>
+    <button id="alerts" class="alerts" type="button" hidden>🔔 Turn on job alerts (works with the page closed)</button>
     <p id="status" class="status" role="status">Connecting…</p>
     <p id="error" class="error" role="alert" hidden></p>
     <div id="jobs" class="jobs"></div>
   </section>
 </main>
-<script src="/rider-app.js?v=7abcb2abc4e8"></script></body></html>
+<script src="/push-client.js?v=57559177bd2d"></script><script src="/rider-app.js?v=ac8424681cb7"></script></body></html>

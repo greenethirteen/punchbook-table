@@ -125,5 +125,9 @@ $('jobs').addEventListener('submit',e=>{
   act(j.id,'accept',{method:j.dispatch.method,courierRef:f.ref.value,...(f.cost.value!==''?{courierCost:Number(f.cost.value)}:{})});
 });
 
+// Push alerts for new jobs when the page is closed (push-client.js, sw.js).
+async function refreshAlerts(){const p=window.punchbookPush;if(!p?.supported)return;const st=await p.state();$('alerts').hidden=st==='on';}
+$('alerts').addEventListener('click',async()=>{const b=$('alerts');b.disabled=true;try{await window.punchbookPush.enable('/api/push/rider',{'x-rider-key':key});b.hidden=true}catch(e){b.textContent='🔔 '+e.message}b.disabled=false});
+refreshAlerts();
 if(me)showBoard();else showSetup();
 setInterval(load,5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});

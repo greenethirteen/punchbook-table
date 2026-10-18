@@ -7,6 +7,7 @@ import { Button, Notice, Stepper } from '@/components/ui';
 import { DELIVERY_FEE, payByCard, payByJustPay, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
 import { clock, money } from '@/lib/format';
 import { colors, radius } from '@/lib/theme';
+import { enableOrderNotifications } from '@/lib/push';
 import { useCart } from '@/state/cart';
 import { useOrders } from '@/state/orders';
 
@@ -98,6 +99,7 @@ export default function Checkout() {
       if (result.order.paymentStatus !== 'paid') throw new Error('Payment wasn’t completed. You can try again.');
 
       saveOrder(result.order);
+      enableOrderNotifications(result.order.id);
       cart.clear();
       router.dismissTo('/');
       router.push({ pathname: '/order/[id]', params: { id: result.order.id } });

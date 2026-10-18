@@ -97,5 +97,5 @@ export function createRider({orders, restaurants, staff}) {
     });
   }
 
-  return {mount};
+  return {mount, auth};
 }

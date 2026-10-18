@@ -44,9 +44,14 @@
     if(r.status===401){showLogin(Boolean(read()));return null}
     const me=await r.json();
     const bar=document.createElement('div');bar.className='staff-bar';
-    bar.innerHTML=`<span>${me.role==='admin'?'Punchbook admin · all restaurants':'Signed in · '+String(me.restaurantName||me.restaurantId).replace(/[<>&]/g,'')}</span><button type="button" data-sound>🔔 Turn on order sound</button>${me.open?'':'<button type="button" class="sp" data-out>Sign out</button>'}`;
+    bar.innerHTML=`<span>${me.role==='admin'?'Punchbook admin · all restaurants':'Signed in · '+String(me.restaurantName||me.restaurantId).replace(/[<>&]/g,'')}</span><button type="button" data-sound>🔔 Turn on order sound</button><button type="button" data-push hidden>📲 Alerts when closed</button>${me.open?'':'<button type="button" class="sp" data-out>Sign out</button>'}`;
     bar.querySelector('[data-sound]').addEventListener('click',e=>{audio||=new (window.AudioContext||window.webkitAudioContext)();audio.resume?.();e.target.textContent='🔔 Sound on';window.staffAlert()});
     bar.querySelector('[data-out]')?.addEventListener('click',()=>{write('');location.reload()});
+    // Phone/desktop notifications for new orders, even with this page closed (push-client.js, sw.js).
+    const pushBtn=bar.querySelector('[data-push]'),s=document.createElement('script');s.src='/push-client.js?v=1';
+    s.onload=async()=>{const p=window.punchbookPush;if(!p.supported)return;const st=await p.state();pushBtn.hidden=false;if(st==='on')pushBtn.textContent='📲 Alerts on';
+      pushBtn.addEventListener('click',async()=>{pushBtn.disabled=true;try{await p.enable('/api/push/staff');pushBtn.textContent='📲 Alerts on'}catch(e){pushBtn.textContent='📲 '+e.message}pushBtn.disabled=false})};
+    document.head.append(s);
     document.body.prepend(bar);
     const warnings=[];
     if(me.open)warnings.push('Not locked: anyone with this link can see customer details and change orders. Set PUNCHBOOK_ADMIN_KEY (and RESTAURANT_KEYS) in Railway.');

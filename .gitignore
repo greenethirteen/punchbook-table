@@ -13,3 +13,4 @@ data/orders.json.tmp
 data/orders.json.unreadable-*
 data/accounts.json
 data/accounts.json.tmp
+staff-keys.local.txt

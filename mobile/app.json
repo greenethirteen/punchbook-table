@@ -19,7 +19,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "order.punchbook.com",
-      "versionCode": 9
+      "versionCode": 9,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,6 +33,13 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Punchbook uses your location to fill in your address."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#244633"
         }
       ]
     ],

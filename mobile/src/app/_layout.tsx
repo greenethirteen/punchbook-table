@@ -1,11 +1,22 @@
-import { Stack } from 'expo-router';
+import * as Notifications from 'expo-notifications';
+import { router, Stack } from 'expo-router';
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { orderIdOf } from '@/lib/push';
 import { colors } from '@/lib/theme';
 import { CartProvider } from '@/state/cart';
 import { OrdersProvider } from '@/state/orders';
 
 export default function RootLayout() {
+  // Tapping an order notification opens that order, whether the app was running or not.
+  useEffect(() => {
+    const open = (id: string | null) => id && router.push({ pathname: '/order/[id]', params: { id } });
+    open(orderIdOf(Notifications.getLastNotificationResponse()));
+    const sub = Notifications.addNotificationResponseReceivedListener(r => open(orderIdOf(r)));
+    return () => sub.remove();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <OrdersProvider>
