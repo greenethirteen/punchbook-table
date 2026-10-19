@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { Fulfilment, MenuItem, Restaurant } from '@/lib/api';
+import { DELIVERY_ENABLED, type Fulfilment, type MenuItem, type Restaurant } from '@/lib/api';
 
 type CartRestaurant = Pick<Restaurant, 'id' | 'name' | 'area' | 'prepMinutes'>;
 type Line = { item: MenuItem; qty: number };
@@ -57,7 +57,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setLines([]);
         setRestaurant(null);
       },
-      fulfilment,
+      fulfilment: DELIVERY_ENABLED ? fulfilment : 'pickup',
       setFulfilment,
     };
   }, [restaurant, lines, fulfilment]);

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Notice, Stepper } from '@/components/ui';
-import { DELIVERY_FEE, payByCard, payByJustPay, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
+import { DELIVERY_ENABLED, DELIVERY_FEE, payByCard, payByJustPay, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
 import { clock, money } from '@/lib/format';
 import { colors, radius } from '@/lib/theme';
 import { enableOrderNotifications } from '@/lib/push';
@@ -180,7 +180,14 @@ export default function Checkout() {
         <Text style={styles.label}>Pickup or delivery</Text>
         <View style={{ gap: 8 }}>
           <Choice wide selected={!delivery} onPress={() => setFulfilment('pickup')} title="Pickup" sub={`Collect from ${restaurant.area} · Free`} />
-          <Choice wide selected={delivery} onPress={chooseDelivery} title="Delivery" sub={`To your door · ${money(DELIVERY_FEE)}`} />
+          <Choice
+            wide
+            selected={delivery}
+            disabled={!DELIVERY_ENABLED}
+            onPress={chooseDelivery}
+            title="Delivery"
+            sub={DELIVERY_ENABLED ? `To your door · ${money(DELIVERY_FEE)}` : 'Coming soon'}
+          />
         </View>
         {delivery && (
           <Pressable accessibilityRole="button" onPress={() => router.push('/address')} style={[styles.card, styles.addressRow]}>
@@ -218,13 +225,14 @@ export default function Checkout() {
   );
 }
 
-function Choice({ selected, onPress, title, sub, wide }: { selected: boolean; onPress: () => void; title: string; sub: string; wide?: boolean }) {
+function Choice({ selected, onPress, title, sub, wide, disabled }: { selected: boolean; onPress: () => void; title: string; sub: string; wide?: boolean; disabled?: boolean }) {
   return (
     <Pressable
       accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
+      accessibilityState={{ checked: selected, disabled }}
+      disabled={disabled}
       onPress={onPress}
-      style={[styles.choice, wide && styles.choiceWide, selected && styles.choiceSelected]}
+      style={[styles.choice, wide && styles.choiceWide, selected && styles.choiceSelected, disabled && { opacity: 0.5 }]}
     >
       {wide && <View style={[styles.radio, selected && styles.radioOn]} />}
       <View>

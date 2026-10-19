@@ -1,0 +1,214 @@
+<title>Punchbook Welcome Tour</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a clickable phone preview of the app's first-launch tour (each slide = a coloured scene on top,
+   headline below), then all three slides in a row for review.
+   Single light theme on purpose: it mirrors the app, which only has a light theme (mobile/src/lib/theme.ts). */
+:root {
+  --ink: #171713;
+  --muted: #73736d;
+  --paper: #f4f2eb;
+  --card: #ffffff;
+  --line: #e7e3d8;
+  --green: #157d55;
+  --green-deep: #0f5c3f;
+  --mint: #3fd18b;
+  --accent: #ff5c35;
+  --sun: #ffc94a;
+  --desk: #e9e6dc;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--desk); color: var(--ink); font-family: var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.page { max-width: 1040px; margin: 0 auto; display: grid; gap: 40px; }
+header.intro { display: grid; gap: 6px; text-align: center; }
+header.intro h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.8px; }
+header.intro p { margin: 0; color: var(--muted); font-size: 15px; }
+
+/* Phone */
+.stage { display: flex; justify-content: center; }
+.phone {
+  width: 360px; max-width: 100%; aspect-ratio: 360 / 760; background: var(--paper);
+  border-radius: 44px; border: 10px solid var(--ink); position: relative; overflow: hidden;
+  box-shadow: 0 30px 60px -20px #17171355; display: flex; flex-direction: column;
+}
+.bar { position: absolute; z-index: 3; inset: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 0; }
+.brand { font-size: 21px; font-weight: 900; letter-spacing: -0.8px; color: #fff; }
+.brand span { color: var(--sun); }
+.skip { border: 0; background: #ffffff26; color: #fff; font: inherit; font-size: 14px; font-weight: 800; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.track { flex: 1; display: flex; transition: transform .5s cubic-bezier(.2,.7,.2,1); touch-action: pan-y; }
+.slide { flex: 0 0 100%; display: flex; flex-direction: column; }
+.scene { flex: 1.15; position: relative; overflow: hidden; border-radius: 0 0 36px 36px; display: grid; place-items: center; }
+.copy { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 18px 28px 6px; }
+.copy h2 { margin: 0; font-size: 34px; line-height: 1.06; font-weight: 900; letter-spacing: -1.3px; text-wrap: balance; }
+.copy h2 em { font-style: normal; color: var(--green); }
+.copy p { margin: 0; font-size: 15.5px; line-height: 1.5; color: var(--muted); max-width: 275px; text-wrap: pretty; }
+/* Marker-pen highlight for the line that matters most */
+.copy mark { background: linear-gradient(transparent 52%, var(--sun) 52%, var(--sun) 92%, transparent 92%); color: var(--ink); font-weight: 900; padding: 0 2px; }
+.foot { padding: 0 22px 24px; display: grid; gap: 16px; }
+.dots { display: flex; gap: 6px; justify-content: center; }
+.dot { width: 7px; height: 7px; border-radius: 4px; background: #d6d2c6; transition: width .3s, background .3s; }
+.dot.on { width: 22px; background: var(--ink); }
+.cta { border: 0; border-radius: 16px; min-height: 54px; background: var(--ink); color: #fff; font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; }
+.cta:focus-visible, .skip:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.done { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; text-align: center; background: var(--paper); padding: 30px; }
+.done[hidden], .skip[hidden] { display: none; }
+.done p { margin: 8px 0 18px; color: var(--muted); }
+.soon { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px 7px 10px; font-size: 13px; font-weight: 800; color: var(--ink); }
+.soon i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px #ff5c3526; }
+.done button { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 12px 18px; font: inherit; font-weight: 700; cursor: pointer; }
+
+/* Shared scene pieces */
+.ring { position: absolute; border-radius: 50%; border: 2px solid #ffffff2e; }
+.blob { position: absolute; border-radius: 50%; }
+.spark { position: absolute; width: 10px; height: 10px; border-radius: 3px; transform: rotate(45deg); }
+.float { animation: float 4s ease-in-out infinite; }
+.float.b { animation-delay: -1.3s; } .float.c { animation-delay: -2.6s; }
+@keyframes float { 50% { transform: translateY(-8px); } }
+
+/* 1 · Pickup made easy: a bag in the middle, the three steps orbiting it */
+.s1 { background: var(--green); }
+.bag { position: relative; width: 132px; height: 138px; background: var(--paper); border-radius: 22px 22px 30px 30px; box-shadow: 0 18px 30px -10px #0006; display: grid; place-items: center; }
+.bag::before { content: ""; position: absolute; top: -34px; left: 34px; width: 64px; height: 50px; border: 9px solid var(--paper); border-bottom: 0; border-radius: 40px 40px 0 0; }
+.bag b { font-size: 54px; font-weight: 900; letter-spacing: -2px; color: var(--ink); margin-top: 8px; }
+.bag b span { color: var(--accent); }
+.step { position: absolute; background: var(--card); color: var(--ink); border-radius: 999px; padding: 9px 14px 9px 9px; font-size: 14px; font-weight: 900; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 20px -8px #0005; }
+.step i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; color: #fff; }
+
+/* 2 · No waiting: a ringing bell and the ready notification */
+.s2 { background: var(--sun); }
+.s2 .ring { border-color: #17171324; }
+.bell { width: 112px; height: 112px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; box-shadow: 0 18px 30px -10px #0005; animation: ring 2.4s ease-in-out infinite; transform-origin: 50% 10%; }
+@keyframes ring { 0%, 60%, 100% { transform: rotate(0); } 66% { transform: rotate(12deg); } 72% { transform: rotate(-10deg); } 78% { transform: rotate(7deg); } 84% { transform: rotate(-4deg); } }
+.toast { position: absolute; left: 22px; right: 22px; bottom: 26px; background: var(--card); border-radius: 18px; padding: 12px 14px; display: flex; gap: 12px; align-items: center; box-shadow: 0 14px 26px -10px #0005; }
+.toast .app { width: 36px; height: 36px; border-radius: 10px; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 900; font-size: 20px; }
+.toast small { display: block; font-size: 11px; color: var(--muted); }
+.toast strong { font-size: 14.5px; }
+.queue { position: absolute; top: 74px; display: flex; gap: 6px; opacity: .9; }
+.queue span { width: 18px; height: 30px; border-radius: 9px 9px 4px 4px; background: #17171330; }
+.queue span.x { background: none; position: relative; }
+
+/* 3 · Fair prices: two receipts' worth of fees, side by side */
+.s3 { background: var(--ink); }
+.bars { display: flex; align-items: flex-end; gap: 22px; height: 190px; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.col .val { font-weight: 900; font-size: 30px; letter-spacing: -1px; color: #fff; }
+.col .val.old { color: #ffffff80; text-decoration: line-through; text-decoration-color: var(--accent); text-decoration-thickness: 4px; }
+.col .bar-fill { width: 78px; border-radius: 14px 14px 6px 6px; }
+.col .who { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #ffffffb3; }
+.stamp { position: absolute; top: 78px; right: 26px; transform: rotate(10deg); border: 3px solid var(--mint); color: var(--mint); border-radius: 12px; padding: 4px 10px; font-weight: 900; font-size: 14px; letter-spacing: 1px; }
+
+/* All slides for review */
+.review h3 { margin: 0 0 14px; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.mini { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; padding: 0 0 22px; display: flex; flex-direction: column; text-align: center; gap: 0; min-width: 0; cursor: pointer; overflow: hidden; font: inherit; color: inherit; }
+.mini:hover { border-color: var(--ink); }
+.mini .scene { flex: none; height: 250px; border-radius: 0 0 28px 28px; }
+.mini .copy { padding: 18px 18px 0; }
+.mini .copy h2 { font-size: 26px; }
+.mini .copy p { font-size: 13.5px; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; } }
+@media (max-width: 460px) { .phone { border-width: 8px; border-radius: 36px; } .copy h2 { font-size: 30px; } }
+@media (prefers-reduced-motion: reduce) { .track, .dot { transition: none; } .float, .bell { animation: none; } }
+</style>
+
+<div class="page">
+  <header class="intro">
+    <h1>Welcome tour preview</h1>
+    <p>Tap Next or swipe the phone. The three slides are laid out below too.</p>
+  </header>
+
+  <div class="stage">
+    <div class="phone" id="phone" aria-roledescription="carousel" aria-label="Punchbook welcome tour">
+      <div class="bar">
+        <div class="brand">punchbook<span>.</span></div>
+        <button class="skip" id="skip" type="button">Skip</button>
+      </div>
+      <div class="track" id="track"></div>
+      <div class="foot">
+        <div class="dots" id="dots" aria-hidden="true"></div>
+        <button class="cta" id="cta" type="button">Next</button>
+      </div>
+      <div class="done" id="done" hidden>
+        <div><strong style="font-size:20px">Home screen opens here</strong><p>The tour is shown once, on first launch.</p><button type="button" id="again">Watch again</button></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="review">
+    <h3>All three slides</h3>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<script>
+const BELL = '<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ffc94a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+
+const scenes = {
+  pickup: `
+    <span class="ring" style="width:300px;height:300px"></span>
+    <span class="ring" style="width:200px;height:200px"></span>
+    <span class="blob" style="width:90px;height:90px;background:#ffffff14;left:-20px;bottom:30px"></span>
+    <span class="spark float" style="background:var(--sun);top:90px;left:44px"></span>
+    <span class="spark float b" style="background:var(--accent);bottom:58px;right:46px"></span>
+    <span class="spark float c" style="background:var(--mint);top:120px;right:36px;width:8px;height:8px"></span>
+    <div class="bag float b"><b>p<span>.</span></b></div>
+    <span class="step float" style="top:96px;left:22px"><i style="background:var(--accent)">1</i>Order</span>
+    <span class="step float c" style="top:128px;right:18px"><i style="background:var(--green)">2</i>Pay</span>
+    <span class="step float b" style="bottom:42px;left:50%;transform:translateX(-50%)"><i style="background:var(--ink)">3</i>Collect</span>`,
+  wait: `
+    <span class="ring" style="width:280px;height:280px"></span>
+    <span class="ring" style="width:190px;height:190px"></span>
+    <span class="spark float" style="background:var(--ink);top:96px;left:48px;width:8px;height:8px"></span>
+    <span class="spark float b" style="background:var(--accent);top:84px;right:58px"></span>
+    <div class="bell" style="margin-top:-70px">${BELL}</div>
+    <div class="toast float c"><span class="app">p</span><div><small>Punchbook · now</small><strong>Your order is ready! Walk in and collect.</strong></div></div>`,
+  fair: `
+    <span class="blob" style="width:240px;height:240px;background:#ffffff08;top:-60px;left:-70px"></span>
+    <span class="spark float" style="background:var(--mint);top:96px;left:40px"></span>
+    <span class="spark float b" style="background:var(--sun);bottom:40px;right:40px;width:8px;height:8px"></span>
+    <span class="stamp">FAIRER</span>
+    <div class="bars" style="margin-top:30px">
+      <div class="col"><span class="val old">30%</span><span class="bar-fill" style="height:120px;background:var(--accent)"></span><span class="who">Delivery apps</span></div>
+      <div class="col"><span class="val">10%</span><span class="bar-fill float" style="height:40px;background:var(--mint)"></span><span class="who">Punchbook</span></div>
+    </div>`
+};
+
+const slides = [
+  { scene: 'pickup', cls: 's1', title: 'Pickup orders, <em>made easy.</em>', body: 'Same prices as the counter. No app markups.', extra: '<span class="soon"><i></i>Delivery coming soon</span>' },
+  { scene: 'wait', cls: 's2', title: 'No waiting <em>in line.</em>', body: 'We’ll tell you the moment your food is ready. Just walk in and pick it up.' },
+  { scene: 'fair', cls: 's3', title: 'Fair <em>prices.</em>', body: 'Delivery apps charge restaurants up to 30% of every order, which pushes up menu prices. Punchbook charges far less.' }
+];
+
+const track = document.getElementById('track'), dots = document.getElementById('dots'), cta = document.getElementById('cta'),
+  skip = document.getElementById('skip'), done = document.getElementById('done'), grid = document.getElementById('grid');
+const slideHTML = s => `<div class="scene ${s.cls}" aria-hidden="true">${scenes[s.scene]}</div><div class="copy"><h2>${s.title}</h2>${s.body ? `<p>${s.body}</p>` : ''}${s.extra || ''}</div>`;
+track.innerHTML = slides.map((s, i) => `<div class="slide" role="group" aria-label="${i + 1} of ${slides.length}">${slideHTML(s)}</div>`).join('');
+dots.innerHTML = slides.map(() => '<span class="dot"></span>').join('');
+grid.innerHTML = slides.map((s, i) => `<button class="mini" type="button" data-i="${i}" aria-label="Show slide ${i + 1}">${slideHTML(s)}</button>`).join('');
+
+let index = 0;
+function go(i) {
+  index = Math.max(0, Math.min(slides.length - 1, i));
+  track.style.transform = `translateX(-${index * 100}%)`;
+  [...dots.children].forEach((d, n) => d.classList.toggle('on', n === index));
+  [...track.children].forEach((s, n) => s.setAttribute('aria-hidden', String(n !== index)));
+  const last = index === slides.length - 1;
+  cta.textContent = last ? 'Get started' : 'Next';
+  skip.hidden = last;
+}
+cta.addEventListener('click', () => index === slides.length - 1 ? (done.hidden = false) : go(index + 1));
+skip.addEventListener('click', () => { done.hidden = false; });
+document.getElementById('again').addEventListener('click', () => { done.hidden = true; go(0); });
+grid.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) { done.hidden = true; go(Number(b.dataset.i)); document.getElementById('phone').scrollIntoView({behavior: 'smooth', block: 'center'}); } });
+document.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(index + 1); if (e.key === 'ArrowLeft') go(index - 1); });
+let startX = null;
+track.addEventListener('pointerdown', e => { startX = e.clientX; });
+track.addEventListener('pointerup', e => { if (startX === null) return; const dx = e.clientX - startX; if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1)); startX = null; });
+go(0);
+</script>

@@ -5,7 +5,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, Sty
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BagIcon, CloseIcon, ReceiptIcon, ScooterIcon, SearchIcon } from '@/components/icons';
 import { Notice } from '@/components/ui';
-import { getRestaurants, imageUrl, type PickupOrder, type PickupStatus, type Restaurant } from '@/lib/api';
+import { DELIVERY_ENABLED, getRestaurants, imageUrl, type PickupOrder, type PickupStatus, type Restaurant } from '@/lib/api';
 import { clock } from '@/lib/format';
 import { colors, radius } from '@/lib/theme';
 import { useCart } from '@/state/cart';
@@ -98,17 +98,21 @@ export default function Home() {
       <View style={styles.toggle} accessibilityRole="radiogroup" accessibilityLabel="Pickup or delivery">
         {(['pickup', 'delivery'] as const).map(f => {
           const on = fulfilment === f;
+          const soon = f === 'delivery' && !DELIVERY_ENABLED;
           const Glyph = f === 'pickup' ? BagIcon : ScooterIcon;
           return (
             <Pressable
               key={f}
               accessibilityRole="radio"
-              accessibilityState={{ checked: on }}
+              accessibilityState={{ checked: on, disabled: soon }}
+              accessibilityLabel={soon ? 'Delivery, coming soon' : undefined}
+              disabled={soon}
               onPress={() => setFulfilment(f)}
               style={[styles.toggleOption, on && styles.toggleOn]}
             >
-              <Glyph size={18} color={on ? '#fff' : '#3d3c36'} />
-              <Text style={[styles.toggleText, on && { color: '#fff' }]}>{f === 'pickup' ? 'Pickup' : 'Delivery'}</Text>
+              <Glyph size={18} color={on ? '#fff' : soon ? '#a3a198' : '#3d3c36'} />
+              <Text style={[styles.toggleText, on && { color: '#fff' }, soon && { color: '#a3a198' }]}>{f === 'pickup' ? 'Pickup' : 'Delivery'}</Text>
+              {soon && <Text style={styles.soonTag}>SOON</Text>}
             </Pressable>
           );
         })}
@@ -289,6 +293,7 @@ const styles = StyleSheet.create({
   toggle: { flexDirection: 'row', gap: 4, backgroundColor: '#e8e4d8', borderRadius: 14, padding: 4, marginTop: 12 },
   toggleOption: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 44, borderRadius: 11 },
   toggleOn: { backgroundColor: colors.ink },
+  soonTag: { fontSize: 10, fontWeight: '900', letterSpacing: 0.6, color: colors.accent, backgroundColor: '#ffe9e1', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, overflow: 'hidden' },
   toggleText: { fontSize: 14, fontWeight: '700', color: '#3d3c36' },
   live: { backgroundColor: colors.ink, borderRadius: 20, padding: 16, marginTop: 16 },
   liveTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },

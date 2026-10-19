@@ -25,6 +25,9 @@ export type PickupStatus = 'new' | 'preparing' | 'ready' | 'collected' | 'cancel
 export type PaymentMethod = 'card' | 'justpay';
 export type Fulfilment = 'pickup' | 'delivery';
 
+/** Delivery is built but not launched yet: the app shows it as "Coming soon". Flip to true to open it. */
+export const DELIVERY_ENABLED = false;
+
 /** Flat delivery charge in LKR. The server applies the same amount. */
 export const DELIVERY_FEE = 250;
 
