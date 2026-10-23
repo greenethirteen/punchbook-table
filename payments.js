@@ -8,7 +8,11 @@
 //                          which is only for testing: any order can be marked paid for free.
 // PAYMENTS_LK_WEBHOOK_SECRET  Signing secret of the webhook endpoint registered in the dashboard.
 // SIMULATE_PAYMENTS=false  Refuse simulated payments even when no key is set.
+//
+// An order can instead be paid through OnePay (onepay.js) when its page asks for gateway "onepay"
+// (the /peppermint-v5 menu does). The same rules apply: paid only once OnePay confirms the amount.
 import crypto from 'crypto';
+import {createOnepay} from './onepay.js';
 
 const API = () => process.env.PAYMENTS_LK_API_BASE || 'https://api.payments.lk/v1'; // overridable for tests
 const RECHECK_MS = 60000, RECHECK_WINDOW_MS = 2 * 3600000, SIGNATURE_TOLERANCE_S = 300;
@@ -20,6 +24,8 @@ export function createPayments({orders, publicBase, onPaid}) {
   const provider = () => key() ? 'payments.lk' : 'simulated';
   const simulationAllowed = () => !key() && String(process.env.SIMULATE_PAYMENTS || 'true').toLowerCase() !== 'false';
   const cents = o => Math.round(Number(o.total) * 100);
+  const onepay = createOnepay();
+  const isOnepay = o => o.payment?.provider === 'onepay';
 
   async function call(method, path, body, idempotencyKey) {
     const res = await fetch(API() + path, {
@@ -43,7 +49,14 @@ export function createPayments({orders, publicBase, onPaid}) {
 
   /** Reads the order's checkout back from Payments.lk and marks the order paid if it succeeded. */
   async function reconcile(o) {
-    if (!key() || !o.payment?.checkoutId || o.paymentStatus === 'paid') return o;
+    if (o.paymentStatus === 'paid') return o;
+    if (isOnepay(o)) {
+      if (!o.payment.txId || !onepay.configured()) return o;
+      const r = await onepay.check(o.payment.txId);
+      if (r.paid && (r.amount == null || Math.round(r.amount * 100) === cents(o))) markPaid(o, {provider: 'onepay', paymentId: o.payment.txId, feeCents: null});
+      return o;
+    }
+    if (!key() || !o.payment?.checkoutId) return o;
     const checkout = await call('GET', `/checkouts/${encodeURIComponent(o.payment.checkoutId)}`);
     const p = checkout.payment || {};
     o.payment.checkoutStatus = checkout.status;
@@ -56,10 +69,17 @@ export function createPayments({orders, publicBase, onPaid}) {
   }
 
   /** Starts paying for an order: {redirectUrl} for a real checkout, or the order paid when simulated. */
-  async function start(o, req, {method, returnUrl} = {}) {
+  async function start(o, req, {method, returnUrl, gateway} = {}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
     if (o.orderStatus === 'cancelled') throw Object.assign(new Error('This order was cancelled.'), {status: 409});
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
+    if (gateway === 'onepay') {
+      if (!onepay.configured()) throw Object.assign(new Error('OnePay isn’t set up yet.'), {status: 503});
+      if (isOnepay(o)) { await reconcile(o).catch(() => {}); if (o.paymentStatus === 'paid') return {ok: true, order: o}; }
+      const {url, txId} = await onepay.start(o, `${publicBase(req)}/payment-return.html?order=${encodeURIComponent(o.id)}`);
+      o.payment = {provider: 'onepay', txId, url, attempts: (o.payment?.attempts || 0) + 1};
+      return {ok: true, simulated: false, redirectUrl: url, order: o};
+    }
     if (!key()) {
       if (!simulationAllowed()) throw Object.assign(new Error('Payments aren’t set up yet.'), {status: 503});
       markPaid(o, {provider: 'simulated', ref: (o.paymentMethod === 'justpay' ? 'JP' : 'CARD') + '-DEMO-' + crypto.randomBytes(3).toString('hex').toUpperCase()});
@@ -89,6 +109,12 @@ export function createPayments({orders, publicBase, onPaid}) {
   /** Refunds a paid order in full. Simulated payments are just marked refunded. */
   async function refund(o, reason) {
     if (o.paymentStatus !== 'paid') return;
+    // No refund API is documented for OnePay yet: the order is marked for a refund from the OnePay dashboard.
+    if (isOnepay(o)) {
+      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: 'Refund this in the OnePay merchant dashboard.'};
+      o.paymentStatus = 'refund_pending';
+      return;
+    }
     if (o.payment?.provider === 'payments.lk' && o.payment.paymentId) {
       const r = await call('POST', '/refunds', {paymentId: o.payment.paymentId, reason: String(reason || 'Order cancelled').slice(0, 200)}, `refund-${o.id}`);
       o.refund = {id: r.id, status: r.status, amount: r.amountCents / 100, at: new Date().toISOString()};
@@ -119,7 +145,7 @@ export function createPayments({orders, publicBase, onPaid}) {
     const pay = method => async (req, res) => {
       const o = find(req, res);
       if (!o) return;
-      try { res.json(await start(o, req, {method, returnUrl: req.body?.returnUrl})); }
+      try { res.json(await start(o, req, {method, returnUrl: req.body?.returnUrl, gateway: req.body?.gateway})); }
       catch (e) { console.error('Payment start failed:', e.message); res.status(e.status === 409 || e.status === 503 ? e.status : 502).json({error: e.status === 409 || e.status === 503 ? e.message : 'Couldn’t start the payment. Please try again.'}); }
     };
     app.post('/api/payments/card', pay('card'));
@@ -131,6 +157,14 @@ export function createPayments({orders, publicBase, onPaid}) {
       if (!o) return;
       try { await reconcile(o); } catch (e) { console.error('Payment verify failed:', e.message); }
       res.json({ok: o.paymentStatus === 'paid', simulated: o.payment?.provider === 'simulated', order: o, ...(o.payment?.failureMessage && o.paymentStatus !== 'paid' ? {error: o.payment.failureMessage} : {})});
+    });
+
+    // OnePay's callback (set in the OnePay portal → APP). Only a nudge: the order is checked with OnePay.
+    app.post('/api/payments/onepay/callback', async (req, res) => {
+      const tx = String(req.body?.transaction_id || '');
+      const o = tx && orders.find(x => isOnepay(x) && x.payment.txId === tx);
+      if (o) await reconcile(o).catch(e => console.error('OnePay callback check failed:', e.message));
+      res.json({ok: true});
     });
 
     // The signature is checked, but the order is still only marked paid from Payments.lk's own record.
@@ -151,9 +185,8 @@ export function createPayments({orders, publicBase, onPaid}) {
 
   // Catches payments whose webhook and return both went missing (e.g. the customer closed the app).
   async function recheck() {
-    if (!key()) return;
     const cutoff = Date.now() - RECHECK_WINDOW_MS;
-    for (const o of orders.filter(x => x.paymentStatus === 'pending' && x.payment?.checkoutId && Date.parse(x.createdAt) > cutoff)) {
+    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isOnepay(x) ? onepay.configured() : key() && x.payment?.checkoutId))) {
       await reconcile(o).catch(e => console.error('Payment recheck failed:', o.id, e.message));
     }
   }
