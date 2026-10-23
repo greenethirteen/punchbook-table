@@ -7,9 +7,6 @@
 // PAYMENTS_LK_SECRET_KEY   sk_test_… (sandbox) or sk_live_…. Without it payments are simulated,
 //                          which is only for testing: any order can be marked paid for free.
 // PAYMENTS_LK_WEBHOOK_SECRET  Signing secret of the webhook endpoint registered in the dashboard.
-// PAYMENTS_LK_CUSTOMER_EMAIL  Email sent with every checkout (default orders@punchbook.online). Sending the
-//                          customer's details stops the checkout page asking for contact and billing
-//                          details; Punchbook doesn't collect customer emails, so its receipts come here.
 // SIMULATE_PAYMENTS=false  Refuse simulated payments even when no key is set.
 import crypto from 'crypto';
 
@@ -58,13 +55,6 @@ export function createPayments({orders, publicBase, onPaid}) {
     return o;
   }
 
-  // Name 2-80 characters; phone only when it is a Sri Lankan mobile number, which Payments.lk accepts.
-  function checkoutCustomer(o) {
-    const name = String(o.customer?.name || (o.table ? `Table ${o.table}` : 'Punchbook guest')).trim().slice(0, 80).padEnd(2, '.');
-    const phone = String(o.customer?.phone || '').replace(/[\s-]/g, '');
-    return {name, email: process.env.PAYMENTS_LK_CUSTOMER_EMAIL || 'orders@punchbook.online', ...(/^(\+94|0)7\d{8}$/.test(phone) ? {phone} : {})};
-  }
-
   /** Starts paying for an order: {redirectUrl} for a real checkout, or the order paid when simulated. */
   async function start(o, req, {method, returnUrl} = {}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
@@ -88,7 +78,6 @@ export function createPayments({orders, publicBase, onPaid}) {
       amountCents: cents(o),
       description: `${o.restaurantName || 'Punchbook'} order ${o.id}`.slice(0, 120),
       reference: o.id,
-      customer: checkoutCustomer(o),
       successUrl: back || page,
       cancelUrl: back ? `${back}${back.includes('?') ? '&' : '?'}cancelled=1` : `${page}&cancelled=1`,
       expiresInMinutes: 30,
