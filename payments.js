@@ -75,13 +75,15 @@ export function createPayments({orders, publicBase, onPaid}) {
   }
 
   /** Starts paying for an order: {redirectUrl} for a real checkout, or the order paid when simulated. */
-  async function start(o, req, {method, returnUrl, gateway} = {}) {
+  async function start(o, req, {method, returnUrl, gateway, popup, payhereMethod} = {}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
     if (o.orderStatus === 'cancelled') throw Object.assign(new Error('This order was cancelled.'), {status: 409});
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
     if (gateway === 'payhere') {
       if (!payhere.configured()) throw Object.assign(new Error('PayHere isn’t set up yet.'), {status: 503});
       o.payment = {provider: 'payhere', attempts: (o.payment?.attempts || 0) + 1};
+      // The /peppermint-v7 menu opens PayHere as a popup over the page instead of leaving it.
+      if (popup) return {ok: true, simulated: false, payhere: payhere.popupPayment(o, publicBase(req), String(payhereMethod || '')), order: o};
       return {ok: true, simulated: false, redirectUrl: `${publicBase(req)}/api/payments/payhere/checkout/${encodeURIComponent(o.id)}`, order: o};
     }
     if (gateway === 'onepay') {
@@ -156,7 +158,8 @@ export function createPayments({orders, publicBase, onPaid}) {
     const pay = method => async (req, res) => {
       const o = find(req, res);
       if (!o) return;
-      try { res.json(await start(o, req, {method, returnUrl: req.body?.returnUrl, gateway: req.body?.gateway})); }
+      const b = req.body || {};
+      try { res.json(await start(o, req, {method, returnUrl: b.returnUrl, gateway: b.gateway, popup: b.popup === true, payhereMethod: b.payhereMethod})); }
       catch (e) { console.error('Payment start failed:', e.message); res.status(e.status === 409 || e.status === 503 ? e.status : 502).json({error: e.status === 409 || e.status === 503 ? e.message : 'Couldn’t start the payment. Please try again.'}); }
     };
     app.post('/api/payments/card', pay('card'));

@@ -10,6 +10,8 @@
 // PAYHERE_SANDBOX=false                         Use live PayHere instead of sandbox.payhere.lk.
 import crypto from 'crypto';
 
+// Methods PayHere can open directly, skipping its own "Pay with" screen (its payment_method field).
+const DIRECT_METHODS = new Set(['VISA', 'MASTER', 'AMEX', 'HELAPAY', 'FRIMI', 'QPLUS']);
 const md5 = s => crypto.createHash('md5').update(s).digest('hex').toUpperCase();
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 
@@ -53,6 +55,11 @@ export function createPayhere() {
 <script>document.getElementById('f').submit()</script></body></html>`;
   }
 
+  /** The payment object for PayHere's popup (JavaScript SDK), optionally opening straight on one method. */
+  function popupPayment(o, base, method) {
+    return {sandbox: host().includes('sandbox'), ...fields(o, base), ...(DIRECT_METHODS.has(method) ? {payment_method: method} : {})};
+  }
+
   /** Checks a notify_url callback. Returns {orderId, paid, amount, paymentId} or null when the signature is wrong. */
   function readNotify(b) {
     const want = md5(String(b.merchant_id) + b.order_id + b.payhere_amount + b.payhere_currency + b.status_code + secretHash());
@@ -60,5 +67,5 @@ export function createPayhere() {
     return {orderId: String(b.order_id), paid: String(b.status_code) === '2', amount: Number(b.payhere_amount), currency: b.payhere_currency, paymentId: String(b.payment_id || ''), method: b.method || null};
   }
 
-  return {configured, redirectPage, readNotify, host};
+  return {configured, redirectPage, popupPayment, readNotify, host};
 }
