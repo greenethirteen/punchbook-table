@@ -13,6 +13,7 @@ import {createStaff} from './staff.js';
 import {createPayments} from './payments.js';
 import {createKitchen} from './kitchen.js';
 import {createPush} from './push.js';
+import {createOnepayTest} from './onepay-test.js';
 
 // Load .env locally when present; hosted env vars (e.g. Railway) are left untouched.
 try{process.loadEnvFile?.()}catch(e){if(e.code!=='ENOENT')throw e}
@@ -84,6 +85,8 @@ app.get('/api/admin/companies/:id',requireAdmin,async(req,res)=>{const c=(await 
 app.patch('/api/admin/companies/:id/status',requireAdmin,async(req,res)=>{const status=cleanText(req.body?.status,40);if(!COMPANY_STATUSES.has(status))return res.status(400).json({error:'Invalid company status.'});const companies=await readCompanies(),c=companies.find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});c.status=status;c.adminNotes=cleanText(req.body?.adminNotes,3000);c.updatedAt=new Date().toISOString();await writeCompanies(companies);res.json({ok:true,company:summariseCompany(c)})});
 // Payments.lk checkout, webhook and refunds. See payments.js.
 payments.mount(app);
+// OnePay sandbox trial page (/onepay-test). See onepay-test.js.
+createOnepayTest({publicBase}).mount(app);
 // Staff sign-in and restaurant order controls. See staff.js and kitchen.js.
 staff.mount(app);kitchen.mount(app);
 // Square POS bridge (console at /pos). See pos-square.js.
@@ -108,6 +111,6 @@ app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${
 app.get('/api/public/companies',staff.requireAdmin,async(_q,res)=>{try{const companies=(await readCompanies()).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));res.json({companies:companies.map(publicCompany)})}catch{res.status(500).json({error:'Could not load applications.'})}});
 app.get('/api/public/companies/:id',staff.requireAdmin,async(req,res)=>{const c=(await readCompanies()).find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});res.json({company:publicCompany(c)})});
 app.patch('/api/public/companies/:id/status',staff.requireAdmin,async(req,res)=>{const status=cleanText(req.body?.status,40);if(!COMPANY_STATUSES.has(status))return res.status(400).json({error:'Invalid company status.'});const companies=await readCompanies(),c=companies.find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});c.status=status;c.adminNotes=cleanText(req.body?.adminNotes,3000);c.updatedAt=new Date().toISOString();await writeCompanies(companies);res.json({ok:true,company:publicCompany(c)})});
-app.get(['/peppermint','/peppermint/t/:table','/r/:restaurant/t/:table'],(_q,r)=>sendPage(r,'peppermint.html'));app.get(['/amraleaf-v3','/amraleaf-v3/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'));app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>sendPage(r,'pos.html'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/accounts',(_q,r)=>sendPage(r,'accounts.html'));
+app.get(['/peppermint','/peppermint/t/:table','/r/:restaurant/t/:table'],(_q,r)=>sendPage(r,'peppermint.html'));app.get(['/amraleaf-v3','/amraleaf-v3/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'));app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>sendPage(r,'pos.html'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/onepay-test',(_q,r)=>sendPage(r,'onepay-test.html'));app.get('/accounts',(_q,r)=>sendPage(r,'accounts.html'));
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE} · ${orderStore.count()} saved orders loaded`));
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>orderStore.flush().then(orderStore.flush).finally(()=>process.exit(0)));
