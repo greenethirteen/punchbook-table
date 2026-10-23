@@ -10,9 +10,12 @@
 // SIMULATE_PAYMENTS=false  Refuse simulated payments even when no key is set.
 //
 // An order can instead be paid through OnePay (onepay.js) when its page asks for gateway "onepay"
-// (the /peppermint-v5 menu does). The same rules apply: paid only once OnePay confirms the amount.
+// (the /peppermint-v5 menu does), or through PayHere (payhere.js, gateway "payhere", /peppermint-v6).
+// The same rules apply: paid only once the gateway confirms the amount.
 import crypto from 'crypto';
+import express from 'express';
 import {createOnepay} from './onepay.js';
+import {createPayhere} from './payhere.js';
 
 const API = () => process.env.PAYMENTS_LK_API_BASE || 'https://api.payments.lk/v1'; // overridable for tests
 const RECHECK_MS = 60000, RECHECK_WINDOW_MS = 2 * 3600000, SIGNATURE_TOLERANCE_S = 300;
@@ -24,8 +27,9 @@ export function createPayments({orders, publicBase, onPaid}) {
   const provider = () => key() ? 'payments.lk' : 'simulated';
   const simulationAllowed = () => !key() && String(process.env.SIMULATE_PAYMENTS || 'true').toLowerCase() !== 'false';
   const cents = o => Math.round(Number(o.total) * 100);
-  const onepay = createOnepay();
+  const onepay = createOnepay(), payhere = createPayhere();
   const isOnepay = o => o.payment?.provider === 'onepay';
+  const isPayhere = o => o.payment?.provider === 'payhere';
 
   async function call(method, path, body, idempotencyKey) {
     const res = await fetch(API() + path, {
@@ -50,6 +54,8 @@ export function createPayments({orders, publicBase, onPaid}) {
   /** Reads the order's checkout back from Payments.lk and marks the order paid if it succeeded. */
   async function reconcile(o) {
     if (o.paymentStatus === 'paid') return o;
+    // PayHere has no lookup without extra API keys: its signed notify_url callback is what marks orders paid.
+    if (isPayhere(o)) return o;
     if (isOnepay(o)) {
       if (!o.payment.txId || !onepay.configured()) return o;
       const r = await onepay.check(o.payment.txId);
@@ -73,6 +79,11 @@ export function createPayments({orders, publicBase, onPaid}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
     if (o.orderStatus === 'cancelled') throw Object.assign(new Error('This order was cancelled.'), {status: 409});
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
+    if (gateway === 'payhere') {
+      if (!payhere.configured()) throw Object.assign(new Error('PayHere isn’t set up yet.'), {status: 503});
+      o.payment = {provider: 'payhere', attempts: (o.payment?.attempts || 0) + 1};
+      return {ok: true, simulated: false, redirectUrl: `${publicBase(req)}/api/payments/payhere/checkout/${encodeURIComponent(o.id)}`, order: o};
+    }
     if (gateway === 'onepay') {
       if (!onepay.configured()) throw Object.assign(new Error('OnePay isn’t set up yet.'), {status: 503});
       if (isOnepay(o)) { await reconcile(o).catch(() => {}); if (o.paymentStatus === 'paid') return {ok: true, order: o}; }
@@ -109,9 +120,9 @@ export function createPayments({orders, publicBase, onPaid}) {
   /** Refunds a paid order in full. Simulated payments are just marked refunded. */
   async function refund(o, reason) {
     if (o.paymentStatus !== 'paid') return;
-    // No refund API is documented for OnePay yet: the order is marked for a refund from the OnePay dashboard.
-    if (isOnepay(o)) {
-      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: 'Refund this in the OnePay merchant dashboard.'};
+    // No refund API is set up for OnePay or PayHere: the order is marked for a refund from their dashboard.
+    if (isOnepay(o) || isPayhere(o)) {
+      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isOnepay(o) ? 'OnePay' : 'PayHere'} merchant dashboard.`};
       o.paymentStatus = 'refund_pending';
       return;
     }
@@ -157,6 +168,21 @@ export function createPayments({orders, publicBase, onPaid}) {
       if (!o) return;
       try { await reconcile(o); } catch (e) { console.error('Payment verify failed:', e.message); }
       res.json({ok: o.paymentStatus === 'paid', simulated: o.payment?.provider === 'simulated', order: o, ...(o.payment?.failureMessage && o.paymentStatus !== 'paid' ? {error: o.payment.failureMessage} : {})});
+    });
+
+    // PayHere: the page that posts to PayHere's checkout, and PayHere's signed result (form-encoded).
+    app.get('/api/payments/payhere/checkout/:id', (req, res) => {
+      const o = orders.find(x => x.id === req.params.id && isPayhere(x));
+      if (!o || !payhere.configured()) return res.status(404).send('Payment not found.');
+      if (o.paymentStatus === 'paid') return res.redirect(`/payment-return.html?order=${encodeURIComponent(o.id)}`);
+      res.set('Cache-Control', 'no-store').type('html').send(payhere.redirectPage(o, publicBase(req)));
+    });
+    app.post('/api/payments/payhere/notify', express.urlencoded({extended: false}), (req, res) => {
+      const r = payhere.readNotify(req.body || {});
+      if (!r) { console.error('PayHere notify with a bad signature for', req.body?.order_id); return res.status(400).send('bad signature'); }
+      const o = orders.find(x => x.id === r.orderId && isPayhere(x));
+      if (o && r.paid && r.currency === 'LKR' && Math.round(r.amount * 100) === cents(o)) markPaid(o, {provider: 'payhere', paymentId: r.paymentId, card: r.method, feeCents: null});
+      res.send('ok');
     });
 
     // OnePay's callback (set in the OnePay portal → APP). Only a nudge: the order is checked with OnePay.

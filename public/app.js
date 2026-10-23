@@ -1,7 +1,7 @@
 let data=null, cart={}, selected='All', payMethod='card';
 const table=(location.pathname.match(/\/t\/([^/]+)/)||[])[1]||'12';
-// /peppermint-v5 is the same menu paying through OnePay instead of Payments.lk.
-const gateway=location.pathname.startsWith('/peppermint-v5')?'onepay':undefined;
+// /peppermint-v5 and -v6 are the same menu paying through OnePay or PayHere instead of Payments.lk.
+const gateway=location.pathname.startsWith('/peppermint-v5')?'onepay':location.pathname.startsWith('/peppermint-v6')?'payhere':undefined;
 document.getElementById('tablePill').textContent='Table '+table;
 const money=n=>'LKR '+Number(n).toLocaleString('en-LK');
 const iconPaths = {
