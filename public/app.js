@@ -1,7 +1,7 @@
 let data=null, cart={}, selected='All', payMethod='card';
 const table=(location.pathname.match(/\/t\/([^/]+)/)||[])[1]||'12';
 // /peppermint-v5 and -v6 are the same menu paying through OnePay or PayHere instead of Payments.lk.
-const gateway=location.pathname.startsWith('/peppermint-v5')?'onepay':/^\/peppermint-v[67]/.test(location.pathname)?'payhere':undefined;
+const gateway=location.pathname.startsWith('/peppermint-v5')?'onepay':/^\/peppermint-v[67]/.test(location.pathname)?'payhere':location.pathname.startsWith('/peppermint-v8')?'payplus':undefined;
 // /peppermint-v7: one Pay button; PayHere opens as a popup over the menu and the customer picks a method there.
 const popupPay=location.pathname.startsWith('/peppermint-v7');
 let pending=null,phLoading=null;

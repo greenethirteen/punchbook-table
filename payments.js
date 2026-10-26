@@ -10,12 +10,14 @@
 // SIMULATE_PAYMENTS=false  Refuse simulated payments even when no key is set.
 //
 // An order can instead be paid through OnePay (onepay.js) when its page asks for gateway "onepay"
-// (the /peppermint-v5 menu does), or through PayHere (payhere.js, gateway "payhere", /peppermint-v6).
+// (the /peppermint-v5 menu does), through PayHere (payhere.js, gateway "payhere", /peppermint-v6 and -v7)
+// or through PayPlus (payplus.js, gateway "payplus", /peppermint-v8).
 // The same rules apply: paid only once the gateway confirms the amount.
 import crypto from 'crypto';
 import express from 'express';
 import {createOnepay} from './onepay.js';
 import {createPayhere} from './payhere.js';
+import {createPayplus} from './payplus.js';
 
 const API = () => process.env.PAYMENTS_LK_API_BASE || 'https://api.payments.lk/v1'; // overridable for tests
 const RECHECK_MS = 60000, RECHECK_WINDOW_MS = 2 * 3600000, SIGNATURE_TOLERANCE_S = 300;
@@ -27,9 +29,10 @@ export function createPayments({orders, publicBase, onPaid}) {
   const provider = () => key() ? 'payments.lk' : 'simulated';
   const simulationAllowed = () => !key() && String(process.env.SIMULATE_PAYMENTS || 'true').toLowerCase() !== 'false';
   const cents = o => Math.round(Number(o.total) * 100);
-  const onepay = createOnepay(), payhere = createPayhere();
+  const onepay = createOnepay(), payhere = createPayhere(), payplus = createPayplus();
   const isOnepay = o => o.payment?.provider === 'onepay';
   const isPayhere = o => o.payment?.provider === 'payhere';
+  const isPayplus = o => o.payment?.provider === 'payplus';
 
   async function call(method, path, body, idempotencyKey) {
     const res = await fetch(API() + path, {
@@ -55,7 +58,7 @@ export function createPayments({orders, publicBase, onPaid}) {
   async function reconcile(o) {
     if (o.paymentStatus === 'paid') return o;
     // PayHere has no lookup without extra API keys: its signed notify_url callback is what marks orders paid.
-    if (isPayhere(o)) return o;
+    if (isPayhere(o) || isPayplus(o)) return o; // PayPlus too: only its notification marks orders paid
     if (isOnepay(o)) {
       if (!o.payment.txId || !onepay.configured()) return o;
       const r = await onepay.check(o.payment.txId);
@@ -79,6 +82,12 @@ export function createPayments({orders, publicBase, onPaid}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
     if (o.orderStatus === 'cancelled') throw Object.assign(new Error('This order was cancelled.'), {status: 409});
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
+    if (gateway === 'payplus') {
+      if (!payplus.configured()) throw Object.assign(new Error('PayPlus isn’t set up yet.'), {status: 503});
+      const base = publicBase(req), {url, sessionId} = await payplus.start(o, {base, domain: new URL(base).host});
+      o.payment = {provider: 'payplus', sessionId, url, attempts: (o.payment?.attempts || 0) + 1};
+      return {ok: true, simulated: false, redirectUrl: url, order: o};
+    }
     if (gateway === 'payhere') {
       if (!payhere.configured()) throw Object.assign(new Error('PayHere isn’t set up yet.'), {status: 503});
       o.payment = {provider: 'payhere', attempts: (o.payment?.attempts || 0) + 1};
@@ -123,8 +132,8 @@ export function createPayments({orders, publicBase, onPaid}) {
   async function refund(o, reason) {
     if (o.paymentStatus !== 'paid') return;
     // No refund API is set up for OnePay or PayHere: the order is marked for a refund from their dashboard.
-    if (isOnepay(o) || isPayhere(o)) {
-      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isOnepay(o) ? 'OnePay' : 'PayHere'} merchant dashboard.`};
+    if (isOnepay(o) || isPayhere(o) || isPayplus(o)) {
+      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isOnepay(o) ? 'OnePay' : isPayhere(o) ? 'PayHere' : 'PayPlus'} merchant dashboard.`};
       o.paymentStatus = 'refund_pending';
       return;
     }
@@ -186,6 +195,19 @@ export function createPayments({orders, publicBase, onPaid}) {
       const o = orders.find(x => x.id === r.orderId && isPayhere(x));
       if (o && r.paid && r.currency === 'LKR' && Math.round(r.amount * 100) === cents(o)) markPaid(o, {provider: 'payhere', paymentId: r.paymentId, card: r.method, feeCents: null});
       res.send('ok');
+    });
+
+    // PayPlus's result (base64 or JSON). The full notification is kept on the order while the format is confirmed.
+    app.post('/api/payments/payplus/notify', express.text({type: '*/*', limit: '1mb'}), (req, res) => {
+      const r = payplus.readNotify(req.body, req.get('authorization'));
+      console.log('PayPlus notify:', r ? `${r.orderId} paid=${r.paid} verified=${r.verified}` : 'rejected', String(req.body).slice(0, 600));
+      if (!r) return res.status(400).json({error: 'Bad notification'});
+      const o = orders.find(x => x.id === r.orderId && isPayplus(x));
+      if (o) {
+        o.payment.lastNotify = {at: new Date().toISOString(), verified: r.verified, raw: r.raw};
+        if (r.paid && (r.amount == null || Math.round(r.amount * 100) === cents(o))) markPaid(o, {provider: 'payplus', paymentId: r.txId, feeCents: null});
+      }
+      res.json({ok: true});
     });
 
     // OnePay's callback (set in the OnePay portal → APP). Only a nudge: the order is checked with OnePay.

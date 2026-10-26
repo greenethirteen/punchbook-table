@@ -13,7 +13,7 @@ function show(icon,title,msg,order){
     if(/Android/i.test(navigator.userAgent)){back.href='intent://order/'+encodeURIComponent(id)+'#Intent;scheme=punchbook;package=order.punchbook.com;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=order.punchbook.com')+';end';back.textContent='Back to the Punchbook app';}
     else{back.hidden=true;if(icon==='✓')$('#msg').textContent+=' Your order updates are in the Punchbook app.';}
   }
-  else{back.href=(order.payment?.provider==='onepay'?'/peppermint-v5/t/':order.payment?.provider==='payhere'?'/peppermint-v6/t/':order.restaurantId==='amra'?'/amraleaf-v3/t/':'/peppermint/t/')+encodeURIComponent(order.table||'');back.textContent='Back to the menu';}
+  else{back.href=(order.payment?.provider==='onepay'?'/peppermint-v5/t/':order.payment?.provider==='payhere'?'/peppermint-v6/t/':order.payment?.provider==='payplus'?'/peppermint-v8/t/':order.restaurantId==='amra'?'/amraleaf-v3/t/':'/peppermint/t/')+encodeURIComponent(order.table||'');back.textContent='Back to the menu';}
 }
 async function check(tries){
   try{
