@@ -3,7 +3,7 @@
 // https://support.payhere.lk/api-&-mobile-sdk/javascript-sdk
 // PayHere reports the result to notify_url; only a correctly signed notification for the right amount marks an
 // order paid. It requires name, email, phone and address up front; table orders have none, so they get
-// the table number and the restaurant's own area.
+// "Punchbook Guest" and the restaurant's own area.
 //
 // PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET  Sandbox merchant and the secret for this domain
 //                                               (PayHere → Integrations → add domain).
@@ -32,8 +32,8 @@ export function createPayhere() {
       items: `${o.restaurantName || 'Punchbook'} order ${o.id}`,
       currency: 'LKR',
       amount,
-      first_name: first || (o.table ? 'Table' : 'Punchbook'),
-      last_name: rest.join(' ') || (o.table ? String(o.table) : 'guest'),
+      first_name: first || 'Punchbook',
+      last_name: first ? rest.join(' ') || '-' : 'Guest',
       email: env('PAYMENTS_CUSTOMER_EMAIL') || 'orders@punchbook.online',
       phone: /^(\+94|0)7\d{8}$/.test(phone) ? phone : '0770000000',
       address: o.restaurantName || 'Punchbook',

@@ -4,7 +4,7 @@
 // body with "Authorization: hmac <hex>".
 // PayPlus also POSTs a Base64 result to notifyUrl, but an order is only marked paid after the signed
 // status check (/api/v2/payment-session/status) says so for the right amount.
-// PayPlus requires the customer's name, email and phone; table orders get the table number and placeholders.
+// PayPlus requires the customer's name, email and phone; orders without them get "Punchbook Guest" and placeholders.
 //
 // PAYPLUS_MERCHANT_ID, PAYPLUS_SECRET  From dashboard.payplus.lk → Integrations (test mode for sandbox).
 // PAYPLUS_APP_KEY                      Application key, if the account has one (sandbox works without).
@@ -36,8 +36,9 @@ export function createPayplus() {
     const [first, ...rest] = String(o.customer?.name || '').trim().split(/\s+/).filter(Boolean);
     const digits = String(o.customer?.phone || '').replace(/\D/g, '').replace(/^94/, '').replace(/^0/, '');
     return {
-      firstname: (first || (o.table ? 'Table' : 'Punchbook')).slice(0, 100),
-      lastname: (rest.join(' ') || (o.table ? String(o.table) : 'guest')).slice(0, 100),
+      // PayPlus shows these on its card step, so customers without a name on the order see "Punchbook Guest".
+      firstname: (first || 'Punchbook').slice(0, 100),
+      lastname: (first ? rest.join(' ') || '-' : 'Guest').slice(0, 100),
       email: env('PAYMENTS_CUSTOMER_EMAIL') || 'orders@punchbook.online',
       phoneNumber: /^7\d{8}$/.test(digits) ? digits : '770000000',
       dialCode: '+94',
