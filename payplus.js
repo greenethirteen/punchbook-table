@@ -1,93 +1,92 @@
 // PayPlus (DirectPay) hosted checkout, used by payments.js when an order is paid with gateway "payplus"
-// (the /peppermint-v8 menu). Mirrors their official SDK (npm payplus-ipg): the request is a base64 JSON
-// payload signed with HMAC-SHA256 of that base64 text, sent as "Authorization: hmac <hex>".
-// PayPlus POSTs the result to notify_url. Its format isn't documented, so readNotify accepts a base64 or
-// plain JSON body and checks an "hmac" Authorization header the same way; in sandbox an unsigned or
-// unrecognised notification is still accepted (and logged) so the format can be confirmed from a test payment.
+// (the /peppermint-v8 menu). Follows "PayPlus Transactions API v1.7": every request is a JSON payload,
+// Base64-encoded, signed with HMAC-SHA256 of that Base64 text using the merchant secret, and sent as the
+// body with "Authorization: hmac <hex>".
+// PayPlus also POSTs a Base64 result to notifyUrl, but an order is only marked paid after the signed
+// status check (/api/v2/payment-session/status) says so for the right amount.
 // PayPlus requires the customer's name, email and phone; table orders get the table number and placeholders.
 //
-// PAYPLUS_MERCHANT_ID, PAYPLUS_APP_KEY, PAYPLUS_SECRET  From dashboard.payplus.lk (test mode for sandbox).
-// PAYPLUS_SANDBOX=false                                Use the live gateway.
+// PAYPLUS_MERCHANT_ID, PAYPLUS_SECRET  From dashboard.payplus.lk → Integrations (test mode for sandbox).
+// PAYPLUS_APP_KEY                      Application key, if the account has one (sandbox works without).
+// PAYPLUS_SANDBOX=false                Use the live gateway.
 import crypto from 'crypto';
 
-const ENDPOINTS = {
-  sandbox: 'https://gateway-sandbox-api.payplus.lk/api/payment-session/create',
-  live: 'https://gateway-api.payplus.lk/api/payment-session/create',
-};
+const BASE = {sandbox: 'https://gateway-sandbox-api.payplus.lk', live: 'https://gateway-api.payplus.lk'};
+const PAID = new Set(['SUCCESS', 'SUCCESSFUL', 'COMPLETED', 'PAID', 'APPROVED']);
 
 export function createPayplus() {
   const env = n => process.env[n] || '';
-  const configured = () => Boolean(env('PAYPLUS_MERCHANT_ID') && env('PAYPLUS_APP_KEY') && env('PAYPLUS_SECRET'));
+  const configured = () => Boolean(env('PAYPLUS_MERCHANT_ID') && env('PAYPLUS_SECRET'));
   const sandbox = () => env('PAYPLUS_SANDBOX').toLowerCase() !== 'false';
-  const hmac = text => crypto.createHmac('sha256', env('PAYPLUS_SECRET')).update(text).digest('hex');
+  const base = () => env('PAYPLUS_API_URL') || (sandbox() ? BASE.sandbox : BASE.live); // override for tests
+
+  async function call(path, payload) {
+    const body = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64');
+    const signature = crypto.createHmac('sha256', env('PAYPLUS_SECRET')).update(body).digest('hex');
+    const res = await fetch(base() + path, {method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `hmac ${signature}`}, body});
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.result !== 'SUCCESS') {
+      const why = data?.error?.explanation || data?.error?.cause || `PayPlus returned ${res.status}`;
+      throw Object.assign(new Error(why), {status: res.status, code: data?.error?.code});
+    }
+    return data.data || {};
+  }
 
   function customer(o) {
     const [first, ...rest] = String(o.customer?.name || '').trim().split(/\s+/).filter(Boolean);
     const digits = String(o.customer?.phone || '').replace(/\D/g, '').replace(/^94/, '').replace(/^0/, '');
     return {
-      firstname: (first || (o.table ? 'Table' : 'Punchbook')).slice(0, 60),
-      lastname: (rest.join(' ') || (o.table ? String(o.table) : 'guest')).slice(0, 60),
+      firstname: (first || (o.table ? 'Table' : 'Punchbook')).slice(0, 100),
+      lastname: (rest.join(' ') || (o.table ? String(o.table) : 'guest')).slice(0, 100),
       email: env('PAYMENTS_CUSTOMER_EMAIL') || 'orders@punchbook.online',
       phoneNumber: /^7\d{8}$/.test(digits) ? digits : '770000000',
       dialCode: '+94',
     };
   }
 
-  /** Creates a hosted payment session; returns {url, sessionId}. */
-  async function start(o, {base, domain}) {
-    const payload = {
+  /** Creates a hosted payment session; returns {url, token}. */
+  async function start(o, {base: site, domain}) {
+    const d = await call('/api/payment-session/create', {
       merchantId: env('PAYPLUS_MERCHANT_ID'),
       applicationKey: env('PAYPLUS_APP_KEY'),
       domain,
+      platformType: 'WEB',
       amount: Number(Number(o.total).toFixed(2)),
-      type: 'PAYMENT_LINK',
       paymentType: 'ONE_TIME',
+      type: 'PAYMENT_LINK',
       orderId: o.id,
       currency: 'LKR',
       pluginVersion: '1.0.0',
-      notifyUrl: `${base}/api/payments/payplus/notify`,
-      redirectUrl: `${base}/payment-return.html?order=${encodeURIComponent(o.id)}`,
-      source: 'CUSTOM',
-      description: `${o.restaurantName || 'Punchbook'} order ${o.id}`,
+      notifyUrl: `${site}/api/payments/payplus/notify`,
+      redirectUrl: `${site}/payment-return.html?order=${encodeURIComponent(o.id)}`,
+      source: 'NODE_JS',
+      description: `${o.restaurantName || 'Punchbook'} order ${o.id}`.slice(0, 255),
       doInitialPayment: false,
       customerInfo: customer(o),
-    };
-    const body = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64');
-    const res = await fetch(env('PAYPLUS_API_URL') || (sandbox() ? ENDPOINTS.sandbox : ENDPOINTS.live), { // override for tests
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', Authorization: `hmac ${hmac(body)}`},
-      body,
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.data?.link) {
-      console.error('PayPlus session failed:', res.status, JSON.stringify(data).slice(0, 400));
-      throw Object.assign(new Error(data?.message || data?.data?.message || `PayPlus returned ${res.status}`), {status: res.status});
+    if (!d.link) throw new Error('PayPlus didn’t return a payment link.');
+    return {url: d.link, token: d.token || null};
+  }
+
+  /** Asks PayPlus for the order's status; returns {paid, status, amount, txId}. */
+  async function check(orderId) {
+    const d = await call('/api/v2/payment-session/status', {merchantId: env('PAYPLUS_MERCHANT_ID'), orderId});
+    const status = String(d.status || '').toUpperCase();
+    return {paid: PAID.has(status), status, amount: d.amount != null ? Number(d.amount) : null, txId: String(d.transactionId || d.referenceNo || '')};
+  }
+
+  /** The order id in PayPlus's Base64 notification, if it can be read. It is only a cue to run check(). */
+  function notifiedOrderId(raw) {
+    const text = String(raw || '').trim().replace(/^"|"$/g, '');
+    for (const parse of [() => JSON.parse(Buffer.from(text, 'base64').toString('utf8')), () => JSON.parse(text)]) {
+      try {
+        const d = parse();
+        const v = d?.orderId || d?.data?.orderId || d?.order_id;
+        if (v) return String(v);
+      } catch {}
     }
-    return {url: data.data.link, sessionId: data.data.sessionId || null};
+    return null;
   }
 
-  /** Reads PayPlus's notification. Returns {orderId, paid, amount, txId, verified, raw} or null if it can't be trusted. */
-  function readNotify(raw, authorization) {
-    const text = String(raw || '').trim();
-    let data = null;
-    try { data = JSON.parse(Buffer.from(text, 'base64').toString('utf8')); } catch {}
-    if (!data || typeof data !== 'object') { try { data = JSON.parse(text); } catch {} }
-    if (!data || typeof data !== 'object') return null;
-    const sig = String(authorization || '').replace(/^hmac\s+/i, '');
-    const want = hmac(text);
-    const verified = Boolean(sig) && sig.length === want.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(want));
-    if (!verified && !sandbox()) return null;
-    const d = data.data && typeof data.data === 'object' ? {...data, ...data.data} : data;
-    const status = String(d.status || d.transactionStatus || d.paymentStatus || '').toUpperCase();
-    return {
-      orderId: String(d.orderId || d.order_id || d.reference || ''),
-      paid: ['SUCCESS', 'SUCCESSFUL', 'PAID', 'COMPLETED', 'APPROVED'].includes(status),
-      amount: d.amount != null ? Number(d.amount) : (d.transaction?.amount != null ? Number(d.transaction.amount) : null),
-      txId: String(d.transactionId || d.transaction?.id || d.sessionId || ''),
-      verified,
-      raw: data,
-    };
-  }
-
-  return {configured, start, readNotify, sandbox};
+  return {configured, start, check, notifiedOrderId, sandbox};
 }

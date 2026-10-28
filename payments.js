@@ -58,7 +58,14 @@ export function createPayments({orders, publicBase, onPaid}) {
   async function reconcile(o) {
     if (o.paymentStatus === 'paid') return o;
     // PayHere has no lookup without extra API keys: its signed notify_url callback is what marks orders paid.
-    if (isPayhere(o) || isPayplus(o)) return o; // PayPlus too: only its notification marks orders paid
+    if (isPayhere(o)) return o;
+    if (isPayplus(o)) {
+      if (!payplus.configured()) return o;
+      const r = await payplus.check(o.id);
+      o.payment.status = r.status;
+      if (r.paid && (r.amount == null || Math.round(r.amount * 100) === cents(o))) markPaid(o, {provider: 'payplus', paymentId: r.txId, feeCents: null});
+      return o;
+    }
     if (isOnepay(o)) {
       if (!o.payment.txId || !onepay.configured()) return o;
       const r = await onepay.check(o.payment.txId);
@@ -84,8 +91,9 @@ export function createPayments({orders, publicBase, onPaid}) {
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
     if (gateway === 'payplus') {
       if (!payplus.configured()) throw Object.assign(new Error('PayPlus isn’t set up yet.'), {status: 503});
-      const base = publicBase(req), {url, sessionId} = await payplus.start(o, {base, domain: new URL(base).host});
-      o.payment = {provider: 'payplus', sessionId, url, attempts: (o.payment?.attempts || 0) + 1};
+      if (isPayplus(o)) { await reconcile(o).catch(() => {}); if (o.paymentStatus === 'paid') return {ok: true, order: o}; }
+      const base = publicBase(req), {url, token} = await payplus.start(o, {base, domain: new URL(base).host});
+      o.payment = {provider: 'payplus', token, url, attempts: (o.payment?.attempts || 0) + 1};
       return {ok: true, simulated: false, redirectUrl: url, order: o};
     }
     if (gateway === 'payhere') {
@@ -197,16 +205,11 @@ export function createPayments({orders, publicBase, onPaid}) {
       res.send('ok');
     });
 
-    // PayPlus's result (base64 or JSON). The full notification is kept on the order while the format is confirmed.
-    app.post('/api/payments/payplus/notify', express.text({type: '*/*', limit: '1mb'}), (req, res) => {
-      const r = payplus.readNotify(req.body, req.get('authorization'));
-      console.log('PayPlus notify:', r ? `${r.orderId} paid=${r.paid} verified=${r.verified}` : 'rejected', String(req.body).slice(0, 600));
-      if (!r) return res.status(400).json({error: 'Bad notification'});
-      const o = orders.find(x => x.id === r.orderId && isPayplus(x));
-      if (o) {
-        o.payment.lastNotify = {at: new Date().toISOString(), verified: r.verified, raw: r.raw};
-        if (r.paid && (r.amount == null || Math.round(r.amount * 100) === cents(o))) markPaid(o, {provider: 'payplus', paymentId: r.txId, feeCents: null});
-      }
+    // PayPlus's Base64 result. Only a cue: the order is checked with PayPlus's signed status API.
+    app.post('/api/payments/payplus/notify', express.text({type: '*/*', limit: '1mb'}), async (req, res) => {
+      const id = payplus.notifiedOrderId(req.body);
+      const o = id && orders.find(x => x.id === id && isPayplus(x));
+      if (o) await reconcile(o).catch(e => console.error('PayPlus notify check failed:', e.message));
       res.json({ok: true});
     });
 
@@ -237,7 +240,7 @@ export function createPayments({orders, publicBase, onPaid}) {
   // Catches payments whose webhook and return both went missing (e.g. the customer closed the app).
   async function recheck() {
     const cutoff = Date.now() - RECHECK_WINDOW_MS;
-    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isOnepay(x) ? onepay.configured() : key() && x.payment?.checkoutId))) {
+    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isOnepay(x) ? onepay.configured() : isPayplus(x) ? payplus.configured() : key() && x.payment?.checkoutId))) {
       await reconcile(o).catch(e => console.error('Payment recheck failed:', o.id, e.message));
     }
   }
