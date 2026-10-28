@@ -127,7 +127,7 @@ $('qr-form').addEventListener('submit',event=>{
   event.preventDefault();
   if(!event.target.reportValidity())return;
   const table=encodeURIComponent($('qr-table').value);
-  if(event.submitter?.value==='menu')window.open('/peppermint/t/'+table,'_blank','noopener,noreferrer');
+  if(event.submitter?.value==='menu')window.open('/peppermint-pp/t/'+table,'_blank','noopener,noreferrer');
   else location.href='/qr?table='+table;
 });
 window.staffReady?.then(me=>{if(!me)return;$('restaurant-name').innerHTML=me.role==='admin'?'All restaurants <span>Punchbook admin</span>':`${escapeHtml(me.restaurantName)} <span>${escapeHtml(me.restaurantArea||'')}</span>`;loadKitchens();load();});

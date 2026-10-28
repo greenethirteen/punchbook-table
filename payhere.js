@@ -1,7 +1,7 @@
-// PayHere hosted checkout (used by payments.js when an order is paid with gateway "payhere", e.g. from
-// the /peppermint-v6 menu). https://support.payhere.lk/api-&-mobile-sdk/checkout-api
-// PayHere takes a form POST, so the customer is sent to a tiny page here that posts to PayHere. PayHere
-// reports the result to notify_url; only a correctly signed notification for the right amount marks an
+// PayHere checkout (used by payments.js when an order is paid with gateway "payhere", from the
+// /peppermint-ph menu). The menu opens PayHere's popup (JavaScript SDK) with the payment object built here.
+// https://support.payhere.lk/api-&-mobile-sdk/javascript-sdk
+// PayHere reports the result to notify_url; only a correctly signed notification for the right amount marks an
 // order paid. It requires name, email, phone and address up front; table orders have none, so they get
 // the table number and the restaurant's own area.
 //
@@ -10,10 +10,7 @@
 // PAYHERE_SANDBOX=false                         Use live PayHere instead of sandbox.payhere.lk.
 import crypto from 'crypto';
 
-// Methods PayHere can open directly, skipping its own "Pay with" screen (its payment_method field).
-const DIRECT_METHODS = new Set(['VISA', 'MASTER', 'AMEX', 'HELAPAY', 'FRIMI', 'QPLUS']);
 const md5 = s => crypto.createHash('md5').update(s).digest('hex').toUpperCase();
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 
 export function createPayhere() {
   const env = n => process.env[n] || '';
@@ -46,18 +43,9 @@ export function createPayhere() {
     };
   }
 
-  /** A page that sends the browser straight on to PayHere's checkout. */
-  function redirectPage(o, base) {
-    const inputs = Object.entries(fields(o, base)).map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
-    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Opening PayHere…</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px system-ui,sans-serif;background:#f4f2eb;color:#171713}button{font:inherit;border:0;border-radius:12px;padding:14px 22px;background:#171713;color:#fff;font-weight:800}</style></head>
-<body><form id="f" method="post" action="${host()}/pay/checkout">${inputs}<noscript><button>Continue to PayHere</button></noscript><p>Opening PayHere…</p></form>
-<script>document.getElementById('f').submit()</script></body></html>`;
-  }
-
-  /** The payment object for PayHere's popup (JavaScript SDK), optionally opening straight on one method. */
-  function popupPayment(o, base, method) {
-    return {sandbox: host().includes('sandbox'), ...fields(o, base), ...(DIRECT_METHODS.has(method) ? {payment_method: method} : {})};
+  /** The payment object for PayHere's popup (JavaScript SDK). */
+  function popupPayment(o, base) {
+    return {sandbox: host().includes('sandbox'), ...fields(o, base)};
   }
 
   /** Checks a notify_url callback. Returns {orderId, paid, amount, paymentId} or null when the signature is wrong. */
@@ -67,5 +55,5 @@ export function createPayhere() {
     return {orderId: String(b.order_id), paid: String(b.status_code) === '2', amount: Number(b.payhere_amount), currency: b.payhere_currency, paymentId: String(b.payment_id || ''), method: b.method || null};
   }
 
-  return {configured, redirectPage, popupPayment, readNotify, host};
+  return {configured, popupPayment, readNotify, host};
 }

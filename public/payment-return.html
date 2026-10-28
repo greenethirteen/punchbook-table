@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment · Punchbook</title><link rel="stylesheet" href="/styles.css?v=3459abe54cab"></head><body><main class="wrap" style="max-width:560px;padding-top:70px"><div class="item" style="display:block;text-align:center;padding:30px"><div class="check" style="margin:auto">…</div><h1 id="title">Checking payment</h1><p id="msg" style="color:#777">Confirming your payment with the bank.</p><a id="back" class="pill" href="/" style="display:inline-block;margin-top:12px;text-decoration:none" hidden>Back</a></div></main>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment · Punchbook</title><link rel="stylesheet" href="/styles.css?v=ccc3a0f953a5"></head><body><main class="wrap" style="max-width:560px;padding-top:70px"><div class="item" style="display:block;text-align:center;padding:30px"><div class="check" style="margin:auto">…</div><h1 id="title">Checking payment</h1><p id="msg" style="color:#777">Confirming your payment with the bank.</p><a id="back" class="pill" href="/" style="display:inline-block;margin-top:12px;text-decoration:none" hidden>Back</a></div></main>
 <script>
 // Customers land here from the Payments.lk checkout. The server confirms the payment with Payments.lk;
 // this page asks a few times because the bank can take a moment.
@@ -13,7 +13,7 @@ function show(icon,title,msg,order){
     if(/Android/i.test(navigator.userAgent)){back.href='intent://order/'+encodeURIComponent(id)+'#Intent;scheme=punchbook;package=order.punchbook.com;S.browser_fallback_url='+encodeURIComponent('https://play.google.com/store/apps/details?id=order.punchbook.com')+';end';back.textContent='Back to the Punchbook app';}
     else{back.hidden=true;if(icon==='✓')$('#msg').textContent+=' Your order updates are in the Punchbook app.';}
   }
-  else{back.href=(order.payment?.provider==='onepay'?'/peppermint-v5/t/':order.payment?.provider==='payhere'?'/peppermint-v6/t/':order.payment?.provider==='payplus'?'/peppermint-v8/t/':order.restaurantId==='amra'?'/amraleaf-v3/t/':'/peppermint/t/')+encodeURIComponent(order.table||'');back.textContent='Back to the menu';}
+  else{back.href=(order.payment?.provider==='payhere'?'/peppermint-ph/t/':order.restaurantId==='amra'?'/amraleaf-v3/t/':'/peppermint-pp/t/')+encodeURIComponent(order.table||'');back.textContent='Back to the menu';}
 }
 async function check(tries){
   try{

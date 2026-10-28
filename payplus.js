@@ -1,5 +1,5 @@
 // PayPlus (DirectPay) hosted checkout, used by payments.js when an order is paid with gateway "payplus"
-// (the /peppermint-v8 menu). Follows "PayPlus Transactions API v1.7": every request is a JSON payload,
+// (the /peppermint-pp menu). Follows "PayPlus Transactions API v1.7": every request is a JSON payload,
 // Base64-encoded, signed with HMAC-SHA256 of that Base64 text using the merchant secret, and sent as the
 // body with "Authorization: hmac <hex>".
 // PayPlus also POSTs a Base64 result to notifyUrl, but an order is only marked paid after the signed

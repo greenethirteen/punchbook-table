@@ -1,11 +1,10 @@
 let data=null, cart={}, selected='All', payMethod='card';
 const table=(location.pathname.match(/\/t\/([^/]+)/)||[])[1]||'12';
-// /peppermint-v5 and -v6 are the same menu paying through OnePay or PayHere instead of Payments.lk.
-const gateway=location.pathname.startsWith('/peppermint-v5')?'onepay':/^\/peppermint-v[67]/.test(location.pathname)?'payhere':location.pathname.startsWith('/peppermint-v8')?'payplus':undefined;
-// /peppermint-v7: one Pay button; PayHere opens as a popup over the menu and the customer picks a method there.
-const popupPay=location.pathname.startsWith('/peppermint-v7');
+// /peppermint-pp pays through PayPlus; /peppermint-ph through PayHere, which opens as a popup over the menu.
+const gateway=location.pathname.startsWith('/peppermint-pp')?'payplus':location.pathname.startsWith('/peppermint-ph')?'payhere':undefined;
+const popupPay=gateway==='payhere';
 let pending=null,phLoading=null;
-// /peppermint-v8 (PayPlus): one Pay button; the methods PayPlus offers are shown as small logos above it.
+// PayPlus: one Pay button; the methods PayPlus offers are shown as small logos above it.
 const ppChoices=()=>`<div class="ppMethods" aria-label="Pay with Mastercard, Visa, JustPay or LankaQR"><span class="ppLogo" aria-hidden="true"><i style="background:#EB001B"></i><i style="background:#F79E1B;margin-left:-7px"></i></span><span class="ppLogo ppVisa" aria-hidden="true">VISA</span><span class="ppLogo ppJust" aria-hidden="true">just<b>pay</b></span><span class="ppLogo ppQr" aria-hidden="true">Lanka<b>QR</b></span></div>`;
 const phChoices=()=>'<p class="phLabel">Card, HelaPay, FriMi, Genie, eZ Cash and more on the next step</p>';
 function loadPayHere(){if(window.payhere)return Promise.resolve();return phLoading||=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://www.payhere.lk/lib/payhere-2.0.js';sc.onload=()=>window.payhere?ok():no(Error('PayHere is unavailable right now.'));sc.onerror=()=>{phLoading=null;sc.remove();no(Error('PayHere is unavailable right now. Check your connection.'))};document.head.appendChild(sc)});}
@@ -16,7 +15,7 @@ async function payInPopup(){const btn=document.querySelector('.paymentBlock .pri
   try{
     // Reuse the unpaid order if the cart hasn't changed, so a retry doesn't make a second order.
     const key=JSON.stringify(cart);if(!pending||pending.key!==key){const order=await createOrder();if(order.error)throw Error(order.error);pending={key,order}}
-    const r=await fetch('/api/payments/card',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:pending.order.id,gateway:'payhere',popup:true})}).then(x=>x.json());
+    const r=await fetch('/api/payments/card',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:pending.order.id,gateway:'payhere'})}).then(x=>x.json());
     if(!r.payhere)throw Error(r.error||'Couldn’t start the payment.');
     await loadPayHere();
     const id=pending.order.id;

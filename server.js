@@ -13,7 +13,6 @@ import {createStaff} from './staff.js';
 import {createPayments} from './payments.js';
 import {createKitchen} from './kitchen.js';
 import {createPush} from './push.js';
-import {createOnepayTest} from './onepay-test.js';
 
 // Load .env locally when present; hosted env vars (e.g. Railway) are left untouched.
 try{process.loadEnvFile?.()}catch(e){if(e.code!=='ENOENT')throw e}
@@ -22,7 +21,7 @@ const app = express();
 // PayPlus posts its result as base64 text, so its notify route reads the raw body itself (payments.js).
 const jsonBody=express.json({limit:'15mb',verify:(req,_res,buf)=>{req.rawBody=buf.toString('utf8')}});
 app.use((req,res,next)=>req.path==='/api/payments/payplus/notify'?next():jsonBody(req,res,next));
-app.get('/table-demo-qr.svg', async (req,res)=>{const svg=await QRCode.toString(`${publicBase(req)}/peppermint/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});res.type('svg').send(svg)});
+app.get('/table-demo-qr.svg', async (req,res)=>{const svg=await QRCode.toString(`${publicBase(req)}/peppermint-pp/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});res.type('svg').send(svg)});
 function sendPage(res,name){res.set('Cache-Control','no-store');res.sendFile(process.cwd()+'/public/'+name)}
 app.get('/',(_req,res)=>sendPage(res,'index.html'));
 app.use(express.static('public',{etag:true,lastModified:true,setHeaders(res,filePath){res.set('Cache-Control',filePath.endsWith('.html')?'no-store':'no-cache, must-revalidate')}}));
@@ -87,8 +86,6 @@ app.get('/api/admin/companies/:id',requireAdmin,async(req,res)=>{const c=(await 
 app.patch('/api/admin/companies/:id/status',requireAdmin,async(req,res)=>{const status=cleanText(req.body?.status,40);if(!COMPANY_STATUSES.has(status))return res.status(400).json({error:'Invalid company status.'});const companies=await readCompanies(),c=companies.find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});c.status=status;c.adminNotes=cleanText(req.body?.adminNotes,3000);c.updatedAt=new Date().toISOString();await writeCompanies(companies);res.json({ok:true,company:summariseCompany(c)})});
 // Payments.lk checkout, webhook and refunds. See payments.js.
 payments.mount(app);
-// OnePay sandbox trial page (/onepay-test). See onepay-test.js.
-createOnepayTest({publicBase}).mount(app);
 // Staff sign-in and restaurant order controls. See staff.js and kitchen.js.
 staff.mount(app);kitchen.mount(app);
 // Square POS bridge (console at /pos). See pos-square.js.
@@ -109,10 +106,13 @@ const rider=createRider({orders,restaurants,staff});rider.mount(app);
 (await createPush({orders,dataDir:DATA_DIR,staff,riderAuth:rider.auth})).mount(app);
 // Daily restaurant payouts (page at /accounts). See accounts.js.
 (await createAccounts({orders,restaurants,dataDir:DATA_DIR,staff})).mount(app);
-app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${publicBase(req)}/peppermint/t/${encodeURIComponent(table)}`,svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;text-align:center;max-width:430px}svg{max-width:100%;height:auto}</style></head><body><div class="card"><h2>Peppermint Café</h2><p>Table ${table}</p>${svg}<h2>Scan to order</h2><p>No app needed · Powered by Punchbook</p></div></html>`)});
+app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${publicBase(req)}/peppermint-pp/t/${encodeURIComponent(table)}`,svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;text-align:center;max-width:430px}svg{max-width:100%;height:auto}</style></head><body><div class="card"><h2>Peppermint Café</h2><p>Table ${table}</p>${svg}<h2>Scan to order</h2><p>No app needed · Powered by Punchbook</p></div></html>`)});
 app.get('/api/public/companies',staff.requireAdmin,async(_q,res)=>{try{const companies=(await readCompanies()).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));res.json({companies:companies.map(publicCompany)})}catch{res.status(500).json({error:'Could not load applications.'})}});
 app.get('/api/public/companies/:id',staff.requireAdmin,async(req,res)=>{const c=(await readCompanies()).find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});res.json({company:publicCompany(c)})});
 app.patch('/api/public/companies/:id/status',staff.requireAdmin,async(req,res)=>{const status=cleanText(req.body?.status,40);if(!COMPANY_STATUSES.has(status))return res.status(400).json({error:'Invalid company status.'});const companies=await readCompanies(),c=companies.find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});c.status=status;c.adminNotes=cleanText(req.body?.adminNotes,3000);c.updatedAt=new Date().toISOString();await writeCompanies(companies);res.json({ok:true,company:publicCompany(c)})});
-app.get(['/peppermint','/peppermint/t/:table','/r/:restaurant/t/:table','/peppermint-v5','/peppermint-v5/t/:table','/peppermint-v6','/peppermint-v6/t/:table','/peppermint-v7','/peppermint-v7/t/:table','/peppermint-v8','/peppermint-v8/t/:table'],(_q,r)=>sendPage(r,'peppermint.html'));app.get(['/amraleaf-v3','/amraleaf-v3/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'));app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>sendPage(r,'pos.html'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/onepay-test',(_q,r)=>sendPage(r,'onepay-test.html'));app.get('/accounts',(_q,r)=>sendPage(r,'accounts.html'));
+// Two Peppermint table menus: -pp pays through PayPlus, -ph through PayHere (public/app.js picks by path).
+app.get(['/peppermint-pp','/peppermint-pp/t/:table','/peppermint-ph','/peppermint-ph/t/:table'],(_q,r)=>sendPage(r,'peppermint.html'));
+// Older menu links and printed QR codes go to the PayPlus menu (v7 was the PayHere popup menu).
+app.get(['/peppermint','/peppermint/t/:table','/r/:restaurant/t/:table','/peppermint-v:n','/peppermint-v:n/t/:table'],(q,r)=>r.redirect(302,`/peppermint-${q.params.n==='7'?'ph':'pp'}${q.params.table?'/t/'+encodeURIComponent(q.params.table):''}`));app.get(['/amraleaf-v3','/amraleaf-v3/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'));app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>sendPage(r,'pos.html'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/onepay-test',(_q,r)=>sendPage(r,'onepay-test.html'));app.get('/accounts',(_q,r)=>sendPage(r,'accounts.html'));
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE} · ${orderStore.count()} saved orders loaded`));
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>orderStore.flush().then(orderStore.flush).finally(()=>process.exit(0)));

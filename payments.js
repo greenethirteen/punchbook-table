@@ -9,13 +9,11 @@
 // PAYMENTS_LK_WEBHOOK_SECRET  Signing secret of the webhook endpoint registered in the dashboard.
 // SIMULATE_PAYMENTS=false  Refuse simulated payments even when no key is set.
 //
-// An order can instead be paid through OnePay (onepay.js) when its page asks for gateway "onepay"
-// (the /peppermint-v5 menu does), through PayHere (payhere.js, gateway "payhere", /peppermint-v6 and -v7)
-// or through PayPlus (payplus.js, gateway "payplus", /peppermint-v8).
+// An order can instead be paid through PayHere (payhere.js, gateway "payhere", the /peppermint-ph menu)
+// or PayPlus (payplus.js, gateway "payplus", the /peppermint-pp menu).
 // The same rules apply: paid only once the gateway confirms the amount.
 import crypto from 'crypto';
 import express from 'express';
-import {createOnepay} from './onepay.js';
 import {createPayhere} from './payhere.js';
 import {createPayplus} from './payplus.js';
 
@@ -29,8 +27,7 @@ export function createPayments({orders, publicBase, onPaid}) {
   const provider = () => key() ? 'payments.lk' : 'simulated';
   const simulationAllowed = () => !key() && String(process.env.SIMULATE_PAYMENTS || 'true').toLowerCase() !== 'false';
   const cents = o => Math.round(Number(o.total) * 100);
-  const onepay = createOnepay(), payhere = createPayhere(), payplus = createPayplus();
-  const isOnepay = o => o.payment?.provider === 'onepay';
+  const payhere = createPayhere(), payplus = createPayplus();
   const isPayhere = o => o.payment?.provider === 'payhere';
   const isPayplus = o => o.payment?.provider === 'payplus';
 
@@ -66,12 +63,6 @@ export function createPayments({orders, publicBase, onPaid}) {
       if (r.paid && (r.amount == null || Math.round(r.amount * 100) === cents(o))) markPaid(o, {provider: 'payplus', paymentId: r.txId, feeCents: null});
       return o;
     }
-    if (isOnepay(o)) {
-      if (!o.payment.txId || !onepay.configured()) return o;
-      const r = await onepay.check(o.payment.txId);
-      if (r.paid && (r.amount == null || Math.round(r.amount * 100) === cents(o))) markPaid(o, {provider: 'onepay', paymentId: o.payment.txId, feeCents: null});
-      return o;
-    }
     if (!key() || !o.payment?.checkoutId) return o;
     const checkout = await call('GET', `/checkouts/${encodeURIComponent(o.payment.checkoutId)}`);
     const p = checkout.payment || {};
@@ -85,7 +76,7 @@ export function createPayments({orders, publicBase, onPaid}) {
   }
 
   /** Starts paying for an order: {redirectUrl} for a real checkout, or the order paid when simulated. */
-  async function start(o, req, {method, returnUrl, gateway, popup, payhereMethod} = {}) {
+  async function start(o, req, {method, returnUrl, gateway} = {}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
     if (o.orderStatus === 'cancelled') throw Object.assign(new Error('This order was cancelled.'), {status: 409});
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
@@ -99,16 +90,8 @@ export function createPayments({orders, publicBase, onPaid}) {
     if (gateway === 'payhere') {
       if (!payhere.configured()) throw Object.assign(new Error('PayHere isn’t set up yet.'), {status: 503});
       o.payment = {provider: 'payhere', attempts: (o.payment?.attempts || 0) + 1};
-      // The /peppermint-v7 menu opens PayHere as a popup over the page instead of leaving it.
-      if (popup) return {ok: true, simulated: false, payhere: payhere.popupPayment(o, publicBase(req), String(payhereMethod || '')), order: o};
-      return {ok: true, simulated: false, redirectUrl: `${publicBase(req)}/api/payments/payhere/checkout/${encodeURIComponent(o.id)}`, order: o};
-    }
-    if (gateway === 'onepay') {
-      if (!onepay.configured()) throw Object.assign(new Error('OnePay isn’t set up yet.'), {status: 503});
-      if (isOnepay(o)) { await reconcile(o).catch(() => {}); if (o.paymentStatus === 'paid') return {ok: true, order: o}; }
-      const {url, txId} = await onepay.start(o, `${publicBase(req)}/payment-return.html?order=${encodeURIComponent(o.id)}`);
-      o.payment = {provider: 'onepay', txId, url, attempts: (o.payment?.attempts || 0) + 1};
-      return {ok: true, simulated: false, redirectUrl: url, order: o};
+      // The menu opens PayHere as a popup over the page with this payment object.
+      return {ok: true, simulated: false, payhere: payhere.popupPayment(o, publicBase(req)), order: o};
     }
     if (!key()) {
       if (!simulationAllowed()) throw Object.assign(new Error('Payments aren’t set up yet.'), {status: 503});
@@ -139,9 +122,9 @@ export function createPayments({orders, publicBase, onPaid}) {
   /** Refunds a paid order in full. Simulated payments are just marked refunded. */
   async function refund(o, reason) {
     if (o.paymentStatus !== 'paid') return;
-    // No refund API is set up for OnePay or PayHere: the order is marked for a refund from their dashboard.
-    if (isOnepay(o) || isPayhere(o) || isPayplus(o)) {
-      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isOnepay(o) ? 'OnePay' : isPayhere(o) ? 'PayHere' : 'PayPlus'} merchant dashboard.`};
+    // No refund API is set up for PayHere or PayPlus: the order is marked for a refund from their dashboard.
+    if (isPayhere(o) || isPayplus(o)) {
+      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isPayhere(o) ? 'PayHere' : 'PayPlus'} merchant dashboard.`};
       o.paymentStatus = 'refund_pending';
       return;
     }
@@ -176,7 +159,7 @@ export function createPayments({orders, publicBase, onPaid}) {
       const o = find(req, res);
       if (!o) return;
       const b = req.body || {};
-      try { res.json(await start(o, req, {method, returnUrl: b.returnUrl, gateway: b.gateway, popup: b.popup === true, payhereMethod: b.payhereMethod})); }
+      try { res.json(await start(o, req, {method, returnUrl: b.returnUrl, gateway: b.gateway})); }
       catch (e) { console.error('Payment start failed:', e.message); res.status(e.status === 409 || e.status === 503 ? e.status : 502).json({error: e.status === 409 || e.status === 503 ? e.message : 'Couldn’t start the payment. Please try again.'}); }
     };
     app.post('/api/payments/card', pay('card'));
@@ -190,13 +173,7 @@ export function createPayments({orders, publicBase, onPaid}) {
       res.json({ok: o.paymentStatus === 'paid', simulated: o.payment?.provider === 'simulated', order: o, ...(o.payment?.failureMessage && o.paymentStatus !== 'paid' ? {error: o.payment.failureMessage} : {})});
     });
 
-    // PayHere: the page that posts to PayHere's checkout, and PayHere's signed result (form-encoded).
-    app.get('/api/payments/payhere/checkout/:id', (req, res) => {
-      const o = orders.find(x => x.id === req.params.id && isPayhere(x));
-      if (!o || !payhere.configured()) return res.status(404).send('Payment not found.');
-      if (o.paymentStatus === 'paid') return res.redirect(`/payment-return.html?order=${encodeURIComponent(o.id)}`);
-      res.set('Cache-Control', 'no-store').type('html').send(payhere.redirectPage(o, publicBase(req)));
-    });
+    // PayHere's signed result (form-encoded).
     app.post('/api/payments/payhere/notify', express.urlencoded({extended: false}), (req, res) => {
       const r = payhere.readNotify(req.body || {});
       if (!r) { console.error('PayHere notify with a bad signature for', req.body?.order_id); return res.status(400).send('bad signature'); }
@@ -210,14 +187,6 @@ export function createPayments({orders, publicBase, onPaid}) {
       const id = payplus.notifiedOrderId(req.body);
       const o = id && orders.find(x => x.id === id && isPayplus(x));
       if (o) await reconcile(o).catch(e => console.error('PayPlus notify check failed:', e.message));
-      res.json({ok: true});
-    });
-
-    // OnePay's callback (set in the OnePay portal → APP). Only a nudge: the order is checked with OnePay.
-    app.post('/api/payments/onepay/callback', async (req, res) => {
-      const tx = String(req.body?.transaction_id || '');
-      const o = tx && orders.find(x => isOnepay(x) && x.payment.txId === tx);
-      if (o) await reconcile(o).catch(e => console.error('OnePay callback check failed:', e.message));
       res.json({ok: true});
     });
 
@@ -240,7 +209,7 @@ export function createPayments({orders, publicBase, onPaid}) {
   // Catches payments whose webhook and return both went missing (e.g. the customer closed the app).
   async function recheck() {
     const cutoff = Date.now() - RECHECK_WINDOW_MS;
-    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isOnepay(x) ? onepay.configured() : isPayplus(x) ? payplus.configured() : key() && x.payment?.checkoutId))) {
+    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isPayplus(x) ? payplus.configured() : key() && x.payment?.checkoutId))) {
       await reconcile(o).catch(e => console.error('Payment recheck failed:', o.id, e.message));
     }
   }
