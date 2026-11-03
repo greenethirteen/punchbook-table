@@ -10,12 +10,14 @@
 // SIMULATE_PAYMENTS=false  Refuse simulated payments even when no key is set.
 //
 // An order can instead be paid through PayHere (payhere.js, gateway "payhere", the /peppermint-ph menu)
-// or PayPlus (payplus.js, gateway "payplus", the /peppermint-pp menu).
+// PayPlus (payplus.js, gateway "payplus", the /peppermint-pp menu) or DirectPay (directpay.js, gateway
+// "directpay", the /peppermint-dp menu).
 // The same rules apply: paid only once the gateway confirms the amount.
 import crypto from 'crypto';
 import express from 'express';
 import {createPayhere} from './payhere.js';
 import {createPayplus} from './payplus.js';
+import {createDirectpay} from './directpay.js';
 
 const API = () => process.env.PAYMENTS_LK_API_BASE || 'https://api.payments.lk/v1'; // overridable for tests
 const RECHECK_MS = 60000, RECHECK_WINDOW_MS = 2 * 3600000, SIGNATURE_TOLERANCE_S = 300;
@@ -27,9 +29,10 @@ export function createPayments({orders, publicBase, onPaid}) {
   const provider = () => key() ? 'payments.lk' : 'simulated';
   const simulationAllowed = () => !key() && String(process.env.SIMULATE_PAYMENTS || 'true').toLowerCase() !== 'false';
   const cents = o => Math.round(Number(o.total) * 100);
-  const payhere = createPayhere(), payplus = createPayplus();
+  const payhere = createPayhere(), payplus = createPayplus(), directpay = createDirectpay();
   const isPayhere = o => o.payment?.provider === 'payhere';
   const isPayplus = o => o.payment?.provider === 'payplus';
+  const isDirectpay = o => o.payment?.provider === 'directpay';
 
   async function call(method, path, body, idempotencyKey) {
     const res = await fetch(API() + path, {
@@ -63,6 +66,13 @@ export function createPayments({orders, publicBase, onPaid}) {
       if (r.paid && (r.amount == null || Math.round(r.amount * 100) === cents(o))) markPaid(o, {provider: 'payplus', paymentId: r.txId, feeCents: null});
       return o;
     }
+    if (isDirectpay(o)) {
+      if (!o.payment.transactionId || !directpay.canVerify()) return o;
+      const r = await directpay.check(o.id, o.payment.transactionId);
+      o.payment.status = r.status;
+      if (r.paid && r.currency === 'LKR' && Math.round(r.amount * 100) === cents(o)) markPaid(o, {provider: 'directpay', paymentId: o.payment.transactionId, feeCents: null});
+      return o;
+    }
     if (!key() || !o.payment?.checkoutId) return o;
     const checkout = await call('GET', `/checkouts/${encodeURIComponent(o.payment.checkoutId)}`);
     const p = checkout.payment || {};
@@ -86,6 +96,12 @@ export function createPayments({orders, publicBase, onPaid}) {
       const base = publicBase(req), {url, token} = await payplus.start(o, {base, domain: new URL(base).host});
       o.payment = {provider: 'payplus', token, url, attempts: (o.payment?.attempts || 0) + 1};
       return {ok: true, simulated: false, redirectUrl: url, order: o};
+    }
+    if (gateway === 'directpay') {
+      if (!directpay.configured()) throw Object.assign(new Error('DirectPay isn’t set up yet.'), {status: 503});
+      o.payment = {provider: 'directpay', attempts: (o.payment?.attempts || 0) + 1};
+      // The menu shows DirectPay's card form with these settings.
+      return {ok: true, simulated: false, directpay: directpay.cardForm(o), order: o};
     }
     if (gateway === 'payhere') {
       if (!payhere.configured()) throw Object.assign(new Error('PayHere isn’t set up yet.'), {status: 503});
@@ -122,9 +138,9 @@ export function createPayments({orders, publicBase, onPaid}) {
   /** Refunds a paid order in full. Simulated payments are just marked refunded. */
   async function refund(o, reason) {
     if (o.paymentStatus !== 'paid') return;
-    // No refund API is set up for PayHere or PayPlus: the order is marked for a refund from their dashboard.
-    if (isPayhere(o) || isPayplus(o)) {
-      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isPayhere(o) ? 'PayHere' : 'PayPlus'} merchant dashboard.`};
+    // No refund API is set up for PayHere, PayPlus or DirectPay: the order is marked for a refund from their dashboard.
+    if (isPayhere(o) || isPayplus(o) || isDirectpay(o)) {
+      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isPayhere(o) ? 'PayHere' : isPayplus(o) ? 'PayPlus' : 'DirectPay'} merchant dashboard.`};
       o.paymentStatus = 'refund_pending';
       return;
     }
@@ -190,6 +206,25 @@ export function createPayments({orders, publicBase, onPaid}) {
       res.json({ok: true});
     });
 
+    // DirectPay's result, from the card form in the menu (orderId, transactionId) or DirectPay's server
+    // confirmation set in the portal ({data: {reference, transactionId, ...}}). Neither is signed: with a private
+    // key the order is checked with DirectPay's status API; without one only sandbox orders are trusted.
+    const directpayResult = async b => {
+      const id = String(b.orderId || b.data?.reference || ''), tx = b.transactionId || b.data?.transactionId;
+      const o = orders.find(x => x.id === id && isDirectpay(x));
+      if (!o || !tx) return o;
+      o.payment.transactionId ??= String(tx);
+      if (directpay.canVerify()) await reconcile(o).catch(e => console.error('DirectPay check failed:', e.message));
+      else if (directpay.sandbox() && String(b.status || b.data?.status).toUpperCase() === 'SUCCESS') markPaid(o, {provider: 'directpay', paymentId: String(tx), feeCents: null, unverified: true});
+      return o;
+    };
+    app.post('/api/payments/directpay/confirm', async (req, res) => {
+      const o = await directpayResult(req.body || {});
+      if (!o) return res.status(404).json({error: 'Order not found'});
+      res.json({ok: o.paymentStatus === 'paid', order: o});
+    });
+    app.post('/api/payments/directpay/notify', async (req, res) => { await directpayResult(req.body || {}); res.json({ok: true}); });
+
     // The signature is checked, but the order is still only marked paid from Payments.lk's own record.
     app.post('/api/payments/webhook', async (req, res) => {
       if (!signatureValid(req.rawBody || '', req.get('payments-signature'))) return res.status(400).json({error: 'Bad signature'});
@@ -209,7 +244,7 @@ export function createPayments({orders, publicBase, onPaid}) {
   // Catches payments whose webhook and return both went missing (e.g. the customer closed the app).
   async function recheck() {
     const cutoff = Date.now() - RECHECK_WINDOW_MS;
-    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isPayplus(x) ? payplus.configured() : key() && x.payment?.checkoutId))) {
+    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isPayplus(x) ? payplus.configured() : isDirectpay(x) ? x.payment.transactionId && directpay.canVerify() : key() && x.payment?.checkoutId))) {
       await reconcile(o).catch(e => console.error('Payment recheck failed:', o.id, e.message));
     }
   }
