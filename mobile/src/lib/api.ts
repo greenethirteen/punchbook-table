@@ -110,8 +110,8 @@ export const registerOrderPush = (orderId: string, token: string) =>
 
 type PaymentResult = { ok: boolean; simulated?: boolean; redirectUrl?: string; order: PickupOrder };
 
-export const payByCard = (orderId: string) =>
-  request<PaymentResult>('/api/payments/card', { method: 'POST', body: JSON.stringify({ orderId }) });
+export const payByCard = (orderId: string, returnUrl?: string) =>
+  request<PaymentResult>('/api/payments/card', { method: 'POST', body: JSON.stringify({ orderId, returnUrl }) });
 
 export const payByJustPay = (orderId: string) =>
   request<PaymentResult>('/api/payments/justpay/simulate', { method: 'POST', body: JSON.stringify({ orderId }) });

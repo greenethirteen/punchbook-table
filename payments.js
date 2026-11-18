@@ -11,13 +11,15 @@
 //
 // An order can instead be paid through PayHere (payhere.js, gateway "payhere", the /peppermint-ph menu)
 // PayPlus (payplus.js, gateway "payplus", the /peppermint-pp menu) or DirectPay (directpay.js, gateway
-// "directpay", the /peppermint-dp menu).
+// "directpay", the /peppermint-dp menu) or SriPay's hosted Checkout Session (sripay.js, gateway "sripay", the
+// /peppermint-sp menu).
 // The same rules apply: paid only once the gateway confirms the amount.
 import crypto from 'crypto';
 import express from 'express';
 import {createPayhere} from './payhere.js';
 import {createPayplus} from './payplus.js';
 import {createDirectpay} from './directpay.js';
+import {createSripay} from './sripay.js';
 
 const API = () => process.env.PAYMENTS_LK_API_BASE || 'https://api.payments.lk/v1'; // overridable for tests
 const RECHECK_MS = 60000, RECHECK_WINDOW_MS = 2 * 3600000, SIGNATURE_TOLERANCE_S = 300;
@@ -29,10 +31,11 @@ export function createPayments({orders, publicBase, onPaid}) {
   const provider = () => key() ? 'payments.lk' : 'simulated';
   const simulationAllowed = () => !key() && String(process.env.SIMULATE_PAYMENTS || 'true').toLowerCase() !== 'false';
   const cents = o => Math.round(Number(o.total) * 100);
-  const payhere = createPayhere(), payplus = createPayplus(), directpay = createDirectpay();
+  const payhere = createPayhere(), payplus = createPayplus(), directpay = createDirectpay(), sripay = createSripay();
   const isPayhere = o => o.payment?.provider === 'payhere';
   const isPayplus = o => o.payment?.provider === 'payplus';
   const isDirectpay = o => o.payment?.provider === 'directpay';
+  const isSripay = o => o.payment?.provider === 'sripay';
 
   async function call(method, path, body, idempotencyKey) {
     const res = await fetch(API() + path, {
@@ -73,6 +76,16 @@ export function createPayments({orders, publicBase, onPaid}) {
       if (r.paid && r.currency === 'LKR' && Math.round(r.amount * 100) === cents(o)) markPaid(o, {provider: 'directpay', paymentId: o.payment.transactionId, feeCents: null});
       return o;
     }
+    if (isSripay(o)) {
+      if (!sripay.configured() || !o.payment.sessionId) return o;
+      const r = await sripay.check(o.payment);
+      o.payment.status = r.status;
+      if (r.reference) o.payment.reference = r.reference;
+      const amountOk = r.amounts?.length ? r.amounts.some(a => Math.round(a * 100) === cents(o)) : sripay.sandbox();
+      if (r.paid && amountOk && (!r.currency || r.currency.toUpperCase() === 'LKR')) markPaid(o, {provider: 'sripay', paymentId: r.reference || o.payment.sessionId, card: r.method, feeCents: null, ...(r.amounts?.length ? {} : {unverified: true})});
+      else if (r.failed) { o.payment.failureMessage = 'The payment didn’t go through.'; o.payment.uncertain = false; }
+      return o;
+    }
     if (!key() || !o.payment?.checkoutId) return o;
     const checkout = await call('GET', `/checkouts/${encodeURIComponent(o.payment.checkoutId)}`);
     const p = checkout.payment || {};
@@ -96,6 +109,21 @@ export function createPayments({orders, publicBase, onPaid}) {
       const base = publicBase(req), {url, token} = await payplus.start(o, {base, domain: new URL(base).host});
       o.payment = {provider: 'payplus', token, url, attempts: (o.payment?.attempts || 0) + 1};
       return {ok: true, simulated: false, redirectUrl: url, order: o};
+    }
+    if (gateway === 'sripay') {
+      if (!sripay.configured()) throw Object.assign(new Error('SriPay isn’t set up yet.'), {status: 503});
+      if (isSripay(o)) {
+        await reconcile(o).catch(() => {});
+        if (o.paymentStatus === 'paid') return {ok: true, order: o};
+        // A payment that may have started is never replaced: it could still go through.
+        if (o.payment.uncertain) throw Object.assign(new Error('We’re still checking your last payment. Please wait a moment.'), {status: 409});
+        // Each session allows one payment attempt: reuse it only while it hasn't started and hasn't expired.
+        if (o.payment.status === 'active' && Date.parse(o.payment.expiresAt) > Date.now() + 60000) return {ok: true, simulated: false, sripay: {methods: o.payment.methods || []}, order: o};
+      }
+      const s = await sripay.start(o, publicBase(req));
+      o.payment = {provider: 'sripay', ...s, status: 'active', attempts: (o.payment?.attempts || 0) + 1};
+      // The menu shows its own method picker, then calls /api/payments/sripay/proceed.
+      return {ok: true, simulated: false, sripay: {methods: s.methods}, order: o};
     }
     if (gateway === 'directpay') {
       if (!directpay.configured()) throw Object.assign(new Error('DirectPay isn’t set up yet.'), {status: 503});
@@ -138,9 +166,9 @@ export function createPayments({orders, publicBase, onPaid}) {
   /** Refunds a paid order in full. Simulated payments are just marked refunded. */
   async function refund(o, reason) {
     if (o.paymentStatus !== 'paid') return;
-    // No refund API is set up for PayHere, PayPlus or DirectPay: the order is marked for a refund from their dashboard.
-    if (isPayhere(o) || isPayplus(o) || isDirectpay(o)) {
-      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isPayhere(o) ? 'PayHere' : isPayplus(o) ? 'PayPlus' : 'DirectPay'} merchant dashboard.`};
+    // No refund API is set up for PayHere, PayPlus, DirectPay or SriPay: the order is marked for a refund from their dashboard.
+    if (isPayhere(o) || isPayplus(o) || isDirectpay(o) || isSripay(o)) {
+      o.refund = {status: 'manual', amount: o.total, at: new Date().toISOString(), note: `Refund this in the ${isPayhere(o) ? 'PayHere' : isPayplus(o) ? 'PayPlus' : isDirectpay(o) ? 'DirectPay' : 'SriPay'} merchant dashboard.`};
       o.paymentStatus = 'refund_pending';
       return;
     }
@@ -175,9 +203,12 @@ export function createPayments({orders, publicBase, onPaid}) {
       const o = find(req, res);
       if (!o) return;
       const b = req.body || {};
-      try { res.json(await start(o, req, {method, returnUrl: b.returnUrl, gateway: b.gateway})); }
+      // Every menu pays through Payments.lk now; the old per-menu gateways are kept only so that
+      // orders already started with them can still be confirmed.
+      try { res.json(await start(o, req, {method, returnUrl: b.returnUrl})); }
       catch (e) { console.error('Payment start failed:', e.message); res.status(e.status === 409 || e.status === 503 ? e.status : 502).json({error: e.status === 409 || e.status === 503 ? e.message : 'Couldn’t start the payment. Please try again.'}); }
     };
+    app.get('/api/payments/config', (_req, res) => res.json({live: provider() === 'payments.lk'}));
     app.post('/api/payments/card', pay('card'));
     // Kept under its old name for app builds that call it; it is a real checkout once a key is set.
     app.post('/api/payments/justpay/simulate', pay('justpay'));
@@ -225,6 +256,44 @@ export function createPayments({orders, publicBase, onPaid}) {
     });
     app.post('/api/payments/directpay/notify', async (req, res) => { await directpayResult(req.body || {}); res.json({ok: true}); });
 
+    // The guest picked a method in the menu: start the payment and send them to the card page or wallet.
+    app.post('/api/payments/sripay/proceed', async (req, res) => {
+      const o = find(req, res);
+      if (!o) return;
+      if (!isSripay(o) || o.payment.status !== 'active') return res.status(409).json({error: 'Start the payment again.'});
+      const method = String(req.body?.method || '');
+      if (!o.payment.methods?.includes(method)) return res.status(400).json({error: 'That payment method isn’t available right now.'});
+      o.payment.status = 'started';
+      o.payment.method = method;
+      try {
+        const r = await sripay.proceed(o.payment, method);
+        if (r.reference) o.payment.reference = r.reference;
+        if (!r.url) { o.payment.uncertain = true; return res.status(502).json({error: 'SriPay didn’t return a payment page.'}); }
+        res.json({ok: true, redirectUrl: r.url});
+      } catch (e) {
+        console.error('SriPay proceed failed:', e.code || '', e.message);
+        if (!e.definite) o.payment.uncertain = true;
+        const why = e.code === 'API_ACCESS_DISABLED' ? 'SriPay hasn’t turned on online payments for this store yet.' : 'SriPay couldn’t start the payment. Please try again.';
+        res.status(502).json({error: why});
+      }
+    });
+
+    // SriPay's signed webhook. payment.succeeded marks the order paid when the amount matches; any other
+    // event for the order triggers a status check. Duplicates still get 2xx, as SriPay asks.
+    app.post('/api/payments/sripay/webhook', async (req, res) => {
+      const event = sripay.readWebhook(req.headers, req.rawBody || '');
+      if (!event) return res.status(401).json({error: 'Bad signature'});
+      const d = event.data || {}, refs = [d.paymentId, d.sessionId, d.paymentReference, d.merchantReference, d.orderId].filter(Boolean).map(String);
+      const o = orders.find(x => isSripay(x) && (refs.includes(x.id) || refs.includes(x.payment.sessionId) || (x.payment.reference && refs.includes(x.payment.reference))));
+      if (o) {
+        const amt = d.amount && typeof d.amount === 'object' ? d.amount : {value: d.amount, currency: d.currency};
+        if (event.type === 'payment.succeeded' && String(amt.currency || '').toUpperCase() === 'LKR' && Math.round(Number(amt.value) * 100) === cents(o)) markPaid(o, {provider: 'sripay', paymentId: String(d.paymentId || o.payment.sessionId), feeCents: null});
+        else if (event.type === 'refund.succeeded' && o.refund) { o.refund.status = 'succeeded'; o.paymentStatus = 'refunded'; }
+        else await reconcile(o).catch(e => console.error('SriPay webhook check failed:', e.message));
+      }
+      res.json({ok: true});
+    });
+
     // The signature is checked, but the order is still only marked paid from Payments.lk's own record.
     app.post('/api/payments/webhook', async (req, res) => {
       if (!signatureValid(req.rawBody || '', req.get('payments-signature'))) return res.status(400).json({error: 'Bad signature'});
@@ -244,7 +313,7 @@ export function createPayments({orders, publicBase, onPaid}) {
   // Catches payments whose webhook and return both went missing (e.g. the customer closed the app).
   async function recheck() {
     const cutoff = Date.now() - RECHECK_WINDOW_MS;
-    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isPayplus(x) ? payplus.configured() : isDirectpay(x) ? x.payment.transactionId && directpay.canVerify() : key() && x.payment?.checkoutId))) {
+    for (const o of orders.filter(x => x.paymentStatus === 'pending' && Date.parse(x.createdAt) > cutoff && (isPayplus(x) ? payplus.configured() : isDirectpay(x) ? x.payment.transactionId && directpay.canVerify() : isSripay(x) ? sripay.configured() && x.payment.sessionId : key() && x.payment?.checkoutId))) {
       await reconcile(o).catch(e => console.error('Payment recheck failed:', o.id, e.message));
     }
   }

@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Notice, Stepper } from '@/components/ui';
-import { DELIVERY_ENABLED, DELIVERY_FEE, payByCard, payByJustPay, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
+import { DELIVERY_ENABLED, DELIVERY_FEE, payByCard, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
+
+const PAYMENT_RETURN = 'punchbook://paid';
 import { clock, money } from '@/lib/format';
 import { colors, radius } from '@/lib/theme';
 import { enableOrderNotifications } from '@/lib/push';
@@ -91,9 +93,10 @@ export default function Checkout() {
         }));
       setUnpaid(order);
 
-      let result = payment === 'justpay' ? await payByJustPay(order.id) : await payByCard(order.id);
+      // Payments.lk's card page opens in the system browser and sends the customer back to the app.
+      let result = await payByCard(order.id, PAYMENT_RETURN);
       if (result.redirectUrl) {
-        await WebBrowser.openBrowserAsync(result.redirectUrl);
+        await WebBrowser.openAuthSessionAsync(result.redirectUrl, PAYMENT_RETURN);
         result = await verifyPayment(order.id);
       }
       if (result.order.paymentStatus !== 'paid') throw new Error('Payment wasn’t completed. You can try again.');
@@ -205,8 +208,7 @@ export default function Checkout() {
 
         <Text style={styles.label}>Payment</Text>
         <View style={{ gap: 8 }}>
-          <Choice wide selected={payment === 'card'} onPress={() => setPayment('card')} title="Card" sub="Visa · Mastercard" />
-          <Choice wide selected={payment === 'justpay'} onPress={() => setPayment('justpay')} title="JustPay" sub="Pay from your bank account" />
+          <Choice wide selected onPress={() => setPayment('card')} title="Card" sub="Visa · Mastercard · secure checkout" />
         </View>
 
         <View style={[styles.card, { marginTop: 22 }]}>
