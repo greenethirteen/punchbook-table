@@ -98,6 +98,17 @@ export function createPayments({orders, publicBase, onPaid}) {
     return o;
   }
 
+  function checkoutCustomer(o) {
+    const c = o.customer || {};
+    const name = String(c.name || [c.firstName, c.lastName].filter(Boolean).join(' ')).trim().slice(0, 80);
+    const phone = String(c.phone || '').replace(/[\s-]/g, '');
+    return {
+      name: name.length >= 2 ? name : 'Punchbook Guest',
+      email: process.env.PAYMENTS_LK_GUEST_EMAIL || 'orders@punchbook.online',
+      ...(/^(\+94|0)7\d{8}$/.test(phone) ? {phone} : {}),
+    };
+  }
+
   /** Starts paying for an order: {redirectUrl} for a real checkout, or the order paid when simulated. */
   async function start(o, req, {method, returnUrl, gateway} = {}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
@@ -155,6 +166,10 @@ export function createPayments({orders, publicBase, onPaid}) {
       amountCents: cents(o),
       description: `${o.restaurantName || 'Punchbook'} order ${o.id}`.slice(0, 120),
       reference: o.id,
+      // With a name and email, Payments.lk skips its details form and opens the card page straight away
+      // ("Straight to the card page" in the dashboard). Table guests give no email, so a Punchbook
+      // address stands in (PAYMENTS_LK_GUEST_EMAIL); Payable's receipt goes there.
+      customer: checkoutCustomer(o),
       successUrl: back || page,
       cancelUrl: back ? `${back}${back.includes('?') ? '&' : '?'}cancelled=1` : `${page}&cancelled=1`,
       expiresInMinutes: 30,
