@@ -1,9 +1,6 @@
 let data=null, cart={}, selected='All', payMethod='card';
 const table=(location.pathname.match(/\/t\/([^/]+)/)||[])[1]||'12';
-// /peppermint-pp pays through PayPlus; /peppermint-ph through PayHere, which opens as a popup over the menu;
-// /peppermint-dp through DirectPay, whose card form opens inside the order sheet.
-// /peppermint-sp through SriPay: the guest picks card, SriPay or Alipay+ in the sheet, then goes straight to that page.
-// Every menu (including the old /peppermint-pp, -ph, -dp and -sp links on printed QR codes) pays through Payments.lk.
+// Every menu pays through Payments.lk.
 const gateway=undefined;
 fetch('/api/payments/config').then(r=>r.json()).then(c=>{window.paymentsLive=!!c.live}).catch(()=>{});
 const popupPay=gateway==='payhere', formPay=gateway==='directpay';
@@ -80,7 +77,7 @@ const iconPaths = {
 };
 function icon(name){return `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]||''}</svg>`;}
 function cardBrands(){return '<span style="display:inline-flex;align-items:center;gap:5px;margin-left:7px;vertical-align:middle" aria-label="Visa, Mastercard"><span style="font-size:10px;font-weight:800;font-style:italic;color:#1434CB">VISA</span><span style="display:inline-flex;align-items:center;font-size:8px;font-weight:800"><span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#EB001B"></span><span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:#F79E1B;margin-left:-6px;opacity:.95"></span></span></span>';}
-async function boot(){ data=await fetch(location.pathname.startsWith('/amraleaf-v3')?'/api/menu?restaurant=amra':'/api/menu').then(r=>r.json()); renderCats(); renderMenu(); }
+async function boot(){ data=await fetch(location.pathname.startsWith('/amraleaf')?'/api/menu?restaurant=amra':'/api/menu').then(r=>r.json()); renderCats(); renderMenu(); }
 function renderCats(){ const cats=['All',...new Set(data.menu.map(x=>x.category))];document.getElementById('cats').innerHTML=cats.map(c=>`<button data-category="${c}" class="cat ${c===selected?'active':''}" onclick="selected='${c}';renderCats();renderMenu()">${c}</button>`).join(''); }
 function renderMenu(){ const items=data.menu.filter(x=>selected==='All'||x.category===selected); document.getElementById('menu').innerHTML=items.map(x=>`<article class="item" data-category="${x.category}"><div><h3>${x.name}</h3><p>${x.desc}</p><div class="row"><span class="price">${money(x.price)}</span><button class="add" aria-label="Add ${x.name}" onclick="add('${x.id}')">+</button></div></div><div class="food"><img src="${x.image||('/images/menu/'+x.id+'.jpg')}" alt="${x.name}" width="600" height="600" loading="lazy" decoding="async"></div></article>`).join(''); }
 function add(id){cart[id]=(cart[id]||0)+1;syncCart();}
