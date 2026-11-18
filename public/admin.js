@@ -41,7 +41,7 @@ function sampleOrders(){
     [2,'served','paid','card',22,[['Crispy Chicken Burger',1750,1],['Chocolate Lava Cake',1100,2]]]
   ].map(([table,orderStatus,paymentStatus,paymentMethod,minutes,lines],i)=>{
     const items=lines.map(([name,price,qty])=>({name,price,qty}));const subtotal=items.reduce((n,x)=>n+x.price*x.qty,0);
-    return {id:'SAMPLE-'+(i+1),table,orderStatus,paymentStatus,paymentMethod,items,total:subtotal+Math.round(subtotal*.05),createdAt:new Date(Date.now()-minutes*60000).toISOString()};
+    return {id:'SAMPLE-'+(i+1),table,orderStatus,paymentStatus,paymentMethod,items,total:subtotal,createdAt:new Date(Date.now()-minutes*60000).toISOString()};
   });
 }
 let samples=sampleOrders(),live=[],mode='live',loading=false,seen=null,armed=null,kitchens=[];
