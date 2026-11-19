@@ -167,5 +167,8 @@ export async function createPush({orders, dataDir, staff, riderAuth}) {
     for (const id of Object.keys(state.app)) if (!ids.has(id)) { delete state.app[id]; dirty = true; }
   }, 3600000).unref();
 
-  return {mount, scan, appReady: () => Boolean(serviceAccount())};
+    // The Punchbook admin's devices (alerts turned on with the admin key), e.g. the morning payout summary.
+  const sendAdmin = payload => sendWeb(s => s.role === 'restaurant' && !s.restaurantId, payload);
+
+  return {mount, scan, sendAdmin, appReady: () => Boolean(serviceAccount())};
 }

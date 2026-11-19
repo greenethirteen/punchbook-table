@@ -105,9 +105,9 @@ posBridge.mount(app);
 // Delivery riders (page at /rider). See rider.js.
 const rider=createRider({orders,restaurants,staff});rider.mount(app);
 // Web push for restaurants and riders, Firebase for the customer app. See push.js.
-(await createPush({orders,dataDir:DATA_DIR,staff,riderAuth:rider.auth})).mount(app);
+const push=await createPush({orders,dataDir:DATA_DIR,staff,riderAuth:rider.auth});push.mount(app);
 // Daily restaurant payouts (page at /accounts). See accounts.js.
-(await createAccounts({orders,restaurants,dataDir:DATA_DIR,staff})).mount(app);
+(await createAccounts({orders,restaurants,dataDir:DATA_DIR,staff,push,applications:readCompanies})).mount(app);
 app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${publicBase(req)}/peppermint/t/${encodeURIComponent(table)}`,svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;text-align:center;max-width:430px}svg{max-width:100%;height:auto}</style></head><body><div class="card"><h2>Peppermint Café</h2><p>Table ${table}</p>${svg}<h2>Scan to order</h2><p>No app needed · Powered by Punchbook</p></div></html>`)});
 app.get('/api/public/companies',staff.requireAdmin,async(_q,res)=>{try{const companies=(await readCompanies()).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));res.json({companies:companies.map(publicCompany)})}catch{res.status(500).json({error:'Could not load applications.'})}});
 app.get('/api/public/companies/:id',staff.requireAdmin,async(req,res)=>{const c=(await readCompanies()).find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});res.json({company:publicCompany(c)})});

@@ -5,6 +5,9 @@
 // Delivery fees stay with Punchbook to pay riders/PickMe, and Punchbook absorbs card fees.
 // Admin only (staff.js). Cancelled and refunded orders don't count. Card fees and rider/PickMe costs
 // are shown so Punchbook's own share can be seen after costs.
+// Each restaurant's bank account is saved here too (typed in, or copied from its signup application),
+// so the page can make one bank bulk-transfer file for a day. Every morning at 9 (Sri Lanka time) the
+// admin's phone gets a push alert listing payouts still to send (alerts turned on from /admin or /accounts).
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -13,9 +16,9 @@ const dayOf = iso => new Intl.DateTimeFormat('en-CA', {timeZone: TZ, year: 'nume
 const round = n => Math.round(n * 100) / 100;
 const text = (v, max) => String(v ?? '').trim().slice(0, max);
 
-export async function createAccounts({orders, restaurants, dataDir, staff}) {
+export async function createAccounts({orders, restaurants, dataDir, staff, push, applications}) {
   const file = path.join(dataDir, 'accounts.json');
-  let state = {commissionPct: 10, payouts: []};
+  let state = {commissionPct: 10, payouts: [], banks: {}, lastSummary: ''};
   try { state = {...state, ...JSON.parse(await fs.readFile(file, 'utf8'))}; } catch (e) { if (e.code !== 'ENOENT') throw e; }
   async function save() {
     await fs.mkdir(dataDir, {recursive: true});
@@ -42,18 +45,39 @@ export async function createAccounts({orders, restaurants, dataDir, staff}) {
     return Object.values(rows).map(r => {
       const payout = state.payouts.find(p => p.restaurantId === r.restaurantId && p.date === date);
       const pct = payout?.commissionPct ?? state.commissionPct, commission = round(r.food * pct / 100);
-      return {...r, commissionPct: pct, commission, owed: round(r.food + r.service - commission), payout: payout || null};
+      return {...r, commissionPct: pct, commission, owed: round(r.food + r.service - commission), payout: payout || null, bank: state.banks[r.restaurantId] || null};
     }).sort((a, b) => b.owed - a.owed);
   }
 
+  const today = () => dayOf(new Date().toISOString());
+  // Payouts still to send from days before `date`.
+  function unsentBefore(date) {
+    const days = [...new Set(orders.filter(o => o.paymentStatus === 'paid').map(o => dayOf(o.paidAt || o.createdAt)))].filter(d => d < date);
+    return days.flatMap(d => day(d).filter(r => !r.payout && r.owed > 0).map(r => ({date: d, restaurantId: r.restaurantId, name: r.name, owed: r.owed}))).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  // Morning summary: once a day from 9am Sri Lanka time.
+  async function morningSummary() {
+    const hour = Number(new Intl.DateTimeFormat('en-GB', {timeZone: TZ, hour: '2-digit', hourCycle: 'h23'}).format(new Date()));
+    const date = today();
+    if (hour < 9 || state.lastSummary === date || !push?.sendAdmin) return;
+    state.lastSummary = date;
+    await save();
+    const list = unsentBefore(date);
+    if (!list.length) return;
+    const by = {};
+    for (const u of list) (by[u.restaurantId] ||= {name: u.name, owed: 0}).owed += u.owed;
+    const total = round(list.reduce((n, u) => n + u.owed, 0)), names = Object.values(by);
+    const lkr = n => 'LKR ' + n.toLocaleString('en-LK', {maximumFractionDigits: 2});
+    await push.sendAdmin({title: `Payouts to send: ${lkr(total)}`, body: names.map(r => `${r.name} ${lkr(round(r.owed))}`).join(' · ').slice(0, 220), url: '/accounts', tag: 'payouts-' + date});
+  }
+  setInterval(() => morningSummary().catch(e => console.error('Payout summary failed:', e.message)), 10 * 60000).unref();
+  setTimeout(() => morningSummary().catch(e => console.error('Payout summary failed:', e.message)), 30000).unref();
+
   function mount(app) {
     app.get('/api/accounts', auth, (req, res) => {
-      const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date) ? req.query.date : dayOf(new Date().toISOString());
-      const rows = day(date);
-      // Earlier days with a payout still to send.
-      const days = [...new Set(orders.filter(o => o.paymentStatus === 'paid').map(o => dayOf(o.paidAt || o.createdAt)))].filter(d => d < date);
-      const unpaid = days.flatMap(d => day(d).filter(r => !r.payout && r.owed > 0).map(r => ({date: d, restaurantId: r.restaurantId, name: r.name, owed: r.owed}))).sort((a, b) => a.date.localeCompare(b.date));
-      res.json({date, today: dayOf(new Date().toISOString()), commissionPct: state.commissionPct, rows, unpaid});
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date) ? req.query.date : today();
+      res.json({date, today: today(), commissionPct: state.commissionPct, rows: day(date), unpaid: unsentBefore(date)});
     });
 
     app.post('/api/accounts/settings', auth, async (req, res) => {
@@ -64,17 +88,42 @@ export async function createAccounts({orders, restaurants, dataDir, staff}) {
       res.json({commissionPct: state.commissionPct});
     });
 
-    // Record (or undo) that a restaurant's payout for a day was sent.
+    // Record (or undo) that restaurants' payouts for a day were sent: one restaurantId, or restaurantIds
+    // for everything in a bank transfer file.
     app.post('/api/accounts/payouts', auth, async (req, res) => {
-      const b = req.body || {}, date = text(b.date, 10), restaurantId = text(b.restaurantId, 40);
-      const row = day(date).find(r => r.restaurantId === restaurantId);
-      state.payouts = state.payouts.filter(p => !(p.restaurantId === restaurantId && p.date === date));
-      if (!b.undo) {
-        if (!row) return res.status(404).json({error: 'No paid orders for that restaurant on that day.'});
-        state.payouts.push({restaurantId, date, amount: row.owed, commissionPct: row.commissionPct, reference: text(b.reference, 80), sentAt: new Date().toISOString()});
+      const b = req.body || {}, date = text(b.date, 10);
+      const ids = Array.isArray(b.restaurantIds) ? b.restaurantIds.slice(0, 200).map(x => text(x, 40)) : [text(b.restaurantId, 40)];
+      const rows = day(date);
+      if (!b.undo && ids.some(id => !rows.find(r => r.restaurantId === id))) return res.status(404).json({error: 'No paid orders for that restaurant on that day.'});
+      for (const restaurantId of ids) {
+        const row = rows.find(r => r.restaurantId === restaurantId);
+        if (Array.isArray(b.restaurantIds) && row?.payout) continue; // already sent: keep its record
+        state.payouts = state.payouts.filter(p => !(p.restaurantId === restaurantId && p.date === date));
+        if (!b.undo) state.payouts.push({restaurantId, date, amount: row.owed, commissionPct: row.commissionPct, reference: text(b.reference, 80), sentAt: new Date().toISOString()});
       }
       await save();
       res.json({ok: true});
+    });
+
+    // A restaurant's bank account for payouts. Empty fields remove it.
+    app.post('/api/accounts/banks', auth, async (req, res) => {
+      const b = req.body || {}, restaurantId = text(b.restaurantId, 40);
+      if (!restaurants.some(r => r.id === restaurantId) && !orders.some(o => o.restaurantId === restaurantId)) return res.status(404).json({error: 'Unknown restaurant.'});
+      const bank = {accountName: text(b.accountName, 120), bankName: text(b.bankName, 80), branch: text(b.branch, 80), accountNumber: text(b.accountNumber, 30).replace(/[\s-]/g, '')};
+      if (!Object.values(bank).some(Boolean)) delete state.banks[restaurantId];
+      else {
+        if (!bank.accountName || !bank.bankName || !bank.accountNumber) return res.status(400).json({error: 'Add the account name, bank and account number.'});
+        if (!/^\d{6,20}$/.test(bank.accountNumber)) return res.status(400).json({error: 'The account number should be 6 to 20 digits.'});
+        state.banks[restaurantId] = {...bank, updatedAt: new Date().toISOString()};
+      }
+      await save();
+      res.json({ok: true, bank: state.banks[restaurantId] || null});
+    });
+
+    // Bank details from signup applications, to copy into a restaurant's payout account.
+    app.get('/api/accounts/applications', auth, async (_req, res) => {
+      const list = await applications().catch(() => []);
+      res.json({applications: list.filter(c => c.bankAccountNumber).map(c => ({id: c.id, name: c.tradingName || c.companyName, accountName: c.bankAccountName, bankName: c.bankName, branch: c.bankBranch, accountNumber: c.bankAccountNumber}))});
     });
   }
 
