@@ -92,6 +92,12 @@
         st.payouts[k]={amount:r.owed,commissionPct:r.commissionPct,reference:b.reference||'',sentAt:new Date().toISOString()}}
       return{ok:true};
     }
+    if(route==='/api/accounts/range'){
+      const params=new URLSearchParams(q),t=colomboDay(),add=(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*864e5).toISOString().slice(0,10);
+      let to=params.get('to')||t;if(to>t)to=t;const from=params.get('from')||add(to,-29),days=[];
+      for(let d=from;d<=to;d=add(d,1)){const rows=day(d);if(rows.length)days.push({date:d,rows})}
+      return ok({from,to,today:t,settleDays:2,commissionPct:st.pct,days,banks:st.banks});
+    }
     if(route==='/api/accounts/mine'){
       const params=new URLSearchParams(q),id=params.get('restaurant')||'peppermint',p=PLACES.find(x=>x.id===id)||PLACES[0],t=colomboDay(),days=[];
       const add=(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*864e5).toISOString().slice(0,10);

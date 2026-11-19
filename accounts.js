@@ -130,6 +130,17 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
         today: t, settleDays: SETTLE_DAYS, commissionPct: state.commissionPct, days, bank: b ? {bankName: b.bankName, last4: b.accountNumber.slice(-4)} : null});
     });
 
+    // Every restaurant's numbers for each day in a range (up to 62 days), for the payouts calendar and reports.
+    app.get('/api/accounts/range', auth, (req, res) => {
+      const ok = d => /^\d{4}-\d{2}-\d{2}$/.test(d || ''), t = today();
+      let to = ok(req.query.to) ? req.query.to : t, from = ok(req.query.from) ? req.query.from : addDays(to, -29);
+      if (to > t) to = t;
+      if (from < addDays(to, -61)) from = addDays(to, -61);
+      const days = [];
+      for (let d = from; d <= to; d = addDays(d, 1)) { const rows = day(d); if (rows.length) days.push({date: d, rows}); }
+      res.json({from, to, today: t, settleDays: SETTLE_DAYS, commissionPct: state.commissionPct, days, banks: state.banks});
+    });
+
     // Payouts already marked sent, newest first, for the history list.
     app.get('/api/accounts/history', auth, (_req, res) => {
       const name = id => restaurants.find(r => r.id === id)?.name || orders.find(o => o.restaurantId === id)?.restaurantName || id;

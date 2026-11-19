@@ -49,6 +49,7 @@ async function load(){
   showError(failed?'Couldn’t reach the server: '+failed.reason.message+' Retrying…':'');
   if(!failed)lastOk=Date.now();pulse();
   loadedOnce=true;render();
+  if(tab==='payouts')loadRange();
 }
 function pulse(){
   const p=$('pulse'),fresh=lastOk&&Date.now()-lastOk<30000;
@@ -56,7 +57,7 @@ function pulse(){
   p.querySelector('span').textContent=demo?'Demo data':fresh?'Live · '+Math.max(0,Math.round((Date.now()-lastOk)/1000))+'s ago':'Offline';
 }
 setInterval(pulse,1000);
-function reset(){D={orders:[],kitchens:[],bridges:{},acc:null,apps:[],history:[]};lastOk=null;seen=null;armed=null;editingBank=null;appsForCopy=null;openApp=null;fileJob=null}
+function reset(){D={orders:[],kitchens:[],bridges:{},acc:null,apps:[],history:[]};payDay=null;lastOk=null;seen=null;armed=null;editingBank=null;appsForCopy=null;openApp=null;fileJob=null}
 
 // ---------- Orders logic (same steps as the restaurant screen, /admin)
 const isDelivery=o=>o.fulfilment==='delivery';
@@ -90,7 +91,7 @@ function render(){
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.mode==='demo')===demo)));
   document.querySelectorAll('[data-tab]').forEach(a=>a.dataset.tab===tab?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
   document.body.dataset.tab=tab;
-  const H={overview:['Command centre','Overview','Today across every restaurant'],orders:['Kitchen','Orders','New, cooking and done, as it happens'],restaurants:['Network','Restaurants','Who’s open, their till and their bank'],payouts:['Money · T+2','Payouts','Each day is paid two days later'],applications:['Onboarding','Applications','Restaurants that want to join']}[tab];
+  const H={overview:['Command centre','Overview','Today across every restaurant'],orders:['Kitchen','Orders','New, cooking and done, as it happens'],restaurants:['Network','Restaurants','Who’s open, their till and their bank'],payouts:['Money · T+2','Payouts','Each day’s sales are paid two days later'],applications:['Onboarding','Applications','Restaurants that want to join']}[tab];
   $('kicker').textContent=H[0];$('page-title').textContent=H[1];$('page-sub').textContent=H[2];document.title=H[1]+' · Punchbook HQ';
   document.querySelectorAll('.tab').forEach(s=>s.hidden=s.id!=='tab-'+tab);
   $('demo-note').hidden=!demo;
@@ -209,30 +210,153 @@ function dueList(){
   return Object.values(by).sort((a,b)=>a.dueBy.localeCompare(b.dueBy)||b.owed-a.owed);
 }
 const TICK='<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
+// ---------- Payouts: summary, then Calendar · To send · Reports · History
+const PALETTE=['#38bdf8','#fbbf24','#a78bfa','#2dd4bf','#f472b6','#34d399','#fb923c','#818cf8'];
+const colorOf=id=>{const ids=D.kitchens.map(k=>k.id);let i=ids.indexOf(id);if(i<0)i=ids.length+[...id].reduce((n,c)=>n+c.charCodeAt(0),0);return PALETTE[i%PALETTE.length]};
+const kfmt=n=>n>=1e6?(n/1e6).toFixed(n>=1e7?0:1)+'M':n>=1e3?(n/1e3).toFixed(n>=1e5?0:1)+'k':String(Math.round(n));
+const monthOf=d=>d.slice(0,7);
+const monthName=m=>new Date(m+'-15T12:00:00').toLocaleDateString([],{month:'long',year:'numeric'});
+const lastDay=m=>{const [y,mo]=m.split('-').map(Number);return new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)};
+let paySub='calendar',payRest='all',payMonth=null,payDay=null;
+const keep=r=>(r.commission||0)+(r.deliveryFees||0)-(r.cardFees||0)-(r.courierCosts||0);
+const pickRows=rows=>rows.filter(r=>payRest==='all'||r.restaurantId===payRest);
+// A day's status for the calendar: paid, overdue, due (today is T+2), upcoming, open (today) or none.
+function dayStatus(date,rows){
+  if(!rows.length)return'none';const t=D.acc?.today;
+  if(rows.every(r=>r.payout))return'paid';
+  if(date===t)return'open';
+  const due=dueOn(date);return due<t?'overdue':due===t?'due':'upcoming';
+}
+const STATUS_PAY={paid:['Paid','good'],overdue:['Overdue','bad'],due:['Due today','warn'],upcoming:['Not due yet','info'],open:['Day still open','plain'],none:['No sales','plain']};
+async function loadRange(force){
+  if(!D.acc)return;payMonth||=monthOf(D.acc.today);
+  const from=payMonth+'-01',to=lastDay(payMonth)<D.acc.today?lastDay(payMonth):D.acc.today;
+  // The chart also needs the 30 days before the end of the month.
+  const chartFrom=addDays(to,-29)<from?addDays(to,-29):from;
+  if(!force&&D.range&&D.range.key===payMonth+'|'+payRest&&Date.now()-D.range.at<8000)return;
+  try{const r=await api(`/api/accounts/range?from=${chartFrom}&to=${to}`);D.range={...r,key:payMonth+'|'+payRest,at:Date.now(),monthFrom:from,monthTo:to};if(tab==='payouts')renderPayouts()}catch(err){showError(err.message)}
+}
+const rangeDays=()=>(D.range?.days||[]).map(d=>({date:d.date,rows:pickRows(d.rows)})).filter(d=>d.rows.length);
+const monthDays=()=>rangeDays().filter(d=>d.date>=D.range.monthFrom&&d.date<=D.range.monthTo);
+
 function renderPayouts(){
-  const due=dueList(),total=due.reduce((n,r)=>n+r.owed,0);
+  const due=dueList().filter(r=>payRest==='all'||r.restaurantId===payRest),t=D.acc?.today;
+  // Unpaid, day by day, to split "due now" from "not due yet".
+  const unpaid=(D.acc?.unpaid||[]).filter(u=>payRest==='all'||u.restaurantId===payRest);
+  const dueNow=unpaid.filter(u=>dueOn(u.date)<=t),overdue=unpaid.filter(u=>dueOn(u.date)<t);
+  const sum=(l,k='owed')=>l.reduce((n,x)=>n+(x[k]||0),0);
+  const mrows=monthDays().flatMap(d=>d.rows),paidRows=mrows.filter(r=>r.payout);
+  $('pay-tiles').innerHTML=[
+    [overdue.length?'rose':'green','Left to send',money(sum(due)),overdue.length?`${overdue.length} overdue`:due.length?`${plural(due.length,'restaurant')}`:'all paid up'],
+    ['orange','Due now',money(sum(dueNow)),dueNow.length?`${plural(new Set(dueNow.map(u=>u.restaurantId)).size,'restaurant')} to pay today`:'nothing due today'],
+    ['blue','Paid this month',money(sum(paidRows,'owed')),payMonth?monthName(payMonth):''],
+    ['purple','You earned this month',money(sum(mrows.map(r=>({owed:keep(r)})))),'commission + delivery − costs'],
+  ].map(([c,l,v,sub])=>`<div class="tile ${c}"><span><i></i>${l}</span><strong>${esc(v)}</strong><small>${esc(sub)}</small></div>`).join('');
+  document.querySelectorAll('[data-sub]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.sub===paySub)));
+  document.querySelectorAll('.sub').forEach(el=>el.hidden=el.id!=='sub-'+paySub);
+  const rests=[...new Set([...D.kitchens.map(k=>k.id),...(D.acc?.unpaid||[]).map(u=>u.restaurantId)])];
+  const sel=$('pay-rest');if(document.activeElement!==sel)sel.innerHTML=[['all','All restaurants'],...rests.map(id=>[id,restName(id)])].map(([v,l])=>`<option value="${esc(v)}" ${v===payRest?'selected':''}>${esc(l)}</option>`).join('');
+  $('monthnav').hidden=!['calendar','reports'].includes(paySub);
+  if(payMonth){$('m-label').textContent=monthName(payMonth);$('m-next').disabled=payMonth>=monthOf(t)}
+  ({calendar:renderCalendar,send:renderSend,reports:renderReports,history:renderHistory})[paySub]();
+}
+
+function renderCalendar(){
+  if(!D.range||!payMonth){$('cal').innerHTML='<div class="empty">Loading…</div>';return}
+  const t=D.acc.today,byDate=Object.fromEntries(rangeDays().map(d=>[d.date,d.rows]));
+  const first=payMonth+'-01',last=lastDay(payMonth),lead=(new Date(first+'T12:00:00Z').getUTCDay()+6)%7;
+  const cells=[];for(let i=0;i<lead;i++)cells.push('<div class="cal-cell blank"></div>');
+  for(let d=first;d<=last;d=addDays(d,1)){
+    const rows=byDate[d]||[],st=d>t?'future':dayStatus(d,rows),owed=rows.reduce((n,r)=>n+r.owed,0);
+    cells.push(`<button type="button" class="cal-cell ${st}${d===t?' today':''}${d===payDay?' sel':''}" data-day="${d}" ${d>t?'disabled':''} aria-label="${nice(d)}: ${rows.length?money(owed)+', '+STATUS_PAY[st]?.[0]:'no sales'}">
+      <span class="dnum">${Number(d.slice(8))}</span>${rows.length?`<span class="damt">${kfmt(owed)}</span><i class="ddot"></i>`:''}</button>`);
+  }
+  $('cal').innerHTML=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(w=>`<div class="cal-head">${w}</div>`).join('')+cells.join('');
+  // Pick a sensible day: the oldest unpaid one, else the latest with sales.
+  if(!payDay||monthOf(payDay)!==payMonth){const list=rangeDays().filter(x=>x.date>=first&&x.date<=last);payDay=(list.find(x=>dayStatus(x.date,x.rows)==='overdue'||dayStatus(x.date,x.rows)==='due')||list[list.length-1])?.date||null;if(payDay)return renderCalendar()}
+  renderDayPanel(byDate[payDay]||[]);
+  renderChart();
+}
+function renderDayPanel(rows){
+  const el=$('daypanel');
+  if(!payDay){el.innerHTML='<div class="empty">No sales this month yet.</div>';return}
+  const st=dayStatus(payDay,rows),sum=k=>rows.reduce((n,r)=>n+(r[k]||0),0),t=D.acc.today,unpaid=rows.filter(r=>!r.payout&&r.owed>0);
+  const [sl,sc]=STATUS_PAY[st]||['','plain'];
+  el.innerHTML=`<div class="dp-head"><div><p class="kicker">${payDay===t?'Today':nice(payDay)}</p><h2>${money(sum('owed'))} <small>to restaurants</small></h2>
+      <p class="help">${rows.length?`Sales ${money(sum('food')+sum('service'))} · commission ${money(sum('commission'))} · you keep ${money(rows.reduce((n,r)=>n+keep(r),0))}`:'No paid orders on this day.'}</p></div>
+      <div class="dp-due"><span class="pill ${sc}">${sl}</span><small>${payDay===t?'Pay on '+nice(dueOn(payDay)):'Due '+nice(dueOn(payDay))}</small></div></div>
+    ${rows.length?`<div class="dp-rows">${rows.map(r=>{const can=!r.payout&&payDay<t;return`<div class="dp-row${r.payout?' paid':''}" style="--rc:${colorOf(r.restaurantId)}">
+      ${can?`<label class="tick"><input type="checkbox" data-dpaid="${esc(r.restaurantId)}" aria-label="Mark ${esc(r.name)} paid for ${nice(payDay)}">${TICK}</label>`:r.payout?`<span class="tick done">${TICK}</span>`:'<span class="tick none"></span>'}
+      <div><b>${esc(r.name)}</b><small>${r.orders} orders · sales ${money(r.food+r.service)} · −${money(r.commission)}</small></div>
+      <div class="dp-bank">${r.payout?`<span class="pill good">Paid ${new Date(r.payout.sentAt).toLocaleDateString([],{day:'numeric',month:'short'})}</span><small>${r.payout.reference?'Ref '+esc(r.payout.reference)+' · ':''}<button type="button" class="linkbtn" data-unpay="${esc(r.restaurantId)}" data-days="${payDay}">undo</button></small>`
+        :r.bank?`${esc(r.bank.bankName)} <span class="mono">••••${esc(String(r.bank.accountNumber).slice(-4))}</span>`:'<span class="pill warn">No bank details</span>'}</div>
+      <div class="amt">${money(r.owed)}</div></div>`}).join('')}</div>`:''}
+    ${unpaid.length&&payDay<t?`<div class="dp-foot"><button type="button" class="btn primary small" id="daybank">Bank file for this day</button><button type="button" class="btn small ghost" id="daypaid">Mark all ${unpaid.length} paid</button></div>`:''}`;
+}
+function renderChart(){
+  const t=D.acc.today,end=D.range.monthTo,start=addDays(end,-29),byDate=Object.fromEntries(rangeDays().map(d=>[d.date,d.rows]));
+  const cols=[];for(let d=start;d<=end;d=addDays(d,1))cols.push({date:d,rows:byDate[d]||[]});
+  const max=Math.max(1,...cols.map(c=>c.rows.reduce((n,r)=>n+r.food+r.service,0)));
+  const ids=[...new Set(cols.flatMap(c=>c.rows.map(r=>r.restaurantId)))];
+  $('stack').innerHTML=cols.map(c=>{const total=c.rows.reduce((n,r)=>n+r.food+r.service,0);
+    return`<button type="button" class="scol${c.date===payDay?' sel':''}" data-day="${c.date}" ${c.date>t?'disabled':''} data-tip="${short(c.date)} · ${money(total)}${c.rows.length>1?' · '+c.rows.map(r=>r.name.split(' ')[0]+' '+kfmt(r.food+r.service)).join(', '):''}" aria-label="${nice(c.date)} sales ${money(total)}">
+      ${c.rows.slice().sort((a,b)=>ids.indexOf(a.restaurantId)-ids.indexOf(b.restaurantId)).map(r=>`<i style="height:${((r.food+r.service)/max*100).toFixed(1)}%;background:${colorOf(r.restaurantId)}"></i>`).join('')}</button>`}).join('');
+  $('stack-labels').innerHTML=cols.map((c,i)=>`<span>${i%5?'':short(c.date)}</span>`).join('');
+  $('stack-legend').innerHTML=ids.map(id=>`<span><i style="background:${colorOf(id)}"></i>${esc(restName(id))}</span>`).join('');
+  const tot=cols.reduce((n,c)=>n+c.rows.reduce((m,r)=>m+r.food+r.service,0),0);
+  $('stack-total').textContent=`${money(tot)} in 30 days · about ${money(Math.round(tot/30))} a day`;
+}
+
+function renderSend(){
+  const due=dueList().filter(r=>payRest==='all'||r.restaurantId===payRest),total=due.reduce((n,r)=>n+r.owed,0);
   const when=r=>r.overdue?`<span class="pill bad">Overdue · was due ${nice(r.dueBy)}</span>`:r.dueToday?'<span class="pill warn">Due today</span>':`<span class="pill info">Due ${nice(r.dueBy)}</span>`;
-  $('due').innerHTML=due.length?`<div class="due">${due.map(r=>`<div class="due-row${r.overdue?' overdue':''}">
+  $('due').innerHTML=due.length?`<div class="due">${due.map(r=>`<div class="due-row${r.overdue?' overdue':''}" style="--rc:${colorOf(r.restaurantId)}">
       <label class="tick" title="Mark ${esc(r.name)} as paid"><input type="checkbox" data-paid="${esc(r.restaurantId)}" aria-label="Mark ${esc(r.name)} as paid">${TICK}</label>
       <div><b>${esc(r.name)}</b><small>Sales from ${range(r.days)}</small></div>
       <div>${r.bank?`${esc(r.bank.bankName)} <span class="mono">••••${esc(String(r.bank.accountNumber).slice(-4))}</span><small>${esc(r.bank.accountName)}</small>`:'<span class="pill warn">No bank details</span><small><a href="#restaurants">Add them in Restaurants</a></small>'}</div>
       <div class="amt">${money(r.owed)}<small>${when(r)}</small></div></div>`).join('')}</div><div class="due-total"><span>Left to send</span><b>${money(total)}</b></div>`
     :'<div class="empty">Nothing left to send. Everyone is paid up.</div>';
   $('bankfile').disabled=!due.some(r=>r.bank);
-  // Sent: one line per restaurant per payment (days paid together are grouped).
+}
+
+function renderReports(){
+  if(!D.range){$('flow').innerHTML='<div class="empty">Loading…</div>';return}
+  const rows=monthDays().flatMap(d=>d.rows),s=k=>rows.reduce((n,r)=>n+(r[k]||0),0);
+  const collected=s('food')+s('service')+s('deliveryFees'),toRest=s('owed'),paid=rows.filter(r=>r.payout).reduce((n,r)=>n+r.owed,0);
+  const kept=rows.reduce((n,r)=>n+keep(r),0);
+  const line=(l,v,c='',sub='')=>`<div class="flow-row ${c}"><span>${l}${sub?`<small>${sub}</small>`:''}</span><b>${v}</b></div>`;
+  $('flow').innerHTML=rows.length?line('Collected from customers',money(collected),'in',`${s('orders')} paid orders`)
+    +line('Owed to restaurants','− '+money(toRest),'out',`${money(paid)} paid · ${money(toRest-paid)} still to send`)
+    +line('Card fees','− '+money(s('cardFees')),'out','charged by the payment provider')
+    +line('Rider / PickMe costs','− '+money(s('courierCosts')),'out')
+    +line('Punchbook keeps',money(kept),'total',`commission ${money(s('commission'))} + delivery fees ${money(s('deliveryFees'))}`)
+    :'<div class="empty">No paid orders this month.</div>';
+  const by={};for(const r of rows){const x=by[r.restaurantId]||={id:r.restaurantId,name:r.name,orders:0,sales:0,commission:0,owed:0,paid:0};x.orders+=r.orders;x.sales+=r.food+r.service;x.commission+=r.commission;x.owed+=r.owed;if(r.payout)x.paid+=r.owed}
+  const list=Object.values(by).sort((a,b)=>b.sales-a.sales);
+  $('month-rows').innerHTML=list.length?list.map(x=>`<tr><td><b style="color:${colorOf(x.id)}">●</b> <b>${esc(x.name)}</b></td><td class="num hide-m">${x.orders}</td><td class="num">${money(x.sales)}</td><td class="num hide-m">− ${money(x.commission)}</td><td class="num">${money(x.owed)}</td><td class="num">${x.owed-x.paid>0.5?`<span class="pill warn">${money(x.owed-x.paid)} left</span>`:'<span class="pill good">All paid</span>'}</td>
+      <td class="num"><button type="button" class="btn small ghost" data-statement="${esc(x.id)}">Statement</button></td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty">No restaurants with sales this month.</td></tr>';
+  if(document.activeElement!==$('pct')&&D.acc)$('pct').value=D.acc.commissionPct;
+}
+// A restaurant's month statement: one line per day, for their accountant.
+function statement(id){
+  const days=monthDays().map(d=>({date:d.date,r:d.rows.find(x=>x.restaurantId===id)})).filter(x=>x.r),name=restName(id);
+  const csv=csvOf([[`Punchbook statement: ${name}`],[`Month: ${monthName(payMonth)}`],[],['Date','Paid orders','Food sales','Service charge','Commission %','Commission','Amount to restaurant','Due date (T+2)','Paid on','Reference'],
+    ...days.map(({date,r})=>[date,r.orders,r.food.toFixed(2),r.service.toFixed(2),r.commissionPct,r.commission.toFixed(2),r.owed.toFixed(2),dueOn(date),r.payout?String(r.payout.sentAt).slice(0,10):'',r.payout?.reference||'']),
+    [],['Total','',days.reduce((n,x)=>n+x.r.food,0).toFixed(2),days.reduce((n,x)=>n+x.r.service,0).toFixed(2),'',days.reduce((n,x)=>n+x.r.commission,0).toFixed(2),days.reduce((n,x)=>n+x.r.owed,0).toFixed(2)]]);
+  download(csv,`punchbook-statement-${id}-${payMonth}${demo?'-DEMO':''}.csv`);
+}
+
+function renderHistory(){
   const groups=[];
-  for(const p of D.history){const g=groups.find(x=>x.restaurantId===p.restaurantId&&x.sentAt.slice(0,16)===String(p.sentAt).slice(0,16)&&x.reference===(p.reference||''));
+  for(const p of D.history.filter(p=>payRest==='all'||p.restaurantId===payRest)){const g=groups.find(x=>x.restaurantId===p.restaurantId&&x.sentAt.slice(0,16)===String(p.sentAt).slice(0,16)&&x.reference===(p.reference||''));
     if(g){g.amount+=p.amount;g.days.push(p.date)}else groups.push({restaurantId:p.restaurantId,name:p.name,sentAt:String(p.sentAt),reference:p.reference||'',amount:p.amount,days:[p.date]})}
-  const shown=histMore?groups:groups.slice(0,8);
-  $('history').innerHTML=groups.length?shown.map(g=>`<div class="hrow"><span class="when">${new Date(g.sentAt).toLocaleString([],{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span>
+  const shown=histMore?groups:groups.slice(0,12);
+  $('history').innerHTML=groups.length?shown.map(g=>`<div class="hrow" style="--rc:${colorOf(g.restaurantId)}"><span class="when">${new Date(g.sentAt).toLocaleString([],{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span>
       <div><b>${esc(g.name)}</b><small>Sales from ${range(g.days.sort())}</small></div><div><small>${g.reference?'Ref '+esc(g.reference):'No reference'}</small></div>
       <span class="amt">${money(Math.round(g.amount*100)/100)}</span><button type="button" class="linkbtn" data-unpay="${esc(g.restaurantId)}" data-days="${esc(g.days.join(','))}">Undo</button></div>`).join('')
-      +(groups.length>8?`<div class="more"><button type="button" class="btn small ghost" id="histmore">${histMore?'Show less':'Show all '+groups.length}</button></div>`:'')
+      +(groups.length>12?`<div class="more"><button type="button" class="btn small ghost" id="histmore">${histMore?'Show less':'Show all '+groups.length}</button></div>`:'')
     :'<div class="empty">Nothing marked as sent yet.</div>';
-  const rows=D.acc?.rows||[];
-  $('today-pay').innerHTML=rows.length?rows.map(r=>`<tr><td><b>${esc(r.name)}</b><small>Due ${nice(dueOn(D.acc.date))}</small></td><td class="num">${r.orders}</td><td class="num">${money(r.food)}</td><td class="num">− ${money(r.commission)}</td><td class="num"><b>${money(r.owed)}</b></td></tr>`).join('')
-    :'<tr><td colspan="5" class="empty">No paid orders yet today.</td></tr>';
-  if(document.activeElement!==$('pct')&&D.acc)$('pct').value=D.acc.commissionPct;
 }
 function toast(msg,undo){
   const t=$('toast');clearTimeout(toast.timer);t.hidden=false;t.innerHTML=`<span>${msg}</span>${undo?'<button type="button" id="toast-undo">Undo</button>':''}`;
@@ -240,7 +364,7 @@ function toast(msg,undo){
 }
 async function setPaid(restaurantId,days,paid){
   for(const date of days)await api('/api/accounts/payouts',paid?{body:{date,restaurantIds:[restaurantId],reference:'Ticked in HQ'}}:{body:{date,restaurantId,undo:true}});
-  await load();
+  await load();await loadRange(true);
 }
 
 const STATUS={submitted:['New','warn'],'under-review':['Reviewing','warn'],'ipg-submitted':['With payment provider','plain'],approved:['Approved','good'],live:['Live','good'],rejected:['Rejected','bad']};
@@ -310,10 +434,22 @@ document.addEventListener('click',async e=>{
     try{await setPaid(t.dataset.unpay,days,false);toast(`${esc(name)} moved back to “To send”.`)}catch(err){showError(err.message)}return}
   if(t.id==='histmore'){histMore=!histMore;renderPayouts();return}
   if(t.id==='toast-undo'){const u=toast.undo;$('toast').hidden=true;toast.undo=null;if(u)try{await u()}catch(err){showError(err.message)}return}
+  if(t.dataset.sub){paySub=t.dataset.sub;renderPayouts();return}
+  if(t.dataset.day&&!t.disabled){payDay=t.dataset.day;if(monthOf(payDay)!==payMonth){payMonth=monthOf(payDay);await loadRange(true)}$('daybar').hidden=true;renderPayouts();return}
+  if(t.id==='m-prev'||t.id==='m-next'){const [y,m]=payMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-1+(t.id==='m-next'?1:-1),15));payMonth=d.toISOString().slice(0,7);payDay=null;renderPayouts();await loadRange(true);return}
+  if(t.dataset.statement)return statement(t.dataset.statement);
+  if(t.id==='daybank')return makeDayBankFile();
+  if(t.id==='daypaid'){const rows=(rangeDays().find(d=>d.date===payDay)?.rows||[]).filter(r=>!r.payout&&r.owed>0);t.disabled=true;
+    try{await api('/api/accounts/payouts',{body:{date:payDay,restaurantIds:rows.map(r=>r.restaurantId),reference:'Ticked in HQ'}});const day=payDay;await load();await loadRange(true);
+      toast(`${plural(rows.length,'restaurant')} marked paid for ${nice(day)}`,async()=>{for(const r of rows)await api('/api/accounts/payouts',{body:{date:day,restaurantId:r.restaurantId,undo:true}});await load();await loadRange(true)})}catch(err){showError(err.message)}return}
   if(t.id==='bankfile')return makeBankFile();
   if(t.id==='markfile')return markFileSent(t);
 });
 document.addEventListener('change',async e=>{
+  if(e.target.id==='pay-rest'){payRest=e.target.value;renderPayouts();await loadRange(true);return}
+  const dbox=e.target.closest('[data-dpaid]');
+  if(dbox){const id=dbox.dataset.dpaid,day=payDay,r=rangeDays().find(d=>d.date===day)?.rows.find(x=>x.restaurantId===id);dbox.disabled=true;
+    try{await setPaid(id,[day],true);toast(`${esc(restName(id))} marked paid for ${nice(day)}${r?' · '+money(r.owed):''}`,()=>setPaid(id,[day],false))}catch(err){dbox.checked=false;dbox.disabled=false;showError(err.message)}return}
   const box=e.target.closest('[data-paid]');
   if(box){const id=box.dataset.paid,r=dueList().find(x=>x.restaurantId===id);if(!r)return;box.disabled=true;
     try{await setPaid(id,r.days,true);toast(`${esc(r.name)} marked paid · ${money(r.owed)}`,()=>setPaid(id,r.days,false))}catch(err){box.checked=false;box.disabled=false;showError(err.message)}return}
@@ -334,30 +470,38 @@ document.addEventListener('submit',async e=>{
     catch(err){$('settings-msg').textContent=err.message}}
 });
 
-// Bank bulk-transfer file: one transfer per restaurant for everything owed from earlier days.
+// Bank bulk-transfer file: one transfer per restaurant. entries = [{date, restaurantId}] it covers.
 const csvOf=rows=>rows.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
-function makeBankFile(){
-  const due=dueList(),ok=due.filter(r=>r.bank),missing=due.filter(r=>!r.bank),stamp=window.pbDemo.colomboDay();
-  const ref=`Punchbook payout ${stamp}`;
-  const csv=csvOf([['Beneficiary name','Account number','Bank','Branch','Amount','Reference'],...ok.map(r=>[r.bank.accountName,r.bank.accountNumber,r.bank.bankName,r.bank.branch||'',r.owed.toFixed(2),ref])]);
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`punchbook-bank-transfers-${stamp}${demo?'-DEMO':''}.csv`;a.click();URL.revokeObjectURL(a.href);
-  fileJob=(D.acc.unpaid||[]).filter(u=>ok.some(r=>r.restaurantId===u.restaurantId));
-  const total=ok.reduce((n,r)=>n+r.owed,0),bar=$('filebar');bar.hidden=false;
-  bar.innerHTML=`<div><b>File downloaded:</b> ${plural(ok.length,'transfer')}, ${money(total)}. Upload it to your bank, approve it, then come back and press the button.</div>
+const download=(text,name)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));a.download=name;a.click();URL.revokeObjectURL(a.href)};
+function bankFile(items,entries,label,barId){
+  const ok=items.filter(r=>r.bank),missing=items.filter(r=>!r.bank),stamp=window.pbDemo.colomboDay(),ref=`Punchbook payout ${label}`;
+  const bar=$(barId);bar.hidden=false;
+  if(!ok.length){bar.innerHTML=`<div class="warn">Add bank details first: ${missing.map(r=>esc(r.name)).join(', ')}.</div>`;return}
+  download(csvOf([['Beneficiary name','Account number','Bank','Branch','Amount','Reference'],...ok.map(r=>[r.bank.accountName,r.bank.accountNumber,r.bank.bankName,r.bank.branch||'',r.owed.toFixed(2),ref])]),`punchbook-bank-transfers-${label}${demo?'-DEMO':''}.csv`);
+  fileJob=entries.filter(u=>ok.some(r=>r.restaurantId===u.restaurantId));
+  bar.innerHTML=`<div><b>File downloaded:</b> ${plural(ok.length,'transfer')}, ${money(ok.reduce((n,r)=>n+r.owed,0))}. Upload it to your bank, approve it, then come back and press the button.</div>
     <div class="row"><input id="fileref" placeholder="Bank batch reference (optional)" aria-label="Bank batch reference"><button type="button" class="btn primary" id="markfile">I’ve paid them: mark ${ok.length} as sent</button></div>
     ${missing.length?`<div class="warn">Left out (no bank details): ${missing.map(r=>esc(r.name)).join(', ')}.</div>`:''}`;
+}
+function makeBankFile(){
+  const due=dueList().filter(r=>payRest==='all'||r.restaurantId===payRest);
+  bankFile(due,(D.acc.unpaid||[]).filter(u=>due.some(r=>r.restaurantId===u.restaurantId)),window.pbDemo.colomboDay(),'filebar');
+}
+function makeDayBankFile(){
+  const rows=(rangeDays().find(d=>d.date===payDay)?.rows||[]).filter(r=>!r.payout&&r.owed>0);
+  bankFile(rows.map(r=>({restaurantId:r.restaurantId,name:r.name,owed:r.owed,bank:r.bank||(D.acc.banks||{})[r.restaurantId]})),rows.map(r=>({date:payDay,restaurantId:r.restaurantId})),payDay,'daybar');
 }
 async function markFileSent(btn){
   if(!fileJob)return;btn.disabled=true;const ref=$('fileref').value.trim()||`Punchbook payout ${window.pbDemo.colomboDay()}`;
   try{
     const byDate={};for(const u of fileJob)(byDate[u.date]||=[]).push(u.restaurantId);
     for(const [date,ids] of Object.entries(byDate))await api('/api/accounts/payouts',{body:{date,restaurantIds:ids,reference:ref}});
-    fileJob=null;$('filebar').hidden=true;say('Payouts marked as sent.');await load();
+    fileJob=null;$('filebar').hidden=true;$('daybar').hidden=true;toast('Payouts marked as sent.');await load();await loadRange(true);
   }catch(err){btn.disabled=false;showError(err.message)}
 }
 
 // ---------- Tabs
-function route(){const t=location.hash.slice(1);tab=['overview','orders','restaurants','payouts','applications'].includes(t)?t:'overview';render();scrollTo(0,0)}
+function route(){const t=location.hash.slice(1);tab=['overview','orders','restaurants','payouts','applications'].includes(t)?t:'overview';render();scrollTo(0,0);if(tab==='payouts')loadRange()}
 addEventListener('hashchange',route);
 
 window.staffReady.then(me=>{
