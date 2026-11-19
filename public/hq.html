@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080c17"><script>try{document.documentElement.dataset.theme=localStorage.getItem("pb-theme")||(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch(e){}</script><title>Punchbook HQ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
-<link rel="stylesheet" href="/hq.css?v=27279eaca474"></head><body>
+<link rel="stylesheet" href="/hq.css?v=9268876cfe22"></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-overview" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z"/></symbol>
   <symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></symbol>
@@ -50,42 +50,52 @@
     <section id="tab-restaurants" class="tab" hidden><div class="cards" id="restaurants"></div></section>
 
     <section id="tab-payouts" class="tab" hidden>
-      <div class="panel accent-green">
-        <div class="panel-head"><div><h2>To send</h2><p class="help">Owed from earlier days. Tick a restaurant once you’ve paid it, or pay everyone with one bank file.</p></div>
-          <div class="tools"><button type="button" class="btn primary" id="bankfile">Download bank file</button></div></div>
-        <div id="filebar" class="filebar" hidden></div>
-        <div id="due"></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div><h2>Sent</h2><p class="help">Everything you’ve marked paid, newest first.</p></div></div>
-        <div id="history"></div>
-      </div>
-      <div class="panel">
-        <h2>Today so far</h2><p class="help">Added to “To send” tomorrow, once the day closes.</p>
-        <div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th class="num">Orders</th><th class="num hide-m">Food sales</th><th class="num hide-m">Commission</th><th class="num">They get</th></tr></thead><tbody id="today-pay"></tbody></table></div>
-        <form id="settings" class="settings"><label for="pct">Commission on food sales</label><input id="pct" type="number" min="0" max="50" step="0.5" required><span>%</span><button class="btn ghost" type="submit">Save</button><span id="settings-msg" role="status"></span></form>
-      </div>
-
+      <div class="tiles" id="pay-tiles"></div>
       <div class="paybar">
-        <div><h2 class="section-title">Day by day</h2><p class="help">Pick a day to see who was paid and who’s still waiting.</p></div>
+        <div class="subtabs" role="tablist" aria-label="Payouts views">
+          <button type="button" role="tab" data-sub="calendar" aria-selected="true">Calendar</button>
+          <button type="button" role="tab" data-sub="send" aria-selected="false">To send</button>
+          <button type="button" role="tab" data-sub="reports" aria-selected="false">Reports</button>
+          <button type="button" role="tab" data-sub="history" aria-selected="false">History</button>
+        </div>
         <div class="paycontrols">
           <select id="pay-rest" aria-label="Restaurant"></select>
           <div class="monthnav" id="monthnav"><button type="button" id="m-prev" aria-label="Previous month">‹</button><b id="m-label"></b><button type="button" id="m-next" aria-label="Next month">›</button></div>
         </div>
       </div>
-      <div class="calgrid">
-        <div class="panel"><div class="cal" id="cal"></div>
-          <div class="legend cal-legend"><span><i class="paid"></i>Paid</span><span><i class="due"></i>Due today</span><span><i class="overdue"></i>Overdue</span><span><i class="upcoming"></i>Not due yet</span><span><i class="open"></i>Today</span></div></div>
-        <div class="panel daypanel"><div id="daypanel"></div><div id="daybar" class="filebar" hidden></div></div>
+
+      <div id="sub-calendar" class="sub">
+        <div class="calgrid">
+          <div class="panel"><div class="cal" id="cal"></div>
+            <div class="legend cal-legend"><span><i class="paid"></i>Paid</span><span><i class="due"></i>Due today</span><span><i class="overdue"></i>Overdue</span><span><i class="upcoming"></i>Not due yet</span><span><i class="open"></i>Today</span></div></div>
+          <div class="panel daypanel"><div id="daypanel"></div><div id="daybar" class="filebar" hidden></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div><h2>Sales by day</h2><p class="help" id="stack-total"></p></div><p class="help">Tap a bar to open that day</p></div>
+          <div class="stack" id="stack"></div><div class="bar-labels" id="stack-labels"></div><div class="legend" id="stack-legend"></div>
+        </div>
       </div>
-      <div class="panel">
-        <div class="panel-head"><div><h2>Sales by day</h2><p class="help" id="stack-total"></p></div><p class="help">Tap a bar to open that day</p></div>
-        <div class="stack" id="stack"></div><div class="bar-labels" id="stack-labels"></div><div class="legend" id="stack-legend"></div>
+
+      <div id="sub-send" class="sub" hidden>
+        <div class="panel accent-green">
+          <div class="panel-head"><div><h2>To send</h2><p class="help">Everything not yet paid, one line per restaurant. Tick when paid, or pay everyone with one bank file.</p></div>
+            <div class="tools"><button type="button" class="btn primary" id="bankfile">Download bank file</button></div></div>
+          <div id="filebar" class="filebar" hidden></div>
+          <div id="due"></div>
+        </div>
       </div>
-      <div class="split split-reports">
-        <div class="panel"><h2>Money in and out</h2><p class="help">For the month shown above.</p><div class="flow" id="flow"></div></div>
-        <div class="panel"><h2>By restaurant</h2><p class="help">Download a statement for their accountant.</p>
-          <div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th class="num hide-m">Orders</th><th class="num">Sales</th><th class="num hide-m">Commission</th><th class="num">They get</th><th class="num">Status</th><th></th></tr></thead><tbody id="month-rows"></tbody></table></div></div>
+
+      <div id="sub-reports" class="sub" hidden>
+        <div class="split split-reports">
+          <div class="panel"><h2>Money in and out</h2><p class="help">For the month shown above.</p><div class="flow" id="flow"></div></div>
+          <div class="panel"><h2>By restaurant</h2><p class="help">Download a statement for their accountant.</p>
+            <div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th class="num hide-m">Orders</th><th class="num">Sales</th><th class="num hide-m">Commission</th><th class="num">They get</th><th class="num">Status</th><th></th></tr></thead><tbody id="month-rows"></tbody></table></div></div>
+        </div>
+        <form id="settings" class="settings"><label for="pct">Commission on food sales</label><input id="pct" type="number" min="0" max="50" step="0.5" required><span>%</span><button class="btn ghost" type="submit">Save</button><span id="settings-msg" role="status"></span><span class="help">Changing it doesn’t change days already paid.</span></form>
+      </div>
+
+      <div id="sub-history" class="sub" hidden>
+        <div class="panel"><div class="panel-head"><div><h2>Sent</h2><p class="help">Everything you’ve marked paid, newest first.</p></div></div><div id="history"></div></div>
       </div>
     </section>
 
@@ -96,4 +106,4 @@
   </main>
 </div>
 <div id="toast" class="toast" role="status" hidden></div>
-<script src="/theme.js?v=15ec769fae04"></script><script src="/staff-auth.js?v=caa0156522f6"></script><script src="/demo-data.js?v=f98b60de922d"></script><script src="/hq.js?v=0ba0be16a4f9"></script></body></html>
+<script src="/theme.js?v=15ec769fae04"></script><script src="/staff-auth.js?v=caa0156522f6"></script><script src="/demo-data.js?v=f98b60de922d"></script><script src="/hq.js?v=1c06dcb2acdf"></script></body></html>

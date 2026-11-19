@@ -210,14 +210,14 @@ function dueList(){
   return Object.values(by).sort((a,b)=>a.dueBy.localeCompare(b.dueBy)||b.owed-a.owed);
 }
 const TICK='<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
-// ---------- Payouts: To send, Sent, Today, then day by day (calendar, chart, month report)
+// ---------- Payouts: summary, then Calendar · To send · Reports · History
 const PALETTE=['#38bdf8','#fbbf24','#a78bfa','#2dd4bf','#f472b6','#34d399','#fb923c','#818cf8'];
 const colorOf=id=>{const ids=D.kitchens.map(k=>k.id);let i=ids.indexOf(id);if(i<0)i=ids.length+[...id].reduce((n,c)=>n+c.charCodeAt(0),0);return PALETTE[i%PALETTE.length]};
 const kfmt=n=>n>=1e6?(n/1e6).toFixed(n>=1e7?0:1)+'M':n>=1e3?(n/1e3).toFixed(n>=1e5?0:1)+'k':String(Math.round(n));
 const monthOf=d=>d.slice(0,7);
 const monthName=m=>new Date(m+'-15T12:00:00').toLocaleDateString([],{month:'long',year:'numeric'});
 const lastDay=m=>{const [y,mo]=m.split('-').map(Number);return new Date(Date.UTC(y,mo,0)).toISOString().slice(0,10)};
-let payRest='all',payMonth=null,payDay=null;
+let paySub='calendar',payRest='all',payMonth=null,payDay=null;
 const keep=r=>(r.commission||0)+(r.deliveryFees||0)-(r.cardFees||0)-(r.courierCosts||0);
 const pickRows=rows=>rows.filter(r=>payRest==='all'||r.restaurantId===payRest);
 // A day's status for the calendar: paid, overdue, due (today is T+2), upcoming, open (today) or none.
@@ -246,10 +246,19 @@ function renderPayouts(){
   const dueNow=unpaid.filter(u=>dueOn(u.date)<=t),overdue=unpaid.filter(u=>dueOn(u.date)<t);
   const sum=(l,k='owed')=>l.reduce((n,x)=>n+(x[k]||0),0);
   const mrows=monthDays().flatMap(d=>d.rows),paidRows=mrows.filter(r=>r.payout);
+  $('pay-tiles').innerHTML=[
+    [overdue.length?'rose':'green','Left to send',money(sum(due)),overdue.length?`${overdue.length} overdue`:due.length?`${plural(due.length,'restaurant')}`:'all paid up'],
+    ['orange','Due now',money(sum(dueNow)),dueNow.length?`${plural(new Set(dueNow.map(u=>u.restaurantId)).size,'restaurant')} to pay today`:'nothing due today'],
+    ['blue','Paid this month',money(sum(paidRows,'owed')),payMonth?monthName(payMonth):''],
+    ['purple','You earned this month',money(sum(mrows.map(r=>({owed:keep(r)})))),'commission + delivery − costs'],
+  ].map(([c,l,v,sub])=>`<div class="tile ${c}"><span><i></i>${l}</span><strong>${esc(v)}</strong><small>${esc(sub)}</small></div>`).join('');
+  document.querySelectorAll('[data-sub]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.sub===paySub)));
+  document.querySelectorAll('.sub').forEach(el=>el.hidden=el.id!=='sub-'+paySub);
   const rests=[...new Set([...D.kitchens.map(k=>k.id),...(D.acc?.unpaid||[]).map(u=>u.restaurantId)])];
   const sel=$('pay-rest');if(document.activeElement!==sel)sel.innerHTML=[['all','All restaurants'],...rests.map(id=>[id,restName(id)])].map(([v,l])=>`<option value="${esc(v)}" ${v===payRest?'selected':''}>${esc(l)}</option>`).join('');
+  $('monthnav').hidden=!['calendar','reports'].includes(paySub);
   if(payMonth){$('m-label').textContent=monthName(payMonth);$('m-next').disabled=payMonth>=monthOf(t)}
-  renderSend();renderHistory();renderToday();renderCalendar();renderReports();
+  ({calendar:renderCalendar,send:renderSend,reports:renderReports,history:renderHistory})[paySub]();
 }
 
 function renderCalendar(){
@@ -299,7 +308,7 @@ function renderChart(){
 }
 
 function renderSend(){
-  const due=dueList(),total=due.reduce((n,r)=>n+r.owed,0);
+  const due=dueList().filter(r=>payRest==='all'||r.restaurantId===payRest),total=due.reduce((n,r)=>n+r.owed,0);
   const when=r=>r.overdue?`<span class="pill bad">Overdue · was due ${nice(r.dueBy)}</span>`:r.dueToday?'<span class="pill warn">Due today</span>':`<span class="pill info">Due ${nice(r.dueBy)}</span>`;
   $('due').innerHTML=due.length?`<div class="due">${due.map(r=>`<div class="due-row${r.overdue?' overdue':''}" style="--rc:${colorOf(r.restaurantId)}">
       <label class="tick" title="Mark ${esc(r.name)} as paid"><input type="checkbox" data-paid="${esc(r.restaurantId)}" aria-label="Mark ${esc(r.name)} as paid">${TICK}</label>
@@ -310,12 +319,6 @@ function renderSend(){
   $('bankfile').disabled=!due.some(r=>r.bank);
 }
 
-function renderToday(){
-  const rows=D.acc?.rows||[];
-  $('today-pay').innerHTML=rows.length?rows.map(r=>`<tr><td><b style="color:${colorOf(r.restaurantId)}">●</b> <b>${esc(r.name)}</b><small>Due ${nice(dueOn(D.acc.date))}</small></td><td class="num">${r.orders}</td><td class="num hide-m">${money(r.food)}</td><td class="num hide-m">− ${money(r.commission)}</td><td class="num"><b>${money(r.owed)}</b></td></tr>`).join('')
-    :'<tr><td colspan="5" class="empty">No paid orders yet today.</td></tr>';
-  if(document.activeElement!==$('pct')&&D.acc)$('pct').value=D.acc.commissionPct;
-}
 function renderReports(){
   if(!D.range){$('flow').innerHTML='<div class="empty">Loading…</div>';return}
   const rows=monthDays().flatMap(d=>d.rows),s=k=>rows.reduce((n,r)=>n+(r[k]||0),0);
@@ -333,6 +336,7 @@ function renderReports(){
   $('month-rows').innerHTML=list.length?list.map(x=>`<tr><td><b style="color:${colorOf(x.id)}">●</b> <b>${esc(x.name)}</b></td><td class="num hide-m">${x.orders}</td><td class="num">${money(x.sales)}</td><td class="num hide-m">− ${money(x.commission)}</td><td class="num">${money(x.owed)}</td><td class="num">${x.owed-x.paid>0.5?`<span class="pill warn">${money(x.owed-x.paid)} left</span>`:'<span class="pill good">All paid</span>'}</td>
       <td class="num"><button type="button" class="btn small ghost" data-statement="${esc(x.id)}">Statement</button></td></tr>`).join('')
     :'<tr><td colspan="7" class="empty">No restaurants with sales this month.</td></tr>';
+  if(document.activeElement!==$('pct')&&D.acc)$('pct').value=D.acc.commissionPct;
 }
 // A restaurant's month statement: one line per day, for their accountant.
 function statement(id){
@@ -345,13 +349,13 @@ function statement(id){
 
 function renderHistory(){
   const groups=[];
-  for(const p of D.history){const g=groups.find(x=>x.restaurantId===p.restaurantId&&x.sentAt.slice(0,16)===String(p.sentAt).slice(0,16)&&x.reference===(p.reference||''));
+  for(const p of D.history.filter(p=>payRest==='all'||p.restaurantId===payRest)){const g=groups.find(x=>x.restaurantId===p.restaurantId&&x.sentAt.slice(0,16)===String(p.sentAt).slice(0,16)&&x.reference===(p.reference||''));
     if(g){g.amount+=p.amount;g.days.push(p.date)}else groups.push({restaurantId:p.restaurantId,name:p.name,sentAt:String(p.sentAt),reference:p.reference||'',amount:p.amount,days:[p.date]})}
-  const shown=histMore?groups:groups.slice(0,8);
+  const shown=histMore?groups:groups.slice(0,12);
   $('history').innerHTML=groups.length?shown.map(g=>`<div class="hrow" style="--rc:${colorOf(g.restaurantId)}"><span class="when">${new Date(g.sentAt).toLocaleString([],{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span>
       <div><b>${esc(g.name)}</b><small>Sales from ${range(g.days.sort())}</small></div><div><small>${g.reference?'Ref '+esc(g.reference):'No reference'}</small></div>
       <span class="amt">${money(Math.round(g.amount*100)/100)}</span><button type="button" class="linkbtn" data-unpay="${esc(g.restaurantId)}" data-days="${esc(g.days.join(','))}">Undo</button></div>`).join('')
-      +(groups.length>8?`<div class="more"><button type="button" class="btn small ghost" id="histmore">${histMore?'Show less':'Show all '+groups.length}</button></div>`:'')
+      +(groups.length>12?`<div class="more"><button type="button" class="btn small ghost" id="histmore">${histMore?'Show less':'Show all '+groups.length}</button></div>`:'')
     :'<div class="empty">Nothing marked as sent yet.</div>';
 }
 function toast(msg,undo){
@@ -430,6 +434,7 @@ document.addEventListener('click',async e=>{
     try{await setPaid(t.dataset.unpay,days,false);toast(`${esc(name)} moved back to “To send”.`)}catch(err){showError(err.message)}return}
   if(t.id==='histmore'){histMore=!histMore;renderPayouts();return}
   if(t.id==='toast-undo'){const u=toast.undo;$('toast').hidden=true;toast.undo=null;if(u)try{await u()}catch(err){showError(err.message)}return}
+  if(t.dataset.sub){paySub=t.dataset.sub;renderPayouts();return}
   if(t.dataset.day&&!t.disabled){payDay=t.dataset.day;if(monthOf(payDay)!==payMonth){payMonth=monthOf(payDay);await loadRange(true)}$('daybar').hidden=true;renderPayouts();return}
   if(t.id==='m-prev'||t.id==='m-next'){const [y,m]=payMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-1+(t.id==='m-next'?1:-1),15));payMonth=d.toISOString().slice(0,7);payDay=null;renderPayouts();await loadRange(true);return}
   if(t.dataset.statement)return statement(t.dataset.statement);
@@ -479,7 +484,7 @@ function bankFile(items,entries,label,barId){
     ${missing.length?`<div class="warn">Left out (no bank details): ${missing.map(r=>esc(r.name)).join(', ')}.</div>`:''}`;
 }
 function makeBankFile(){
-  const due=dueList();
+  const due=dueList().filter(r=>payRest==='all'||r.restaurantId===payRest);
   bankFile(due,(D.acc.unpaid||[]).filter(u=>due.some(r=>r.restaurantId===u.restaurantId)),window.pbDemo.colomboDay(),'filebar');
 }
 function makeDayBankFile(){
