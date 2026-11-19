@@ -4,7 +4,6 @@ import QRCode from 'qrcode';
 import fs from 'fs/promises';
 import path from 'path';
 import {restaurants,peppermintMenu,amraMenu,gloungeMenu} from './restaurants.js';
-import {createSquareBridge} from './pos-square.js';
 import {createPosBridge} from './pos-bridge.js';
 import {createOrderStore} from './order-store.js';
 import {createRider} from './rider.js';
@@ -29,10 +28,9 @@ app.use((q,r,next)=>MENU_FILES[q.path]?r.redirect(301,MENU_FILES[q.path]):next()
 app.use(express.static('public',{etag:true,lastModified:true,setHeaders(res,filePath){res.set('Cache-Control',filePath.endsWith('.html')?'no-store':'no-cache, must-revalidate')}}));
 const PORT=process.env.PORT||3000, BASE=process.env.PUBLIC_BASE_URL||`http://localhost:${PORT}`, orders=[];
 const DATA_DIR=process.env.DATA_DIR||path.join(process.cwd(),'data'), COMPANIES_FILE=path.join(DATA_DIR,'companies.json');
-const pos=createSquareBridge({restaurants,orders,dataDir:DATA_DIR});
 const staff=createStaff({restaurants});
-const payments=createPayments({orders,publicBase,onPaid:o=>pos.orderPaid(o)});
-const kitchen=await createKitchen({orders,restaurants,dataDir:DATA_DIR,staff,payments,onStatus:o=>pos.orderStatusChanged(o)});
+const payments=createPayments({orders,publicBase,onPaid:()=>{}});
+const kitchen=await createKitchen({orders,restaurants,dataDir:DATA_DIR,staff,payments});
 if(!process.env.DATA_DIR)console.warn('DATA_DIR is not set: orders, payouts and applications are saved inside the app folder and are lost on every deploy. Point DATA_DIR at a Railway volume.');
 if(!process.env.PUNCHBOOK_ADMIN_KEY)console.warn('PUNCHBOOK_ADMIN_KEY is not set: the restaurant, rider and accounts screens are open to anyone with the link.');
 if(!process.env.PAYMENTS_LK_SECRET_KEY)console.warn('PAYMENTS_LK_SECRET_KEY is not set: payments are simulated and orders are free.');
@@ -90,16 +88,6 @@ app.patch('/api/admin/companies/:id/status',requireAdmin,async(req,res)=>{const 
 payments.mount(app);
 // Staff sign-in and restaurant order controls. See staff.js and kitchen.js.
 staff.mount(app);kitchen.mount(app);
-// Square POS bridge (console at /pos). See pos-square.js.
-const posRoute=fn=>async(req,res)=>{try{res.json(await fn(req))}catch(e){res.status(502).json({error:String(e.message||e)})}};
-const needSquare=(_req,res,next)=>pos.configured()?next():res.status(503).json({error:'Square is not configured. Set SQUARE_ACCESS_TOKEN and restart.'});
-app.get('/api/pos/square/status',staff.requireAdmin,posRoute(()=>pos.status()));
-app.post('/api/pos/square/link',staff.requireAdmin,posRoute(async req=>{await pos.link(cleanText(req.body?.restaurantId,40));return pos.status()}));
-app.post('/api/pos/square/catalog/sync',staff.requireAdmin,needSquare,posRoute(()=>pos.syncCatalog()));
-app.get('/api/pos/square/orders',staff.requireAdmin,needSquare,posRoute(async()=>({orders:await pos.listSquareOrders()})));
-app.post('/api/pos/square/orders/:id/advance',staff.requireAdmin,needSquare,posRoute(async req=>({order:await pos.advanceSquareOrder(req.params.id)})));
-app.post('/api/pos/square/push/:id',staff.requireAdmin,needSquare,async(req,res)=>{const o=orders.find(x=>x.id===req.params.id);if(!o)return res.status(404).json({error:'Order not found'});if(o.pos?.status==='error')o.pos={};await pos.pushOrder(o);o.pos?.orderId?res.json(o):res.status(400).json({error:o.pos?.error||(o.paymentStatus!=='paid'?'Only paid orders are sent to the POS.':'This order belongs to a restaurant that is not linked to Square.'),order:o})});
-app.post('/api/pos/square/webhook',async(req,res)=>{const url=process.env.SQUARE_WEBHOOK_URL||`${publicBase(req)}/api/pos/square/webhook`,r=await pos.webhook(req,url);res.status(r.status).json(r.error?{error:r.error}:{ok:true})});
 // Local POS bridges (e.g. SambaPOS via bridge/). See pos-bridge.js.
 posBridge.mount(app);
 // Delivery riders (page at /rider). See rider.js.
@@ -109,6 +97,9 @@ const push=await createPush({orders,dataDir:DATA_DIR,staff,riderAuth:rider.auth}
 // Daily restaurant payouts (page at /accounts). See accounts.js.
 (await createAccounts({orders,restaurants,dataDir:DATA_DIR,staff,push,applications:readCompanies})).mount(app);
 app.get('/qr',async(req,res)=>{const table=String(req.query.table||'12'),url=`${publicBase(req)}/peppermint/t/${encodeURIComponent(table)}`,svg=await QRCode.toString(url,{type:'svg',margin:2,width:440});res.type('html').send(`<!doctype html><html><head><meta name="viewport" content="width=device-width"><style>body{font-family:Inter,system-ui;background:#f6f3ec;display:grid;place-items:center;min-height:100vh;margin:0}.card{background:white;padding:38px;border-radius:28px;text-align:center;max-width:430px}svg{max-width:100%;height:auto}</style></head><body><div class="card"><h2>Peppermint Café</h2><p>Table ${table}</p>${svg}<h2>Scan to order</h2><p>No app needed · Powered by Punchbook</p></div></html>`)});
+// An application's uploaded document (business registration, NIC, bank proof), for the admin to open.
+app.get('/api/public/companies/:id/document/:name',staff.requireAdmin,async(req,res)=>{const c=(await readCompanies()).find(x=>x.id===req.params.id),d=c?.documents?.[req.params.name];if(!d?.data||!ALLOWED_DOC_TYPES.has(d.type))return res.status(404).json({error:'Document not found.'});res.set('Content-Disposition',`inline; filename="${String(d.name||req.params.name).replace(/[^\w.\- ]/g,'_')}"`).type(d.type).send(Buffer.from(d.data,'base64'))});
+app.get('/api/public/companies/:id/full',staff.requireAdmin,async(req,res)=>{const c=(await readCompanies()).find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});res.json({company:summariseCompany(c)})});
 app.get('/api/public/companies',staff.requireAdmin,async(_q,res)=>{try{const companies=(await readCompanies()).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));res.json({companies:companies.map(publicCompany)})}catch{res.status(500).json({error:'Could not load applications.'})}});
 app.get('/api/public/companies/:id',staff.requireAdmin,async(req,res)=>{const c=(await readCompanies()).find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});res.json({company:publicCompany(c)})});
 app.patch('/api/public/companies/:id/status',staff.requireAdmin,async(req,res)=>{const status=cleanText(req.body?.status,40);if(!COMPANY_STATUSES.has(status))return res.status(400).json({error:'Invalid company status.'});const companies=await readCompanies(),c=companies.find(x=>x.id===req.params.id);if(!c)return res.status(404).json({error:'Company not found.'});c.status=status;c.adminNotes=cleanText(req.body?.adminNotes,3000);c.updatedAt=new Date().toISOString();await writeCompanies(companies);res.json({ok:true,company:publicCompany(c)})});
@@ -119,6 +110,6 @@ app.get(['/amraleaf','/amraleaf/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'
 app.get(['/glounge','/glounge/t/:table'],(_q,r)=>sendPage(r,'glounge.html'));
 const menuFor=q=>{const r=q.params.restaurant||'';return r==='amra'?'/amraleaf':r==='glounge'?'/glounge':'/peppermint'};
 app.get(['/peppermint-:v','/peppermint-:v/t/:table','/amraleaf-v3','/amraleaf-v3/t/:table','/r/:restaurant/t/:table'],(q,r)=>{const base=q.path.startsWith('/amraleaf')?'/amraleaf':q.path.startsWith('/r/')?menuFor(q):'/peppermint';r.redirect(301,base+(q.params.table?'/t/'+encodeURIComponent(q.params.table):''))});
-app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>sendPage(r,'pos.html'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/accounts',(_q,r)=>sendPage(r,'accounts.html'));
+app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>r.redirect('/hq'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/accounts',(_q,r)=>sendPage(r,'accounts.html'));app.get('/hq',(_q,r)=>sendPage(r,'hq.html'));
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE} · ${orderStore.count()} saved orders loaded`));
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>orderStore.flush().then(orderStore.flush).finally(()=>process.exit(0)));

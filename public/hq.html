@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Punchbook HQ</title><link rel="stylesheet" href="/hq.css?v=81645111dd14"></head><body>
+<header class="hq-top">
+  <div class="hq-row">
+    <a class="brand" href="/hq">punchbook<span>.</span></a><span class="hq-name">HQ</span>
+    <div class="mode" role="group" aria-label="Data"><button type="button" data-mode="live" aria-pressed="true">Live</button><button type="button" data-mode="demo" aria-pressed="false">Demo</button></div>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#overview" data-tab="overview">Overview</a>
+    <a href="#orders" data-tab="orders">Orders <span class="badge" id="b-orders" hidden></span></a>
+    <a href="#restaurants" data-tab="restaurants">Restaurants</a>
+    <a href="#payouts" data-tab="payouts">Payouts <span class="badge" id="b-payouts" hidden></span></a>
+    <a href="#applications" data-tab="applications">Applications <span class="badge" id="b-apps" hidden></span></a>
+  </nav>
+</header>
+<main class="hq" id="main" hidden>
+  <p id="demo-note" class="demo-note" hidden><b>Demo.</b> Made-up restaurants, orders and applications so you can see how HQ looks when busy. Nothing you do here is saved or sent.</p>
+  <p id="error" class="error" role="alert" hidden></p>
+  <p id="live-status" class="sr" role="status" aria-live="polite"></p>
+
+  <section id="tab-overview" class="tab" hidden>
+    <div class="tiles" id="tiles"></div>
+    <div class="split">
+      <div class="panel"><h2>Needs attention</h2><ul class="attention" id="attention"></ul></div>
+      <div class="panel"><h2>Restaurants today</h2><div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th>Kitchen</th><th class="num">Orders</th><th class="num">Sales</th></tr></thead><tbody id="today-rows"></tbody></table></div></div>
+    </div>
+  </section>
+
+  <section id="tab-orders" class="tab" hidden>
+    <div class="filters"><div class="chips" id="f-restaurant" role="group" aria-label="Restaurant"></div><div class="chips" id="f-type" role="group" aria-label="Order type"></div></div>
+    <div class="board" id="board"></div>
+    <p class="fine">Paid orders show here as they come in. Unpaid orders show for 30 minutes while the guest is paying. Orders marked <b>Test</b> were paid in sandbox or test mode.</p>
+  </section>
+
+  <section id="tab-restaurants" class="tab" hidden><div class="cards" id="restaurants"></div></section>
+
+  <section id="tab-payouts" class="tab" hidden>
+    <div class="panel">
+      <div class="panel-head"><div><h2>What to send now</h2><p class="help">Everything owed from earlier days, one line per restaurant. Today is added tomorrow, once the day closes.</p></div>
+        <div class="tools"><button type="button" class="btn primary" id="bankfile">Bank transfer file</button><a class="btn" href="/accounts">Day by day →</a></div></div>
+      <div id="filebar" class="filebar" hidden></div>
+      <div id="due"></div>
+    </div>
+    <div class="panel"><h2>Today so far</h2><div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th class="num">Orders</th><th class="num">Food sales</th><th class="num">Commission</th><th class="num">They get</th></tr></thead><tbody id="today-pay"></tbody></table></div></div>
+    <form id="settings" class="settings"><label for="pct">Commission on food sales</label><input id="pct" type="number" min="0" max="50" step="0.5" required><span>%</span><button class="btn" type="submit">Save</button><span id="settings-msg" role="status"></span></form>
+    <p class="fine">The bank file has name, account number, bank, branch, amount and reference. Upload it to your bank’s bulk payment page, approve it there, then mark the transfers sent here. Turn on “Alerts when closed” in the green bar to get a 9am alert listing payouts still to send.</p>
+  </section>
+
+  <section id="tab-applications" class="tab" hidden>
+    <div class="filters"><div class="chips" id="f-status" role="group" aria-label="Status"></div></div>
+    <div class="apps"><div id="app-list" class="app-list"></div><div id="app-detail" class="app-detail" hidden></div></div>
+  </section>
+</main>
+<script src="/staff-auth.js?v=caa0156522f6"></script><script src="/demo-data.js?v=e83d5a5bba0f"></script><script src="/hq.js?v=8586d4bdc8f3"></script></body></html>

@@ -55,7 +55,7 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
   // Payouts still to send from days before `date`.
   function unsentBefore(date) {
     const days = [...new Set(orders.filter(o => o.paymentStatus === 'paid' && o.testPayment === false).map(o => dayOf(o.paidAt || o.createdAt)))].filter(d => d < date);
-    return days.flatMap(d => day(d).filter(r => !r.payout && r.owed > 0).map(r => ({date: d, restaurantId: r.restaurantId, name: r.name, owed: r.owed}))).sort((a, b) => a.date.localeCompare(b.date));
+    return days.flatMap(d => day(d).filter(r => !r.payout && r.owed > 0).map(r => ({date: d, restaurantId: r.restaurantId, name: r.name, owed: r.owed, bank: r.bank}))).sort((a, b) => a.date.localeCompare(b.date));
   }
 
   // Morning summary: once a day from 9am Sri Lanka time.
@@ -79,7 +79,7 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
   function mount(app) {
     app.get('/api/accounts', auth, (req, res) => {
       const date = /^\d{4}-\d{2}-\d{2}$/.test(req.query.date) ? req.query.date : today();
-      res.json({date, today: today(), commissionPct: state.commissionPct, rows: day(date), unpaid: unsentBefore(date)});
+      res.json({date, today: today(), commissionPct: state.commissionPct, rows: day(date), unpaid: unsentBefore(date), banks: state.banks});
     });
 
     app.post('/api/accounts/settings', auth, async (req, res) => {

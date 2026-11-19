@@ -33,9 +33,7 @@ export function createPosBridge({orders, restaurants, staff}) {
     next();
   }
 
-  // Square has its own push integration in pos-square.js; leave those orders alone.
-  const handledElsewhere = o => o.pos?.provider === 'square';
-  const own = req => orders.find(o => o.id === req.params.id && o.restaurantId === req.restaurantId && !handledElsewhere(o));
+  const own = req => orders.find(o => o.id === req.params.id && o.restaurantId === req.restaurantId);
 
   // The shape the bridge sees. Kept explicit so internal fields never leak to the POS.
   function forBridge(o) {
@@ -79,7 +77,7 @@ export function createPosBridge({orders, restaurants, staff}) {
     // Paid orders not yet in the POS, oldest first. Orders that failed stay out until retried.
     app.get('/api/bridge/orders', auth, (req, res) => {
       const pending = orders.filter(o => o.restaurantId === req.restaurantId && o.paymentStatus === 'paid'
-        && !o.pos?.status && !handledElsewhere(o) && !DONE.has(o.orderStatus));
+        && !o.pos?.status && !DONE.has(o.orderStatus));
       res.json({orders: pending.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, 50).map(forBridge)});
     });
 
@@ -118,7 +116,7 @@ export function createPosBridge({orders, restaurants, staff}) {
     // Send a failed order to the POS again (from the pickup admin screen).
     app.post('/api/orders/:id/pos-retry', staff.requireStaff, (req, res) => {
       const o = orders.find(x => x.id === req.params.id);
-      if (!o || handledElsewhere(o) || !staff.canSee(req.staff, o)) return res.status(404).json({error: 'Order not found.'});
+      if (!o || !staff.canSee(req.staff, o)) return res.status(404).json({error: 'Order not found.'});
       if (o.pos?.status === 'error') o.pos = {};
       res.json(o);
     });
@@ -131,7 +129,7 @@ export function createPosBridge({orders, restaurants, staff}) {
     if (setting === 'off') return;
     const graceMs = (Number(setting) || 10) * 60000, now = Date.now();
     for (const o of orders) {
-      if (o.orderType === 'pickup' && o.pos?.status === 'synced' && !handledElsewhere(o)
+      if (o.orderType === 'pickup' && o.pos?.status === 'synced'
         && ['new', 'preparing'].includes(o.orderStatus) && !o.kitchenReadyAt && now > Date.parse(o.pickupAt) + graceMs) {
         setStatus(o, 'ready', 'timer');
       }

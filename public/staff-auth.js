@@ -1,4 +1,4 @@
-// Shared by the staff screens (/admin, /pickup-admin, /pos, /accounts, /owner-admin). Adds the staff key
+// Shared by the staff screens (/admin, /pickup-admin, /accounts, /hq, /owner-admin). Adds the staff key
 // to this page's /api/ requests, asks for it when the server says 401, shows who is signed in and any
 // setup warnings, and offers window.staffAlert() for a new-order sound. See staff.js on the server.
 (()=>{

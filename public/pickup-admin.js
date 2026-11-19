@@ -19,7 +19,7 @@ function renderFilters(){
 const posNames={sambapos:'SambaPOS',simulator:'POS simulator'};
 function posLine(o){
   const p=o.pos||{},bridge=bridges[o.restaurantId],name=posNames[p.provider]||'POS';
-  if(p.provider==='square'||(!p.status&&!bridge)||o.paymentStatus!=='paid')return'';
+  if((!p.status&&!bridge)||o.paymentStatus!=='paid')return'';
   if(p.status==='synced')return`<p class="pos-status ok">🧾 In ${name}${p.ticketNumber?` · ticket #${escapeHtml(p.ticketNumber)}`:''}${o.statusSource==='timer'?' · auto-marked ready (Ready wasn’t pressed)':''}</p>`;
   if(p.status==='error')return`<p class="pos-status err">⚠ Not in ${name}: ${escapeHtml(p.error)} <button type="button" class="pos-retry" data-retry="${escapeHtml(o.id)}">Retry</button></p>`;
   return`<p class="pos-status wait">⏳ Sending to the POS…${bridge.online?'':' · bridge offline'}</p>`;
