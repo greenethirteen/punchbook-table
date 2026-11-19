@@ -1,54 +1,76 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Punchbook HQ</title><link rel="stylesheet" href="/hq.css?v=81645111dd14"></head><body>
-<header class="hq-top">
-  <div class="hq-row">
-    <a class="brand" href="/hq">punchbook<span>.</span></a><span class="hq-name">HQ</span>
-    <div class="mode" role="group" aria-label="Data"><button type="button" data-mode="live" aria-pressed="true">Live</button><button type="button" data-mode="demo" aria-pressed="false">Demo</button></div>
-  </div>
-  <nav class="tabs" aria-label="Sections">
-    <a href="#overview" data-tab="overview">Overview</a>
-    <a href="#orders" data-tab="orders">Orders <span class="badge" id="b-orders" hidden></span></a>
-    <a href="#restaurants" data-tab="restaurants">Restaurants</a>
-    <a href="#payouts" data-tab="payouts">Payouts <span class="badge" id="b-payouts" hidden></span></a>
-    <a href="#applications" data-tab="applications">Applications <span class="badge" id="b-apps" hidden></span></a>
-  </nav>
-</header>
-<main class="hq" id="main" hidden>
-  <p id="demo-note" class="demo-note" hidden><b>Demo.</b> Made-up restaurants, orders and applications so you can see how HQ looks when busy. Nothing you do here is saved or sent.</p>
-  <p id="error" class="error" role="alert" hidden></p>
-  <p id="live-status" class="sr" role="status" aria-live="polite"></p>
-
-  <section id="tab-overview" class="tab" hidden>
-    <div class="tiles" id="tiles"></div>
-    <div class="split">
-      <div class="panel"><h2>Needs attention</h2><ul class="attention" id="attention"></ul></div>
-      <div class="panel"><h2>Restaurants today</h2><div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th>Kitchen</th><th class="num">Orders</th><th class="num">Sales</th></tr></thead><tbody id="today-rows"></tbody></table></div></div>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080c17"><title>Punchbook HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="/hq.css?v=1b5e0e566432"></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-overview" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z"/></symbol>
+  <symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-restaurants" viewBox="0 0 24 24"><path d="M4 10l1.5-6h13L20 10M4 10h16M4 10a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5 10v10h14V10M10 20v-5h4v5"/></symbol>
+  <symbol id="i-payouts" viewBox="0 0 24 24"><path d="M3 7h18v12H3zM3 11h18M7 15h3M16 4l-4 3-4-3"/></symbol>
+  <symbol id="i-applications" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13l2 2 4-4"/></symbol>
+</svg>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="/hq"><span class="logo">p</span><span>punchbook<em>.</em></span><small>HQ</small></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#overview" data-tab="overview"><svg><use href="#i-overview"/></svg><span>Overview</span></a>
+      <a href="#orders" data-tab="orders"><svg><use href="#i-orders"/></svg><span>Orders</span><b class="badge" id="b-orders" hidden></b></a>
+      <a href="#restaurants" data-tab="restaurants"><svg><use href="#i-restaurants"/></svg><span>Restaurants</span></a>
+      <a href="#payouts" data-tab="payouts"><svg><use href="#i-payouts"/></svg><span>Payouts</span><b class="badge" id="b-payouts" hidden></b></a>
+      <a href="#applications" data-tab="applications"><svg><use href="#i-applications"/></svg><span>Applications</span><b class="badge" id="b-apps" hidden></b></a>
+    </nav>
+    <div class="side-foot">
+      <div class="mode" role="group" aria-label="Data"><button type="button" data-mode="live" aria-pressed="true">Live</button><button type="button" data-mode="demo" aria-pressed="false">Demo</button></div>
+      <div class="pulse" id="pulse"><i></i><span>Connecting…</span></div>
     </div>
-  </section>
+  </aside>
 
-  <section id="tab-orders" class="tab" hidden>
-    <div class="filters"><div class="chips" id="f-restaurant" role="group" aria-label="Restaurant"></div><div class="chips" id="f-type" role="group" aria-label="Order type"></div></div>
-    <div class="board" id="board"></div>
-    <p class="fine">Paid orders show here as they come in. Unpaid orders show for 30 minutes while the guest is paying. Orders marked <b>Test</b> were paid in sandbox or test mode.</p>
-  </section>
+  <main class="hq" id="main" hidden>
+    <header class="pagehead"><div><p class="kicker" id="kicker"></p><h1 id="page-title">Overview</h1></div><p class="sub" id="page-sub"></p></header>
+    <p id="demo-note" class="demo-note" hidden><b>Demo mode</b> Made-up restaurants, orders and applications. Nothing you do here is saved or sent.</p>
+    <p id="error" class="error" role="alert" hidden></p>
+    <p id="live-status" class="sr" role="status" aria-live="polite"></p>
 
-  <section id="tab-restaurants" class="tab" hidden><div class="cards" id="restaurants"></div></section>
+    <section id="tab-overview" class="tab" hidden>
+      <div class="tiles" id="tiles"></div>
+      <div class="split">
+        <div class="panel"><h2>Needs attention</h2><ul class="attention" id="attention"></ul></div>
+        <div class="panel"><h2>Restaurants today</h2><div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th>Kitchen</th><th class="num">Orders</th><th class="num">Sales</th></tr></thead><tbody id="today-rows"></tbody></table></div></div>
+      </div>
+    </section>
 
-  <section id="tab-payouts" class="tab" hidden>
-    <div class="panel">
-      <div class="panel-head"><div><h2>What to send now</h2><p class="help">Everything owed from earlier days, one line per restaurant. Today is added tomorrow, once the day closes.</p></div>
-        <div class="tools"><button type="button" class="btn primary" id="bankfile">Bank transfer file</button><a class="btn" href="/accounts">Day by day →</a></div></div>
-      <div id="filebar" class="filebar" hidden></div>
-      <div id="due"></div>
-    </div>
-    <div class="panel"><h2>Today so far</h2><div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th class="num">Orders</th><th class="num">Food sales</th><th class="num">Commission</th><th class="num">They get</th></tr></thead><tbody id="today-pay"></tbody></table></div></div>
-    <form id="settings" class="settings"><label for="pct">Commission on food sales</label><input id="pct" type="number" min="0" max="50" step="0.5" required><span>%</span><button class="btn" type="submit">Save</button><span id="settings-msg" role="status"></span></form>
-    <p class="fine">The bank file has name, account number, bank, branch, amount and reference. Upload it to your bank’s bulk payment page, approve it there, then mark the transfers sent here. Turn on “Alerts when closed” in the green bar to get a 9am alert listing payouts still to send.</p>
-  </section>
+    <section id="tab-orders" class="tab" hidden>
+      <div class="filters"><div class="chips" id="f-restaurant" role="group" aria-label="Restaurant"></div><div class="chips" id="f-type" role="group" aria-label="Order type"></div></div>
+      <div class="board" id="board"></div>
+      <p class="fine">Unpaid orders show for 30 minutes while the guest pays. <b>Test</b> means paid in sandbox or test mode.</p>
+    </section>
 
-  <section id="tab-applications" class="tab" hidden>
-    <div class="filters"><div class="chips" id="f-status" role="group" aria-label="Status"></div></div>
-    <div class="apps"><div id="app-list" class="app-list"></div><div id="app-detail" class="app-detail" hidden></div></div>
-  </section>
-</main>
-<script src="/staff-auth.js?v=caa0156522f6"></script><script src="/demo-data.js?v=e83d5a5bba0f"></script><script src="/hq.js?v=8586d4bdc8f3"></script></body></html>
+    <section id="tab-restaurants" class="tab" hidden><div class="cards" id="restaurants"></div></section>
+
+    <section id="tab-payouts" class="tab" hidden>
+      <div class="panel accent-green">
+        <div class="panel-head"><div><h2>To send</h2><p class="help">Owed from earlier days. Tick a restaurant once you’ve paid it, or pay everyone with one bank file.</p></div>
+          <div class="tools"><button type="button" class="btn primary" id="bankfile">Download bank file</button></div></div>
+        <div id="filebar" class="filebar" hidden></div>
+        <div id="due"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Sent</h2><p class="help">Everything you’ve marked paid, newest first.</p></div><a class="btn ghost" href="/accounts">Day by day →</a></div>
+        <div id="history"></div>
+      </div>
+      <div class="panel">
+        <h2>Today so far</h2><p class="help">Added to “To send” tomorrow, once the day closes.</p>
+        <div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th class="num">Orders</th><th class="num">Food sales</th><th class="num">Commission</th><th class="num">They get</th></tr></thead><tbody id="today-pay"></tbody></table></div>
+        <form id="settings" class="settings"><label for="pct">Commission on food sales</label><input id="pct" type="number" min="0" max="50" step="0.5" required><span>%</span><button class="btn ghost" type="submit">Save</button><span id="settings-msg" role="status"></span></form>
+      </div>
+    </section>
+
+    <section id="tab-applications" class="tab" hidden>
+      <div class="filters"><div class="chips" id="f-status" role="group" aria-label="Status"></div></div>
+      <div class="apps"><div id="app-list" class="app-list"></div><div id="app-detail" class="app-detail" hidden></div></div>
+    </section>
+  </main>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+<script src="/staff-auth.js?v=caa0156522f6"></script><script src="/demo-data.js?v=2559162d68bf"></script><script src="/hq.js?v=3b00a5686fbb"></script></body></html>

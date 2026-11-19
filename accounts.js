@@ -17,6 +17,9 @@ const TZ = 'Asia/Colombo';
 const dayOf = iso => new Intl.DateTimeFormat('en-CA', {timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date(iso));
 const round = n => Math.round(n * 100) / 100;
 const text = (v, max) => String(v ?? '').trim().slice(0, max);
+// Restaurants are paid each day's money two days later (T+2).
+const SETTLE_DAYS = 2;
+const addDays = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
 
 export async function createAccounts({orders, restaurants, dataDir, staff, push, applications}) {
   const file = path.join(dataDir, 'accounts.json');
@@ -105,6 +108,32 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
       }
       await save();
       res.json({ok: true});
+    });
+
+    // A restaurant's own earnings, day by day, with when each day is paid (T+2). Restaurant keys see only
+    // their restaurant; the admin picks one with ?restaurant=.
+    app.get('/api/accounts/mine', staff.requireStaff, (req, res) => {
+      const id = req.staff.role === 'admin' ? text(req.query.restaurant, 40) || restaurants[0]?.id : req.staff.restaurantId;
+      const r = restaurants.find(x => x.id === id);
+      if (!r) return res.status(404).json({error: 'Restaurant not found.'});
+      const t = today(), n = Math.min(90, Math.max(7, Number(req.query.days) || 30)), days = [];
+      for (let i = 0; i < n; i++) {
+        const d = new Date(Date.parse(t + 'T12:00:00Z') - i * 864e5).toISOString().slice(0, 10), dueDate = addDays(d, SETTLE_DAYS);
+        const row = day(d).find(x => x.restaurantId === id);
+        if (!row) continue;
+        const status = row.payout ? 'paid' : d === t ? 'today' : dueDate < t ? 'overdue' : dueDate === t ? 'due' : 'upcoming';
+        days.push({date: d, dueDate, status, orders: row.orders, food: row.food, service: row.service, commission: row.commission, commissionPct: row.commissionPct, owed: row.owed,
+          payout: row.payout ? {amount: row.payout.amount, sentAt: row.payout.sentAt, reference: row.payout.reference} : null});
+      }
+      const b = state.banks[id];
+      res.json({restaurant: {id: r.id, name: r.name, area: r.area}, restaurants: req.staff.role === 'admin' ? restaurants.map(x => ({id: x.id, name: x.name})) : null,
+        today: t, settleDays: SETTLE_DAYS, commissionPct: state.commissionPct, days, bank: b ? {bankName: b.bankName, last4: b.accountNumber.slice(-4)} : null});
+    });
+
+    // Payouts already marked sent, newest first, for the history list.
+    app.get('/api/accounts/history', auth, (_req, res) => {
+      const name = id => restaurants.find(r => r.id === id)?.name || orders.find(o => o.restaurantId === id)?.restaurantName || id;
+      res.json({payouts: [...state.payouts].sort((a, b) => String(b.sentAt).localeCompare(String(a.sentAt))).slice(0, 300).map(p => ({...p, name: name(p.restaurantId)}))});
     });
 
     // A restaurant's bank account for payouts. Empty fields remove it.

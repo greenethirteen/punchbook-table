@@ -9,10 +9,16 @@ const minsAgo=iso=>Math.max(0,Math.floor((Date.now()-Date.parse(iso))/60000));
 const ago=iso=>{const m=minsAgo(iso);return m<1?'just now':m<60?m+' min ago':hm(iso)};
 const nice=d=>new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'});
 const plural=(n,w)=>`${n} ${w}${n===1?'':'s'}`;
-const LATE_MIN=5,UNPAID_HIDE_MIN=30;
+const LATE_MIN=5,UNPAID_HIDE_MIN=30,SETTLE_DAYS=2;
+// Each day's money is paid to the restaurant two days later (T+2).
+const addDays=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
+const dueOn=d=>addDays(d,SETTLE_DAYS);
+const short=d=>new Date(d+'T12:00:00').toLocaleDateString([],{day:'numeric',month:'short'});
+const range=days=>days.length===1?nice(days[0]):`${short(days[0])} – ${short(days[days.length-1])} (${days.length} days)`;
 
 let demo=window.pbMode()==='demo',tab='overview';
-let D={orders:[],kitchens:[],bridges:{},acc:null,apps:[]};
+let D={orders:[],kitchens:[],bridges:{},acc:null,apps:[],history:[]};
+let lastOk=null,histMore=false;
 let fRest='all',fType='all',fStatus='review',armed=null,editingBank=null,appsForCopy=null,openApp=null,fileJob=null,seen=null,loadedOnce=false;
 const busy=new Set();
 
@@ -28,7 +34,7 @@ const say=msg=>{$('live-status').textContent=msg};
 
 // ---------- Loading
 async function load(){
-  const [orders,kitchens,bridges,acc,apps]=await Promise.allSettled([api('/api/orders'),api('/api/restaurants/status'),api('/api/bridge/health'),api('/api/accounts'),api('/api/public/companies')]);
+  const [orders,kitchens,bridges,acc,apps,hist]=await Promise.allSettled([api('/api/orders'),api('/api/restaurants/status'),api('/api/bridge/health'),api('/api/accounts'),api('/api/public/companies'),api('/api/accounts/history')]);
   if(orders.status==='fulfilled'&&Array.isArray(orders.value)){
     const paidNew=new Set(orders.value.filter(o=>o.paymentStatus==='paid'&&o.orderStatus==='new').map(o=>o.id));
     if(!demo&&seen&&[...paidNew].some(id=>!seen.has(id)))window.staffAlert?.();
@@ -38,11 +44,19 @@ async function load(){
   if(bridges.status==='fulfilled')D.bridges=Object.fromEntries((bridges.value.restaurants||[]).map(b=>[b.id,b]));
   if(acc.status==='fulfilled')D.acc=acc.value;
   if(apps.status==='fulfilled')D.apps=apps.value.companies||[];
+  if(hist.status==='fulfilled')D.history=hist.value.payouts||[];
   const failed=[orders,acc].find(r=>r.status==='rejected');
   showError(failed?'Couldn’t reach the server: '+failed.reason.message+' Retrying…':'');
+  if(!failed)lastOk=Date.now();pulse();
   loadedOnce=true;render();
 }
-function reset(){D={orders:[],kitchens:[],bridges:{},acc:null,apps:[]};seen=null;armed=null;editingBank=null;appsForCopy=null;openApp=null;fileJob=null}
+function pulse(){
+  const p=$('pulse'),fresh=lastOk&&Date.now()-lastOk<30000;
+  p.className='pulse '+(fresh?'on':lastOk===null&&!loadedOnce?'':'off');
+  p.querySelector('span').textContent=demo?'Demo data':fresh?'Live · '+Math.max(0,Math.round((Date.now()-lastOk)/1000))+'s ago':'Offline';
+}
+setInterval(pulse,1000);
+function reset(){D={orders:[],kitchens:[],bridges:{},acc:null,apps:[],history:[]};lastOk=null;seen=null;armed=null;editingBank=null;appsForCopy=null;openApp=null;fileJob=null}
 
 // ---------- Orders logic (same steps as the restaurant screen, /admin)
 const isDelivery=o=>o.fulfilment==='delivery';
@@ -76,6 +90,8 @@ function render(){
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.mode==='demo')===demo)));
   document.querySelectorAll('[data-tab]').forEach(a=>a.dataset.tab===tab?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
   document.body.dataset.tab=tab;
+  const H={overview:['Command centre','Overview','Today across every restaurant'],orders:['Kitchen','Orders','New, cooking and done, as it happens'],restaurants:['Network','Restaurants','Who’s open, their till and their bank'],payouts:['Money · T+2','Payouts','Each day is paid two days later'],applications:['Onboarding','Applications','Restaurants that want to join']}[tab];
+  $('kicker').textContent=H[0];$('page-title').textContent=H[1];$('page-sub').textContent=H[2];document.title=H[1]+' · Punchbook HQ';
   document.querySelectorAll('.tab').forEach(s=>s.hidden=s.id!=='tab-'+tab);
   $('demo-note').hidden=!demo;
   const waiting=D.orders.filter(o=>isPaid(o)&&o.orderStatus==='new').length,due=dueList(),toReview=D.apps.filter(c=>c.status==='submitted').length;
@@ -97,7 +113,7 @@ function renderOverview(){
     ['orders','orange','🍳','In the kitchen now',cooking.length,waiting?plural(waiting,'order')+' not started':'all started'],
     ['payouts','green','💸','To send restaurants',money(dueTotal),due.length?'to '+plural(due.length,'restaurant'):'nothing owed'],
     ['applications','purple','📝','Applications to review',toReview,toReview?'waiting for you':'none waiting'],
-  ].map(([t,c,icon,label,val,sub])=>`<a class="tile ${c}" href="#${t}"><span><i aria-hidden="true">${icon}</i>${label}</span><strong>${esc(val)}</strong><small>${esc(sub)}</small></a>`).join('');
+  ].map(([t,c,icon,label,val,sub])=>`<a class="tile ${c}" href="#${t}"><span><i aria-hidden="true"></i>${label}</span><strong>${esc(val)}</strong><small>${esc(sub)}</small></a>`).join('');
 
   const items=[];
   for(const o of D.orders.filter(isLate))items.push(['bad',`${esc(title(o))} at ${esc(o.restaurantName||restName(o.restaurantId))} has waited ${minsAgo(o.paidAt||o.createdAt)} min`,'orders','See order']);
@@ -105,7 +121,9 @@ function renderOverview(){
   for(const [id,b] of Object.entries(D.bridges))if(!b.online)items.push(['bad',`${esc(restName(id))}’s SambaPOS is offline, so new orders won’t print at the till`,'restaurants','Check']);
   for(const k of D.kitchens)if(!k.accepting)items.push(['',`${esc(k.name)} has paused orders`,'restaurants','Resume']);
   const noBank=due.filter(r=>!r.bank);
-  if(due.length)items.push(['',`${money(dueTotal)} to send to ${plural(due.length,'restaurant')}${noBank.length?` (${noBank.length} without bank details)`:''}`,'payouts','Pay']);
+  const overdue=due.filter(r=>r.overdue);
+  if(overdue.length)items.push(['bad',`${plural(overdue.length,'payout')} overdue (past T+2): ${overdue.map(r=>esc(r.name)).join(', ')}`,'payouts','Pay now']);
+  else if(due.length)items.push(['',`${money(dueTotal)} to send to ${plural(due.length,'restaurant')}${noBank.length?` (${noBank.length} without bank details)`:''}`,'payouts','Pay']);
   const fresh=D.apps.filter(c=>c.status==='submitted').length;
   if(fresh)items.push(['',`${plural(fresh,'new restaurant application')}`,'applications','Review']);
   $('attention').innerHTML=items.length?items.map(([c,t,go,l])=>`<li class="${c}"><span>${t}</span><a href="#${go}">${l} →</a></li>`).join('')
@@ -185,20 +203,44 @@ function bankForm(id,b={}){
 // Payouts still to send from earlier days, one entry per restaurant.
 function dueList(){
   const by={};
+  const today=D.acc?.today;
   for(const u of D.acc?.unpaid||[]){const r=by[u.restaurantId]||={restaurantId:u.restaurantId,name:u.name,owed:0,days:[],bank:(D.acc.banks||{})[u.restaurantId]||u.bank||null};r.owed=Math.round((r.owed+u.owed)*100)/100;r.days.push(u.date)}
-  return Object.values(by).sort((a,b)=>b.owed-a.owed);
+  for(const r of Object.values(by)){r.days.sort();r.dueBy=dueOn(r.days[0]);r.overdue=today>r.dueBy;r.dueToday=today===r.dueBy}
+  return Object.values(by).sort((a,b)=>a.dueBy.localeCompare(b.dueBy)||b.owed-a.owed);
 }
+const TICK='<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>';
 function renderPayouts(){
   const due=dueList(),total=due.reduce((n,r)=>n+r.owed,0);
-  $('due').innerHTML=due.length?`<div class="due">${due.map(r=>`<div class="due-row"><div><b>${esc(r.name)}</b><small>${r.days.length===1?nice(r.days[0]):plural(r.days.length,'day')+': '+r.days.map(nice).join(', ')}</small></div>
-      <div>${r.bank?`${esc(r.bank.bankName)} ••••${esc(String(r.bank.accountNumber).slice(-4))}<small>${esc(r.bank.accountName)}</small>`:'<span class="pill warn">No bank details</span><small><a href="#restaurants">Add them in Restaurants</a></small>'}</div>
-      <div class="amt">${money(r.owed)}</div></div>`).join('')}</div><div class="due-total"><span>Total</span><span>${money(total)}</span></div>`
-    :'<div class="empty">Nothing to send. You’re all paid up.</div>';
+  const when=r=>r.overdue?`<span class="pill bad">Overdue · was due ${nice(r.dueBy)}</span>`:r.dueToday?'<span class="pill warn">Due today</span>':`<span class="pill info">Due ${nice(r.dueBy)}</span>`;
+  $('due').innerHTML=due.length?`<div class="due">${due.map(r=>`<div class="due-row${r.overdue?' overdue':''}">
+      <label class="tick" title="Mark ${esc(r.name)} as paid"><input type="checkbox" data-paid="${esc(r.restaurantId)}" aria-label="Mark ${esc(r.name)} as paid">${TICK}</label>
+      <div><b>${esc(r.name)}</b><small>Sales from ${range(r.days)}</small></div>
+      <div>${r.bank?`${esc(r.bank.bankName)} <span class="mono">••••${esc(String(r.bank.accountNumber).slice(-4))}</span><small>${esc(r.bank.accountName)}</small>`:'<span class="pill warn">No bank details</span><small><a href="#restaurants">Add them in Restaurants</a></small>'}</div>
+      <div class="amt">${money(r.owed)}<small>${when(r)}</small></div></div>`).join('')}</div><div class="due-total"><span>Left to send</span><b>${money(total)}</b></div>`
+    :'<div class="empty">Nothing left to send. Everyone is paid up.</div>';
   $('bankfile').disabled=!due.some(r=>r.bank);
+  // Sent: one line per restaurant per payment (days paid together are grouped).
+  const groups=[];
+  for(const p of D.history){const g=groups.find(x=>x.restaurantId===p.restaurantId&&x.sentAt.slice(0,16)===String(p.sentAt).slice(0,16)&&x.reference===(p.reference||''));
+    if(g){g.amount+=p.amount;g.days.push(p.date)}else groups.push({restaurantId:p.restaurantId,name:p.name,sentAt:String(p.sentAt),reference:p.reference||'',amount:p.amount,days:[p.date]})}
+  const shown=histMore?groups:groups.slice(0,8);
+  $('history').innerHTML=groups.length?shown.map(g=>`<div class="hrow"><span class="when">${new Date(g.sentAt).toLocaleString([],{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</span>
+      <div><b>${esc(g.name)}</b><small>Sales from ${range(g.days.sort())}</small></div><div><small>${g.reference?'Ref '+esc(g.reference):'No reference'}</small></div>
+      <span class="amt">${money(Math.round(g.amount*100)/100)}</span><button type="button" class="linkbtn" data-unpay="${esc(g.restaurantId)}" data-days="${esc(g.days.join(','))}">Undo</button></div>`).join('')
+      +(groups.length>8?`<div class="more"><button type="button" class="btn small ghost" id="histmore">${histMore?'Show less':'Show all '+groups.length}</button></div>`:'')
+    :'<div class="empty">Nothing marked as sent yet.</div>';
   const rows=D.acc?.rows||[];
-  $('today-pay').innerHTML=rows.length?rows.map(r=>`<tr><td><b>${esc(r.name)}</b></td><td class="num">${r.orders}</td><td class="num">${money(r.food)}</td><td class="num">− ${money(r.commission)}</td><td class="num"><b>${money(r.owed)}</b></td></tr>`).join('')
+  $('today-pay').innerHTML=rows.length?rows.map(r=>`<tr><td><b>${esc(r.name)}</b><small>Due ${nice(dueOn(D.acc.date))}</small></td><td class="num">${r.orders}</td><td class="num">${money(r.food)}</td><td class="num">− ${money(r.commission)}</td><td class="num"><b>${money(r.owed)}</b></td></tr>`).join('')
     :'<tr><td colspan="5" class="empty">No paid orders yet today.</td></tr>';
   if(document.activeElement!==$('pct')&&D.acc)$('pct').value=D.acc.commissionPct;
+}
+function toast(msg,undo){
+  const t=$('toast');clearTimeout(toast.timer);t.hidden=false;t.innerHTML=`<span>${msg}</span>${undo?'<button type="button" id="toast-undo">Undo</button>':''}`;
+  toast.undo=undo;toast.timer=setTimeout(()=>{t.hidden=true;toast.undo=null},7000);
+}
+async function setPaid(restaurantId,days,paid){
+  for(const date of days)await api('/api/accounts/payouts',paid?{body:{date,restaurantIds:[restaurantId],reference:'Ticked in HQ'}}:{body:{date,restaurantId,undo:true}});
+  await load();
 }
 
 const STATUS={submitted:['New','warn'],'under-review':['Reviewing','warn'],'ipg-submitted':['With payment provider','plain'],approved:['Approved','good'],live:['Live','good'],rejected:['Rejected','bad']};
@@ -264,10 +306,17 @@ document.addEventListener('click',async e=>{
     catch(err){w?.close();showError(err.message)}
     return;
   }
+  if(t.dataset.unpay){const days=t.dataset.days.split(','),name=restName(t.dataset.unpay);t.disabled=true;
+    try{await setPaid(t.dataset.unpay,days,false);toast(`${esc(name)} moved back to “To send”.`)}catch(err){showError(err.message)}return}
+  if(t.id==='histmore'){histMore=!histMore;renderPayouts();return}
+  if(t.id==='toast-undo'){const u=toast.undo;$('toast').hidden=true;toast.undo=null;if(u)try{await u()}catch(err){showError(err.message)}return}
   if(t.id==='bankfile')return makeBankFile();
   if(t.id==='markfile')return markFileSent(t);
 });
-document.addEventListener('change',e=>{
+document.addEventListener('change',async e=>{
+  const box=e.target.closest('[data-paid]');
+  if(box){const id=box.dataset.paid,r=dueList().find(x=>x.restaurantId===id);if(!r)return;box.disabled=true;
+    try{await setPaid(id,r.days,true);toast(`${esc(r.name)} marked paid · ${money(r.owed)}`,()=>setPaid(id,r.days,false))}catch(err){box.checked=false;box.disabled=false;showError(err.message)}return}
   if(e.target.name!=='app')return;const a=(appsForCopy||[]).find(x=>x.id===e.target.value),f=e.target.form;if(!a)return;
   for(const k of ['accountName','bankName','branch','accountNumber'])f[k].value=a[k]||'';
 });

@@ -32,7 +32,7 @@
       const rnd=seeded(p.id+date),share=age===0?.55:1,orders=Math.max(0,Math.round((p.base/2400)*(.6+rnd()*.8)*share));
       if(!orders)return null;
       const food=Math.round(orders*(1800+rnd()*1600)/10)*10,delivery=Math.round(orders*rnd()*.4),pickup=Math.round((orders-delivery)*rnd()*.5),table=orders-delivery-pickup;
-      const key=p.id+'|'+date,saved=key in st.payouts?st.payouts[key]:(age>2?{amount:null,reference:'BATCH-'+date.replace(/-/g,''),sentAt:new Date(Date.parse(date)+33*36e5).toISOString()}:null);
+      const key=p.id+'|'+date,saved=key in st.payouts?st.payouts[key]:(age>2&&!(p.id==='kade'&&age===3)?{amount:null,reference:'BATCH-'+date.replace(/-/g,''),sentAt:new Date(Date.parse(date)+58*36e5).toISOString()}:null);
       const pct=saved?.commissionPct??st.pct,commission=Math.round(food*pct)/100,owed=Math.round((food-commission)*100)/100;
       return{restaurantId:p.id,name:p.name,orders,food,service:0,deliveryFees:delivery*350,cardFees:Math.round(food*.025),courierCosts:delivery*300,delivery,pickup,table,commissionPct:pct,commission,owed,
         payout:saved?{...saved,amount:saved.amount??owed}:null,bank:st.banks[p.id]||null};
@@ -91,6 +91,19 @@
         if(b.undo){st.payouts[k]=null;continue}if(!r||(b.restaurantIds&&r.payout))continue;
         st.payouts[k]={amount:r.owed,commissionPct:r.commissionPct,reference:b.reference||'',sentAt:new Date().toISOString()}}
       return{ok:true};
+    }
+    if(route==='/api/accounts/mine'){
+      const params=new URLSearchParams(q),id=params.get('restaurant')||'peppermint',p=PLACES.find(x=>x.id===id)||PLACES[0],t=colomboDay(),days=[];
+      const add=(d,n)=>new Date(Date.parse(d+'T12:00:00Z')+n*864e5).toISOString().slice(0,10);
+      for(let i=0;i<30;i++){const d=add(t,-i),row=day(d).find(x=>x.restaurantId===p.id);if(!row)continue;const due=add(d,2);
+        days.push({date:d,dueDate:due,status:row.payout?'paid':d===t?'today':due<t?'overdue':due===t?'due':'upcoming',orders:row.orders,food:row.food,service:0,commission:row.commission,commissionPct:row.commissionPct,owed:row.owed,payout:row.payout})}
+      const b=st.banks[p.id];
+      return ok({restaurant:{id:p.id,name:p.name,area:p.area},restaurants:PLACES.map(x=>({id:x.id,name:x.name})),today:t,settleDays:2,commissionPct:st.pct,days,bank:b?{bankName:b.bankName,last4:b.accountNumber.slice(-4)}:null});
+    }
+    if(route==='/api/accounts/history'){
+      const out=[];
+      for(let i=1;i<=21;i++){const d=colomboDay(new Date(Date.now()-i*864e5));for(const r of day(d))if(r.payout)out.push({...r.payout,restaurantId:r.restaurantId,name:r.name,date:d,amount:r.payout.amount})}
+      return{payouts:out.sort((a,b)=>String(b.sentAt).localeCompare(String(a.sentAt)))};
     }
     if(route==='/api/accounts/banks'){
       const bank={accountName:String(b.accountName||'').trim(),bankName:String(b.bankName||'').trim(),branch:String(b.branch||'').trim(),accountNumber:String(b.accountNumber||'').replace(/[\s-]/g,'')};
