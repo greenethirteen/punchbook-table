@@ -48,8 +48,21 @@ export function createPayments({orders, publicBase, onPaid}) {
     return data;
   }
 
+  // Whether a payment is real money: false only for live gateways. Accounts (accounts.js) counts only
+  // orders with testPayment === false, so orders paid before this flag existed count as test.
+  function testMode(provider) {
+    const off = name => String(process.env[name] || '').toLowerCase() === 'false';
+    if (provider === 'payments.lk') return !key().startsWith('sk_live_');
+    if (provider === 'payhere') return !off('PAYHERE_SANDBOX');
+    if (provider === 'payplus') return payplus.sandbox();
+    if (provider === 'directpay') return !off('DIRECTPAY_SANDBOX');
+    if (provider === 'sripay') return sripay.sandbox();
+    return true; // simulated
+  }
+
   function markPaid(o, info) {
     if (o.paymentStatus === 'paid' || o.orderStatus === 'cancelled') return;
+    o.testPayment = testMode(info.provider) || Boolean(info.unverified);
     o.paymentStatus = 'paid';
     o.paidAt = new Date().toISOString();
     o.payment = {...o.payment, ...info};

@@ -3,7 +3,9 @@
 // saved to DATA_DIR/accounts.json together with the commission rate.
 // Money model: the restaurant gets food sales (plus any table service charge) minus commission.
 // Delivery fees stay with Punchbook to pay riders/PickMe, and Punchbook absorbs card fees.
-// Admin only (staff.js). Cancelled and refunded orders don't count. Card fees and rider/PickMe costs
+// Admin only (staff.js). Only real payments count (testPayment === false, set in payments.js): simulated,
+// sandbox and test-key payments are left out. The page's Demo switch shows made-up data instead.
+// Cancelled and refunded orders don't count. Card fees and rider/PickMe costs
 // are shown so Punchbook's own share can be seen after costs.
 // Each restaurant's bank account is saved here too (typed in, or copied from its signup application),
 // so the page can make one bank bulk-transfer file for a day. Every morning at 9 (Sri Lanka time) the
@@ -32,7 +34,7 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
   function day(date) {
     const rows = {};
     for (const o of orders) {
-      if (o.paymentStatus !== 'paid' || o.orderStatus === 'cancelled' || dayOf(o.paidAt || o.createdAt) !== date) continue;
+      if (o.paymentStatus !== 'paid' || o.testPayment !== false || o.orderStatus === 'cancelled' || dayOf(o.paidAt || o.createdAt) !== date) continue;
       const r = rows[o.restaurantId] ||= {restaurantId: o.restaurantId, name: o.restaurantName || restaurants.find(x => x.id === o.restaurantId)?.name || o.restaurantId, orders: 0, food: 0, service: 0, deliveryFees: 0, cardFees: 0, courierCosts: 0, delivery: 0, pickup: 0, table: 0};
       r.orders++;
       r.food += Number(o.subtotal) || 0;
@@ -52,7 +54,7 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
   const today = () => dayOf(new Date().toISOString());
   // Payouts still to send from days before `date`.
   function unsentBefore(date) {
-    const days = [...new Set(orders.filter(o => o.paymentStatus === 'paid').map(o => dayOf(o.paidAt || o.createdAt)))].filter(d => d < date);
+    const days = [...new Set(orders.filter(o => o.paymentStatus === 'paid' && o.testPayment === false).map(o => dayOf(o.paidAt || o.createdAt)))].filter(d => d < date);
     return days.flatMap(d => day(d).filter(r => !r.payout && r.owed > 0).map(r => ({date: d, restaurantId: r.restaurantId, name: r.name, owed: r.owed}))).sort((a, b) => a.date.localeCompare(b.date));
   }
 

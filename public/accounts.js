@@ -6,7 +6,58 @@ const nice=d=>new Date(d+'T12:00:00').toLocaleDateString([],{weekday:'short',day
 const shift=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
 let data=null,editing=null,apps=null,fileIds=null,date=new URLSearchParams(location.search).get('date')||'';
 
+let demo=(()=>{try{return localStorage.getItem('accounts-mode')==='demo'}catch{return false}})();
+
+// ---- Demo: made-up data, kept in this tab only. It answers the same calls as the server.
+const colomboDay=(t=new Date())=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Colombo',year:'numeric',month:'2-digit',day:'2-digit'}).format(t);
+const DEMO_PLACES=[
+  {id:'d-peppermint',name:'Peppermint Café',base:38000,bank:{accountName:'Peppermint Cafe (Pvt) Ltd',bankName:'Commercial Bank',branch:'Kollupitiya',accountNumber:'8001234567'}},
+  {id:'d-amra',name:'Amra Leaf',base:26000,bank:{accountName:'Amra Leaf Restaurants',bankName:'HNB',branch:'Colombo 07',accountNumber:'076010045123'}},
+  {id:'d-glounge',name:'G Lounge',base:52000,bank:{accountName:'G Lounge Colombo (Pvt) Ltd',bankName:'Sampath Bank',branch:'Bambalapitiya',accountNumber:'002960001234'}},
+  {id:'d-kade',name:'Kade Kitchen',base:14000,bank:null},
+  {id:'d-sunrise',name:'Sunrise Bakers',base:9000,bank:{accountName:'Sunrise Bakers',bankName:'BOC',branch:'Nugegoda',accountNumber:'0083456712'}},
+];
+const dm={pct:10,payouts:{},banks:Object.fromEntries(DEMO_PLACES.filter(p=>p.bank).map(p=>[p.id,p.bank]))};
+const seeded=str=>{let h=2166136261;for(const c of str)h=Math.imul(h^c.charCodeAt(0),16777619);return()=>((h=Math.imul(h^(h>>>15),2246822507)>>>0)%10000)/10000};
+function demoDay(date){
+  const today=colomboDay(),age=Math.round((Date.parse(today)-Date.parse(date))/864e5);
+  if(age<0)return[];
+  return DEMO_PLACES.map(p=>{
+    const rnd=seeded(p.id+date),share=age===0?.55:1,orders=Math.max(0,Math.round((p.base/2400)*(.6+rnd()*.8)*share));
+    if(!orders)return null;
+    const food=Math.round(orders*(1800+rnd()*1600)/10)*10,delivery=Math.round(orders*rnd()*.4),pickup=Math.round((orders-delivery)*rnd()*.5),table=orders-delivery-pickup;
+    const key=p.id+'|'+date,saved=dm.payouts[key]||(age>2?{amount:null,reference:'BATCH-'+date.replace(/-/g,''),sentAt:new Date(Date.parse(date)+33*36e5).toISOString(),auto:true}:null);
+    const pct=saved?.commissionPct??dm.pct,commission=Math.round(food*pct)/100,owed=Math.round((food-commission)*100)/100;
+    return{restaurantId:p.id,name:p.name,orders,food,service:0,deliveryFees:delivery*350,cardFees:Math.round(food*.025),courierCosts:delivery*300,delivery,pickup,table,commissionPct:pct,commission,owed,
+      payout:saved?{...saved,amount:saved.amount??owed}:null,bank:dm.banks[p.id]||null};
+  }).filter(Boolean).sort((a,b)=>b.owed-a.owed);
+}
+async function demoApi(path,body){
+  const [route,q]=path.split('?'),b=body||{};
+  if(route==='/api/accounts'){
+    const today=colomboDay(),date=new URLSearchParams(q).get('date')||today,unpaid=[];
+    for(let i=7;i>=1;i--){const d=colomboDay(new Date(Date.parse(date+'T12:00:00+05:30')-i*864e5));for(const r of demoDay(d))if(!r.payout&&r.owed>0)unpaid.push({date:d,restaurantId:r.restaurantId,name:r.name,owed:r.owed})}
+    return{date,today,commissionPct:dm.pct,rows:demoDay(date),unpaid};
+  }
+  if(route==='/api/accounts/settings'){dm.pct=Number(b.commissionPct);return{commissionPct:dm.pct}}
+  if(route==='/api/accounts/payouts'){
+    const rows=demoDay(b.date);
+    for(const id of b.restaurantIds||[b.restaurantId]){const k=id+'|'+b.date,r=rows.find(x=>x.restaurantId===id);
+      if(b.undo){dm.payouts[k]=null;continue}if(b.restaurantIds&&r?.payout)continue;
+      dm.payouts[k]={amount:r.owed,commissionPct:r.commissionPct,reference:b.reference||'',sentAt:new Date().toISOString()}}
+    return{ok:true};
+  }
+  if(route==='/api/accounts/banks'){
+    const bank={accountName:b.accountName.trim(),bankName:b.bankName.trim(),branch:b.branch.trim(),accountNumber:b.accountNumber.replace(/[\s-]/g,'')};
+    if(!bank.accountName||!bank.bankName||!/^\d{6,20}$/.test(bank.accountNumber))throw Error('Add the account name, bank and a 6 to 20 digit account number.');
+    dm.banks[b.restaurantId]=bank;return{ok:true};
+  }
+  if(route==='/api/accounts/applications')return{applications:[{id:'demo-app',name:'Kade Kitchen (signup)',accountName:'Kade Kitchen (Pvt) Ltd',bankName:'NDB',branch:'Rajagiriya',accountNumber:'101000987654'}]};
+  throw Error('Not available in demo.');
+}
+
 async function api(path,body){
+  if(demo)return demoApi(path,body);
   const res=await fetch(path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},body:body&&JSON.stringify(body)});
   const out=await res.json().catch(()=>({}));
   if(res.status===401)throw Error('auth');
@@ -23,6 +74,8 @@ async function load(){
 }
 
 function render(){
+  document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.mode==='demo')===demo)));
+  $('demo-note').hidden=!demo;
   const rows=data.rows,sum=k=>rows.reduce((n,r)=>n+r[k],0);
   $('date').value=data.date;$('date').max=data.today;$('next').disabled=data.date>=data.today;
   history.replaceState(null,'',data.date===data.today?'/accounts':'/accounts?date='+data.date);
@@ -101,6 +154,11 @@ $('filebar').addEventListener('click',async e=>{
   catch(err){e.target.disabled=false;if(err.message!=='auth'){$('error').textContent=err.message;$('error').hidden=false}}
 });
 const resetFile=()=>{fileIds=null;$('filebar').hidden=true};
+document.querySelector('.mode').addEventListener('click',e=>{
+  const b=e.target.closest('[data-mode]');if(!b||(b.dataset.mode==='demo')===demo)return;
+  demo=b.dataset.mode==='demo';try{localStorage.setItem('accounts-mode',demo?'demo':'live')}catch{}
+  editing=null;apps=null;resetFile();$('error').hidden=true;load();
+});
 $('unpaid').addEventListener('click',e=>{const b=e.target.closest('[data-goto]');if(b){resetFile();date=b.dataset.goto;load()}});
 $('prev').addEventListener('click',()=>{resetFile();date=shift(data.date,-1);load()});
 $('next').addEventListener('click',()=>{resetFile();date=shift(data.date,1);load()});
