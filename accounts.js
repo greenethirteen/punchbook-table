@@ -27,12 +27,15 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
   let state = {commissionPct: 3, feeModel: 'card', payouts: [], banks: {}, lastSummary: ''};
   try { state = {...state, ...JSON.parse(await fs.readFile(file, 'utf8'))}; } catch (e) { if (e.code !== 'ENOENT') throw e; }
   // Before Nov 2026 a 10% commission was taken instead; switch saved settings to the 3% card fee once.
-  if (state.feeModel !== 'card') { state.commissionPct = 3; state.feeModel = 'card'; }
+  const switchToCardFee = state.feeModel !== 'card';
+  if (switchToCardFee) { state.commissionPct = 3; state.feeModel = 'card'; }
   async function save() {
     await fs.mkdir(dataDir, {recursive: true});
     await fs.writeFile(file + '.tmp', JSON.stringify(state, null, 2));
     await fs.rename(file + '.tmp', file);
   }
+
+  if (switchToCardFee) await save();
 
   const auth = staff.requireAdmin;
 
