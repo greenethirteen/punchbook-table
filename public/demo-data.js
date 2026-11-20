@@ -22,7 +22,7 @@
     {id:'kade',name:'Kade Hoppers',area:'Wellawatte',base:14000,bank:null},
     {id:'sunrise',name:'Sunrise Bakehouse',area:'Nugegoda',base:9000,bank:{accountName:'Sunrise Bakehouse',bankName:'BOC',branch:'Nugegoda',accountNumber:'0083456712'}},
   ];
-  const st={pct:10,payouts:{},banks:Object.fromEntries(PLACES.filter(p=>p.bank).map(p=>[p.id,p.bank])),paused:{kade:true},orders:null,applications:null};
+  const st={pct:3,payouts:{},banks:Object.fromEntries(PLACES.filter(p=>p.bank).map(p=>[p.id,p.bank])),paused:{kade:true},orders:null,applications:null};
 
   // ---- Accounts (same shape as /api/accounts)
   function day(date){
@@ -69,6 +69,30 @@
     });
   }
 
+  // Finished, paid orders for the last 6 days that add up to each day's totals above, so a restaurant's
+  // Payments list matches its Earnings.
+  const DISHES={peppermint:['Crispy Chicken Burger','Truffle Chicken Pasta','Pepper Beef Rice','Club Sandwich'],amra:['Chicken Kottu','Seafood Fried Rice','Devilled Prawns','Egg Hoppers'],
+    glounge:['Nutella Waffle','Red Velvet Waffle','Brown Sugar Boba','Taro Milk Tea'],kade:['Egg Hopper Set','String Hoppers','Pol Sambol Plate'],sunrise:['Butter Croissant','Chocolate Babka','Cappuccino']};
+  function pastOrders(){
+    const out=[];let n=500;
+    for(let age=6;age>=1;age--){
+      const date=colomboDay(new Date(Date.now()-age*864e5));
+      for(const r of day(date)){
+        const p=PLACES.find(x=>x.id===r.restaurantId),rnd=seeded('o'+r.restaurantId+date),parts=[];let left=r.food;
+        for(let i=0;i<r.orders;i++){const v=i===r.orders-1?left:Math.max(450,Math.round(left/(r.orders-i)*(.6+rnd()*.8)/10)*10);parts.push(Math.min(v,left-450*(r.orders-i-1)));left-=parts[i]}
+        const kinds=[...Array(r.delivery).fill('delivery'),...Array(r.pickup).fill('pickup'),...Array(r.table).fill('table')];
+        parts.forEach((amt,i)=>{
+          const t=new Date(Date.parse(date+'T03:30:00Z')+(i+1)/(parts.length+1)*12*36e5),type=kinds[i]||'table',pickup=type!=='table',fee=type==='delivery'?350:0;
+          const dish=DISHES[p.id][Math.floor(rnd()*DISHES[p.id].length)];
+          out.push({id:'DEMO-'+(n++),restaurantId:p.id,restaurantName:p.name,orderType:pickup?'pickup':'table',fulfilment:type==='delivery'?'delivery':pickup?'pickup':undefined,table:pickup?null:String(1+Math.floor(rnd()*14)),
+            items:[{name:dish,price:amt,qty:1}],subtotal:amt,service:0,deliveryFee:fee,total:amt+fee,customer:pickup?{name:['Nadeesha','Ruwan','Kasun','Ishara','Dilini','Asanka'][i%6]}:{},paymentMethod:'card',paymentStatus:'paid',testPayment:false,
+            orderStatus:pickup?'collected':'served',createdAt:new Date(t-60000).toISOString(),paidAt:t.toISOString()});
+        });
+      }
+    }
+    return out;
+  }
+
   // ---- Signup applications (same shape as /api/public/companies/:id/full)
   function makeApplications(){
     const a=(id,status,days,f)=>({id,reference:'PBM-DEMO-'+id.toUpperCase(),status,createdAt:new Date(Date.now()-days*864e5).toISOString(),updatedAt:new Date(Date.now()-days*864e5).toISOString(),adminNotes:'',documents:{businessRegistration:{name:'BR-certificate.pdf'},identityDocument:{name:'NIC.jpg'},bankProof:{name:'bank-statement.pdf'}},...f});
@@ -82,7 +106,7 @@
   const ok=x=>JSON.parse(JSON.stringify(x));
   async function api(path,body){
     const [route,q]=path.split('?'),b=body||{};
-    st.orders||=makeOrders();st.applications||=makeApplications();
+    st.orders||=[...makeOrders(),...pastOrders()];st.applications||=makeApplications();
     if(route==='/api/accounts')return ok(accounts(new URLSearchParams(q).get('date')));
     if(route==='/api/accounts/settings'){st.pct=Number(b.commissionPct);return{commissionPct:st.pct}}
     if(route==='/api/accounts/payouts'){

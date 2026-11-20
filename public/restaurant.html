@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080c17"><script>try{document.documentElement.dataset.theme=localStorage.getItem("pb-theme")||(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch(e){}</script><title>Restaurant · Punchbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="/hq.css?v=475f0ee3721e"></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-payments" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 10h18M7 15h4"/></symbol>
+  <symbol id="i-earnings" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+  <symbol id="i-hq" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z"/></symbol>
+</svg>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="/restaurant"><span class="logo">p</span><span>punchbook<em>.</em></span></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#orders" data-tab="orders"><svg><use href="#i-orders"/></svg><span>Live orders</span><b class="badge" id="b-orders" hidden></b></a>
+      <a href="#payments" data-tab="payments"><svg><use href="#i-payments"/></svg><span>Payments</span></a>
+      <a href="#earnings" data-tab="earnings"><svg><use href="#i-earnings"/></svg><span>Earnings</span><b class="badge" id="b-earn" hidden></b></a>
+      <a href="/hq" id="hq-link" hidden><svg><use href="#i-hq"/></svg><span>Back to HQ</span></a>
+    </nav>
+    <div class="side-foot">
+      <button type="button" class="theme" id="theme" aria-label="Switch theme"></button>
+      <div class="mode" role="group" aria-label="Data"><button type="button" data-mode="live" aria-pressed="true">Live</button><button type="button" data-mode="demo" aria-pressed="false">Demo</button></div>
+      <div class="pulse" id="pulse"><i></i><span>Connecting…</span></div>
+    </div>
+  </aside>
+
+  <main class="hq" id="main" hidden>
+    <header class="pagehead"><div><p class="kicker" id="kicker"></p><h1 id="title">Your restaurant</h1></div>
+      <div class="head-right"><p class="sub" id="sub"></p><button type="button" class="btn small" id="pause" hidden></button></div></header>
+    <div class="filters" id="picker-wrap" hidden><div class="chips" id="picker" role="group" aria-label="Restaurant"></div></div>
+    <p id="demo-note" class="demo-note" hidden><b>Demo mode</b> Made-up orders and money to show how this page looks. Nothing here is real or saved.</p>
+    <p id="error" class="error" role="alert" hidden></p>
+    <p id="live-status" class="sr" role="status" aria-live="polite"></p>
+
+    <section id="tab-orders" class="tab" hidden>
+      <div class="tiles" id="o-tiles"></div>
+      <div class="filters"><div class="chips" id="f-type" role="group" aria-label="Order type"></div></div>
+      <div class="board" id="board"></div>
+      <p class="fine">New paid orders appear here straight away. Unpaid orders show for 30 minutes while the guest pays; don’t cook them until they say <b>Paid</b>.</p>
+    </section>
+
+    <section id="tab-payments" class="tab" hidden>
+      <div class="filters"><div class="chips" id="p-days" role="group" aria-label="Day"></div></div>
+      <div class="tiles" id="p-tiles"></div>
+      <div class="panel">
+        <div class="panel-head"><div><h2 id="p-title">Payments</h2><p class="help" id="p-help"></p></div></div>
+        <div class="table-wrap"><table class="list"><thead><tr><th>Time</th><th>Order</th><th class="hide-m">Type</th><th class="num">Paid</th><th class="num hide-m">Card fee</th><th class="num">You get</th><th>Status</th></tr></thead><tbody id="p-rows"></tbody><tfoot id="p-foot"></tfoot></table></div>
+      </div>
+      <p class="fine">“Paid” is the food (and any service charge) the guest paid for. Delivery fees go to the rider and aren’t included. Cancelled and refunded orders don’t count.</p>
+    </section>
+
+    <section id="tab-earnings" class="tab" hidden>
+      <div class="tiles" id="e-tiles"></div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Last 14 days</h2><p class="help">What you get each day, after the card fee.</p></div></div>
+        <div class="bars" id="bars"></div><div class="bar-labels" id="bar-labels"></div>
+        <div class="legend"><span><i style="background:var(--green)"></i>Paid to you</span><span><i style="background:var(--amber)"></i>Due now</span><span><i style="background:var(--cyan)"></i>Coming soon</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Day by day</h2><p class="help" id="rule"></p></div></div>
+        <div class="table-wrap"><table class="list"><thead><tr><th>Day</th><th class="num hide-m">Orders</th><th class="num hide-m">Sales</th><th class="num hide-m">Card fee</th><th class="num">You get</th><th>Payment</th></tr></thead><tbody id="e-rows"></tbody><tfoot id="e-foot"></tfoot></table></div>
+      </div>
+      <p class="fine">Days run midnight to midnight, Sri Lanka time. Questions about a payment? Message Punchbook on WhatsApp.</p>
+    </section>
+  </main>
+</div>
+<script src="/theme.js?v=15ec769fae04"></script><script src="/staff-auth.js?v=caa0156522f6"></script><script src="/demo-data.js?v=72d637bc851f"></script><script src="/restaurant.js?v=4302fada293f"></script></body></html>

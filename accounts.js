@@ -1,8 +1,9 @@
 // Daily accounts (page at /accounts): what each restaurant earned from paid orders on a day,
 // Punchbook's commission, and what Punchbook owes the restaurant. Marking a payout as sent is
 // saved to DATA_DIR/accounts.json together with the commission rate.
-// Money model: the restaurant gets food sales (plus any table service charge) minus commission.
-// Delivery fees stay with Punchbook to pay riders/PickMe, and Punchbook absorbs card fees.
+// Money model: the restaurant gets its sales (food plus any service charge) minus a card fee (3% by
+// default; stored as commissionPct). Delivery fees stay with Punchbook to pay riders/PickMe, and Punchbook
+// pays the payment provider's actual fee out of the 3%.
 // Admin only (staff.js). Only real payments count (testPayment === false, set in payments.js): simulated,
 // sandbox and test-key payments are left out. The page's Demo switch shows made-up data instead.
 // Cancelled and refunded orders don't count. Card fees and rider/PickMe costs
@@ -23,8 +24,10 @@ const addDays = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toI
 
 export async function createAccounts({orders, restaurants, dataDir, staff, push, applications}) {
   const file = path.join(dataDir, 'accounts.json');
-  let state = {commissionPct: 10, payouts: [], banks: {}, lastSummary: ''};
+  let state = {commissionPct: 3, feeModel: 'card', payouts: [], banks: {}, lastSummary: ''};
   try { state = {...state, ...JSON.parse(await fs.readFile(file, 'utf8'))}; } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  // Before Nov 2026 a 10% commission was taken instead; switch saved settings to the 3% card fee once.
+  if (state.feeModel !== 'card') { state.commissionPct = 3; state.feeModel = 'card'; }
   async function save() {
     await fs.mkdir(dataDir, {recursive: true});
     await fs.writeFile(file + '.tmp', JSON.stringify(state, null, 2));
@@ -49,7 +52,7 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
     }
     return Object.values(rows).map(r => {
       const payout = state.payouts.find(p => p.restaurantId === r.restaurantId && p.date === date);
-      const pct = payout?.commissionPct ?? state.commissionPct, commission = round(r.food * pct / 100);
+      const pct = payout?.commissionPct ?? state.commissionPct, commission = round((r.food + r.service) * pct / 100);
       return {...r, commissionPct: pct, commission, owed: round(r.food + r.service - commission), payout: payout || null, bank: state.banks[r.restaurantId] || null};
     }).sort((a, b) => b.owed - a.owed);
   }
@@ -87,7 +90,7 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
 
     app.post('/api/accounts/settings', auth, async (req, res) => {
       const pct = Number(req.body?.commissionPct);
-      if (!(pct >= 0 && pct <= 50)) return res.status(400).json({error: 'Commission must be between 0 and 50%.'});
+      if (!(pct >= 0 && pct <= 50)) return res.status(400).json({error: 'The card fee must be between 0 and 50%.'});
       state.commissionPct = round(pct);
       await save();
       res.json({commissionPct: state.commissionPct});

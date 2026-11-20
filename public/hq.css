@@ -356,3 +356,8 @@ a.tile:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--c) 
 }
 @media(max-width:520px){.tiles{grid-template-columns:1fr 1fr;gap:10px}.tile{padding:14px}.tile strong{font-size:clamp(16px,5vw,21px);letter-spacing:-.8px}.kv{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Restaurant page (/restaurant) */
+.head-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.list tr.muted td{opacity:.55}
+.list tr.clickable{cursor:pointer}
+#p-help .pill{margin-right:6px}

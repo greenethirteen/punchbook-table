@@ -1,6 +1,6 @@
 // Punchbook HQ (/hq): the admin's one screen. Overview, Orders, Restaurants, Payouts, Applications.
 // Live reads the real server; Demo answers the same calls from demo-data.js and changes nothing.
-// Restaurant staff (restaurant keys) are sent to their own order screen at /admin.
+// Restaurant staff (restaurant keys) are sent to their own page at /restaurant.
 const $=id=>document.getElementById(id);
 const money=n=>'LKR '+Number(n||0).toLocaleString('en-LK',{maximumFractionDigits:2});
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -187,6 +187,7 @@ function renderRestaurants(){
       <div class="line"><span>Taking orders</span><span class="val">${k.accepting?'<span class="pill good">Yes</span>':'<span class="pill warn">Paused</span>'}</span></div>
       <div class="line"><span>Till</span><span class="val">${till}</span></div>
       <div class="line"><span>Bank</span><span class="val">${bank}</span></div>
+      <div class="line"><span>Their page</span><span class="val"><a href="/restaurant?restaurant=${encodeURIComponent(k.id)}">Orders, payments and earnings →</a></span></div>
       <div class="line"><span>Owed</span><span class="val">${owed?`<b>${money(owed.owed)}</b><small><a href="#payouts">send it →</a></small>`:'Nothing owed'}</span></div>
       ${editingBank===k.id?bankForm(k.id,b):''}</article>`;
   }).join(''):'<div class="empty">No restaurants yet.</div>';
@@ -250,7 +251,7 @@ function renderPayouts(){
     [overdue.length?'rose':'green','Left to send',money(sum(due)),overdue.length?`${overdue.length} overdue`:due.length?`${plural(due.length,'restaurant')}`:'all paid up'],
     ['orange','Due now',money(sum(dueNow)),dueNow.length?`${plural(new Set(dueNow.map(u=>u.restaurantId)).size,'restaurant')} to pay today`:'nothing due today'],
     ['blue','Paid this month',money(sum(paidRows,'owed')),payMonth?monthName(payMonth):''],
-    ['purple','You earned this month',money(sum(mrows.map(r=>({owed:keep(r)})))),'commission + delivery − costs'],
+    ['purple','You earned this month',money(sum(mrows.map(r=>({owed:keep(r)})))),'3% card fee + delivery − costs'],
   ].map(([c,l,v,sub])=>`<div class="tile ${c}"><span><i></i>${l}</span><strong>${esc(v)}</strong><small>${esc(sub)}</small></div>`).join('');
   document.querySelectorAll('[data-sub]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.sub===paySub)));
   document.querySelectorAll('.sub').forEach(el=>el.hidden=el.id!=='sub-'+paySub);
@@ -283,7 +284,7 @@ function renderDayPanel(rows){
   const st=dayStatus(payDay,rows),sum=k=>rows.reduce((n,r)=>n+(r[k]||0),0),t=D.acc.today,unpaid=rows.filter(r=>!r.payout&&r.owed>0);
   const [sl,sc]=STATUS_PAY[st]||['','plain'];
   el.innerHTML=`<div class="dp-head"><div><p class="kicker">${payDay===t?'Today':nice(payDay)}</p><h2>${money(sum('owed'))} <small>to restaurants</small></h2>
-      <p class="help">${rows.length?`Sales ${money(sum('food')+sum('service'))} · commission ${money(sum('commission'))} · you keep ${money(rows.reduce((n,r)=>n+keep(r),0))}`:'No paid orders on this day.'}</p></div>
+      <p class="help">${rows.length?`Sales ${money(sum('food')+sum('service'))} · card fee ${money(sum('commission'))} · you keep ${money(rows.reduce((n,r)=>n+keep(r),0))}`:'No paid orders on this day.'}</p></div>
       <div class="dp-due"><span class="pill ${sc}">${sl}</span><small>${payDay===t?'Pay on '+nice(dueOn(payDay)):'Due '+nice(dueOn(payDay))}</small></div></div>
     ${rows.length?`<div class="dp-rows">${rows.map(r=>{const can=!r.payout&&payDay<t;return`<div class="dp-row${r.payout?' paid':''}" style="--rc:${colorOf(r.restaurantId)}">
       ${can?`<label class="tick"><input type="checkbox" data-dpaid="${esc(r.restaurantId)}" aria-label="Mark ${esc(r.name)} paid for ${nice(payDay)}">${TICK}</label>`:r.payout?`<span class="tick done">${TICK}</span>`:'<span class="tick none"></span>'}
@@ -327,9 +328,9 @@ function renderReports(){
   const line=(l,v,c='',sub='')=>`<div class="flow-row ${c}"><span>${l}${sub?`<small>${sub}</small>`:''}</span><b>${v}</b></div>`;
   $('flow').innerHTML=rows.length?line('Collected from customers',money(collected),'in',`${s('orders')} paid orders`)
     +line('Owed to restaurants','− '+money(toRest),'out',`${money(paid)} paid · ${money(toRest-paid)} still to send`)
-    +line('Card fees','− '+money(s('cardFees')),'out','charged by the payment provider')
+    +line('Payment provider fees','− '+money(s('cardFees')),'out','what Payments.lk actually charged')
     +line('Rider / PickMe costs','− '+money(s('courierCosts')),'out')
-    +line('Punchbook keeps',money(kept),'total',`commission ${money(s('commission'))} + delivery fees ${money(s('deliveryFees'))}`)
+    +line('Punchbook keeps',money(kept),'total',`card fee ${money(s('commission'))} + delivery fees ${money(s('deliveryFees'))}`)
     :'<div class="empty">No paid orders this month.</div>';
   const by={};for(const r of rows){const x=by[r.restaurantId]||={id:r.restaurantId,name:r.name,orders:0,sales:0,commission:0,owed:0,paid:0};x.orders+=r.orders;x.sales+=r.food+r.service;x.commission+=r.commission;x.owed+=r.owed;if(r.payout)x.paid+=r.owed}
   const list=Object.values(by).sort((a,b)=>b.sales-a.sales);
@@ -341,7 +342,7 @@ function renderReports(){
 // A restaurant's month statement: one line per day, for their accountant.
 function statement(id){
   const days=monthDays().map(d=>({date:d.date,r:d.rows.find(x=>x.restaurantId===id)})).filter(x=>x.r),name=restName(id);
-  const csv=csvOf([[`Punchbook statement: ${name}`],[`Month: ${monthName(payMonth)}`],[],['Date','Paid orders','Food sales','Service charge','Commission %','Commission','Amount to restaurant','Due date (T+2)','Paid on','Reference'],
+  const csv=csvOf([[`Punchbook statement: ${name}`],[`Month: ${monthName(payMonth)}`],[],['Date','Paid orders','Food sales','Service charge','Card fee %','Card fee','Amount to restaurant','Due date (T+2)','Paid on','Reference'],
     ...days.map(({date,r})=>[date,r.orders,r.food.toFixed(2),r.service.toFixed(2),r.commissionPct,r.commission.toFixed(2),r.owed.toFixed(2),dueOn(date),r.payout?String(r.payout.sentAt).slice(0,10):'',r.payout?.reference||'']),
     [],['Total','',days.reduce((n,x)=>n+x.r.food,0).toFixed(2),days.reduce((n,x)=>n+x.r.service,0).toFixed(2),'',days.reduce((n,x)=>n+x.r.commission,0).toFixed(2),days.reduce((n,x)=>n+x.r.owed,0).toFixed(2)]]);
   download(csv,`punchbook-statement-${id}-${payMonth}${demo?'-DEMO':''}.csv`);
@@ -506,7 +507,7 @@ addEventListener('hashchange',route);
 
 window.staffReady.then(me=>{
   if(!me)return;
-  if(me.role!=='admin'){location.replace('/admin');return}
+  if(me.role!=='admin'){location.replace('/restaurant');return}
   $('main').hidden=false;route();load();
   setInterval(()=>{if(!document.hidden)load()},8000);
   setInterval(()=>{if(!document.hidden&&tab==='orders'&&!document.activeElement?.closest('.tab'))renderOrders()},30000);
