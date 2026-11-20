@@ -24,7 +24,7 @@ const addDays = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toI
 
 export async function createAccounts({orders, restaurants, dataDir, staff, push, applications}) {
   const file = path.join(dataDir, 'accounts.json');
-  let state = {commissionPct: 3, feeModel: 'card', payouts: [], banks: {}, lastSummary: ''};
+  let state = {commissionPct: 3, payouts: [], banks: {}, lastSummary: ''};
   try { state = {...state, ...JSON.parse(await fs.readFile(file, 'utf8'))}; } catch (e) { if (e.code !== 'ENOENT') throw e; }
   // Before Nov 2026 a 10% commission was taken instead; switch saved settings to the 3% card fee once.
   const switchToCardFee = state.feeModel !== 'card';
