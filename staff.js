@@ -1,4 +1,4 @@
-// Staff access for the restaurant screens (/restaurant, /admin, /pickup-admin, /hq, /owner-admin).
+// Staff access for the staff screens (/restaurant for restaurants, /hq for the Punchbook admin).
 // PUNCHBOOK_ADMIN_KEY sees everything. RESTAURANT_KEYS=peppermint:<password>,amra:<password> gives each
 // restaurant a login (username = the restaurant id, e.g. "amra") that only sees and changes its own
 // orders and money. Until PUNCHBOOK_ADMIN_KEY is set the screens stay open (for testing) and say so in a banner.

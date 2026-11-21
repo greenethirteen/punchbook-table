@@ -86,7 +86,7 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
     for (const u of list) (by[u.restaurantId] ||= {name: u.name, owed: 0}).owed += u.owed;
     const total = round(list.reduce((n, u) => n + u.owed, 0)), names = Object.values(by);
     const lkr = n => 'LKR ' + n.toLocaleString('en-LK', {maximumFractionDigits: 2});
-    await push.sendAdmin({title: `Payouts to send: ${lkr(total)}`, body: names.map(r => `${r.name} ${lkr(round(r.owed))}`).join(' · ').slice(0, 220), url: '/accounts', tag: 'payouts-' + date});
+    await push.sendAdmin({title: `Payouts to send: ${lkr(total)}`, body: names.map(r => `${r.name} ${lkr(round(r.owed))}`).join(' · ').slice(0, 220), url: '/hq#payouts', tag: 'payouts-' + date});
   }
   setInterval(() => morningSummary().catch(e => console.error('Payout summary failed:', e.message)), 10 * 60000).unref();
   setTimeout(() => morningSummary().catch(e => console.error('Payout summary failed:', e.message)), 30000).unref();

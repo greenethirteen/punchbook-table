@@ -1,5 +1,5 @@
 // Notifications that reach people when their screen is off or the page is closed.
-// - Restaurants (/admin, /pickup-admin) and riders (/rider) subscribe with browser web push.
+// - Restaurants (/restaurant) and riders (/rider) subscribe with browser web push.
 //   VAPID keys come from VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY, or are made once and kept in DATA_DIR/push.json.
 // - The Punchbook Rider app (rider-app/) registers a Firebase (FCM) token for new-job alerts.
 // - Customers' app phones register a Firebase (FCM) token per order. Sending needs
@@ -101,7 +101,7 @@ export async function createPush({orders, dataDir, staff, riderAuth}) {
       if (becamePaid && o.orderStatus === 'new') {
         const who = o.orderType === 'pickup' ? `${o.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'} · ${o.customer?.name || 'Guest'}` : `Table ${o.table}`;
         await sendWeb(s => s.role === 'restaurant' && (!s.restaurantId || s.restaurantId === o.restaurantId),
-          {title: `New order · ${o.restaurantName || ''}`, body: `${who} · ${money(o.total)}`, url: '/admin', tag: o.id});
+          {title: `New order · ${o.restaurantName || ''}`, body: `${who} · ${money(o.total)}`, url: '/restaurant#orders', tag: o.id});
         if (o.fulfilment === 'delivery') {
           const job = {title: 'New delivery job 🛵', body: `${o.restaurantName} → ${o.customer?.address?.line || 'customer'} · fee ${money(o.deliveryFee || 0)}`};
           await sendWeb(s => s.role === 'rider', {...job, url: '/rider', tag: 'job-' + o.id});

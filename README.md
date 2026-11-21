@@ -17,9 +17,8 @@ Open:
 - Customer menu: http://localhost:3000/peppermint
 - Table-specific menu: http://localhost:3000/peppermint/t/12
 - Existing `/r/peppermint/t/12` QR links remain supported.
-- Restaurant dashboard: http://localhost:3000/admin
 - QR poster: http://localhost:3000/qr?table=12
-- Pickup order board (for the Android app in `mobile/`): http://localhost:3000/pickup-admin
+- Restaurant dashboard (orders, payments, earnings): http://localhost:3000/dashboard
 - Punchbook HQ (admin: overview, orders, restaurants, payouts, applications): http://localhost:3000/hq
 
 ## Payments

@@ -142,6 +142,7 @@ function orderCard(o){
     if(o.note)lines.push('“'+esc(o.note)+'”');
     extra=`<div class="extra">${lines.filter(Boolean).join('<br>')}</div>`;
   }
+  const posRetry=o.pos?.status==='error'&&!cancelled?`<button type="button" class="btn small" data-posretry="${esc(o.id)}" ${b?'disabled':''}>Resend to SambaPOS</button>`:'';
   const main=step&&!cancelled?`<button type="button" class="btn ${o.orderStatus==='new'?'primary':''}" data-step="${esc(o.id)}" data-next="${step[0]}" ${b||pending?'disabled':''}>${b?'Updating…':pending?'Waiting for payment':step[1]}</button>`:'';
   const canCancel=!cancelled&&!pending&&step&&o.dispatch?.status!=='picked_up';
   const cancel=canCancel?`<button type="button" class="btn small danger" data-cancel="${esc(o.id)}" ${b?'disabled':''}>${armed===o.id?'Tap again to cancel & refund':'Cancel'}</button>`:'';
@@ -149,7 +150,7 @@ function orderCard(o){
   return`<article class="order${late?' late':''}${cancelled?' cancelled':''}"><div class="order-top"><b>${esc(title(o))}</b><time datetime="${esc(o.createdAt)}">${ago(o.paidAt||o.createdAt)}</time></div>
     <div class="where">${esc(o.id)}</div><div class="tags">${tags.join('')}</div>
     <ul>${o.items.map(i=>`<li><span>${esc(i.qty)} × ${esc(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')}${o.deliveryFee?`<li><span>Delivery</span><span>${money(o.deliveryFee)}</span></li>`:''}</ul>
-    <div class="total"><span>Total</span><span>${money(o.total)}</span></div>${extra}${done}${main||cancel?`<div class="acts">${main}${cancel}</div>`:''}</article>`;
+    <div class="total"><span>Total</span><span>${money(o.total)}</span></div>${extra}${done}${main||cancel||posRetry?`<div class="acts">${main}${posRetry}${cancel}</div>`:''}</article>`;
 }
 
 // ---------- Payments: every order on a day, the card fee and what the restaurant gets
@@ -231,6 +232,9 @@ document.addEventListener('click',async e=>{
     try{const o=await api('/api/orders/'+encodeURIComponent(id)+'/status',{body:{orderStatus:t.dataset.next}});orders=orders.map(x=>x.id===id?o:x);$('live-status').textContent=title(o)+' updated.'}catch(err){showError(err.message)}
     busy.delete(id);render();return;
   }
+  if(t.dataset.posretry){const id=t.dataset.posretry;busy.add(id);renderOrders();
+    try{const o=await api('/api/orders/'+encodeURIComponent(id)+'/pos-retry',{body:{}});orders=orders.map(x=>x.id===id?o:x);$('live-status').textContent='Sent to SambaPOS again.'}catch(err){showError(err.message)}
+    busy.delete(id);render();return}
   if(t.dataset.cancel){
     const id=t.dataset.cancel;
     if(armed!==id){armed=id;renderOrders();setTimeout(()=>{if(armed===id){armed=null;renderOrders()}},5000);return}

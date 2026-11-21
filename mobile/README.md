@@ -4,7 +4,7 @@ Order-ahead pickup app for Punchbook restaurants. Expo / React Native + TypeScri
 
 Flow: restaurant list → menu → bag & checkout (pickup time, name, mobile, card or JustPay) → live order status with pickup code → My orders.
 
-Restaurants and menus come from the main server (`../restaurants.js` via `/api/pickup/*`). Restaurants manage orders at `/pickup-admin` (New → Preparing → Ready → Collected); the app polls every 5 seconds.
+Restaurants and menus come from the main server (`../restaurants.js` via `/api/pickup/*`). Restaurants manage orders at `/restaurant` (sign in at `/dashboard`) (New → Preparing → Ready → Collected); the app polls every 5 seconds.
 
 ## Run on the Android emulator
 

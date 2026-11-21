@@ -1,4 +1,4 @@
-// Restaurant-side order controls used by /admin and /pickup-admin: the order list, status changes,
+// Restaurant-side order controls used by /restaurant and /hq: the order list, status changes,
 // cancelling with a refund, and pausing new orders. All of it needs a staff key (see staff.js), and a
 // restaurant's key only reaches its own orders.
 //

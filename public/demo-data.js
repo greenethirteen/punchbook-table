@@ -142,7 +142,9 @@
     }
     if(route==='/api/accounts/applications')return{applications:st.applications.map(c=>({id:c.id,name:c.tradingName,accountName:c.bankAccountName,bankName:c.bankName,branch:c.bankBranch,accountNumber:c.bankAccountNumber}))};
     if(route==='/api/orders')return ok(st.orders);
-    let m=route.match(/^\/api\/orders\/([^/]+)\/(status|cancel)$/);
+    let m=route.match(/^\/api\/orders\/([^/]+)\/pos-retry$/);
+    if(m){const o=st.orders.find(x=>x.id===decodeURIComponent(m[1]));if(!o)throw Error('Order not found.');o.pos={provider:'sambapos',status:'synced',ticketNumber:'4199'};return ok(o)}
+    m=route.match(/^\/api\/orders\/([^/]+)\/(status|cancel)$/);
     if(m){const o=st.orders.find(x=>x.id===decodeURIComponent(m[1]));if(!o)throw Error('Order not found.');
       if(m[2]==='cancel'){o.orderStatus='cancelled';o.cancelReason=b.reason;o.paymentStatus='refunded'}
       else if(b.orderStatus==='food_ready')o.kitchenReadyAt=new Date().toISOString();
