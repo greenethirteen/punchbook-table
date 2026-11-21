@@ -80,7 +80,7 @@ h1{font-family:var(--head);font-size:21px;line-height:1.15;letter-spacing:-.5px;
 
   <section class="status s-new" id="status" aria-live="polite">
     <span class="test" id="test" hidden>🧪 Demo order · test payment</span>
-    <div class="st-head"><span class="emoji" id="emoji">🎟️</span>
+    <div class="st-head"><span class="emoji" id="emoji">👨‍🍳</span>
       <div class="st-text"><h1 id="headline">Finding your order…</h1><p class="lead" id="lead"></p></div>
       <div class="eta" id="eta" hidden><b id="count"></b><small id="count-label"></small></div></div>
     <div id="progress" hidden><div class="bar"><i id="fill"></i></div><div class="steps" id="steps"></div></div>
@@ -103,7 +103,7 @@ h1{font-family:var(--head);font-size:21px;line-height:1.15;letter-spacing:-.5px;
   const stageOf=o=>o.orderStatus==='new'?0:o.orderStatus==='preparing'?1:2;
   // Headline, emoji and a few lines that rotate while the guest waits.
   const COPY={
-    0:['Ticket’s on the rail','🎟️',['The kitchen just got your order.','You’re in the queue. Great picks, by the way.','Chef’s reading your order. No notes.']],
+    0:['Order accepted ✅','👨‍🍳',['The kitchen’s firing up the pans for you.','Your food is up next. Great picks, by the way.','Chef’s getting the ingredients ready.']],
     1:['We’re cookin’ 🔥','🍳',['Pans are hot, spices are flying.','Plating it up with a little extra love.','Smells good from here. Hang tight.','Perfect moment to put the phone down and chat 😉']],
     table:['Dig in!','🍽️',['Food’s on the table. Enjoy every bite.','Hope it tastes as good as it looks.']],
     pickup:['Hot and ready!','🛍️',['Swing by the counter and give your name.']],
@@ -146,7 +146,7 @@ h1{font-family:var(--head);font-size:21px;line-height:1.15;letter-spacing:-.5px;
     if(key!==shownKey)rotate(lines);shownKey=key;
     const t=o.times||{},times=[o.paidAt,t.preparing,t.served||t.ready||t.collected];
     $('progress').hidden=false;
-    $('steps').innerHTML=['Order in','Cookin’',LAST[k]].map((l,i)=>{const s=i<at||at===2?'done':i===at?'now':'';return`<span class="${s}">${s==='done'?'✓ ':''}${l}<small>${s&&times[i]?hm(times[i]):s==='now'?'now':''}</small></span>`}).join('');
+    $('steps').innerHTML=['Accepted','Cookin’',LAST[k]].map((l,i)=>{const s=i<at||at===2?'done':i===at?'now':'';return`<span class="${s}">${s==='done'?'✓ ':''}${l}<small>${s&&times[i]?hm(times[i]):s==='now'?'now':''}</small></span>`}).join('');
     // "Order something else" stays quiet while waiting, and becomes the main button once the food arrives.
     $('again').hidden=!o.menuUrl;$('again').className='again'+(at===2?'':' soft');$('again').textContent=at===2?'＋ Hungry for more? Order again':'＋ Add something to your order';
     tick();
@@ -171,7 +171,7 @@ h1{font-family:var(--head);font-size:21px;line-height:1.15;letter-spacing:-.5px;
       const key=x.paymentStatus+'|'+x.orderStatus;
       if(lastKey&&key!==lastKey){try{navigator.vibrate?.([120,80,120])}catch{}if(['served','ready','collected'].includes(x.orderStatus))confetti()}
       lastKey=key;o=x;fails=0;$('live').classList.remove('off');$('live').querySelector('span').textContent='Live';
-      document.title=({new:'Ticket’s in',preparing:'We’re cookin’',served:'Dig in!',ready:'Ready!',collected:'Collected',cancelled:'Cancelled'}[o.orderStatus]||'Your order')+' · '+((o.brand&&o.brand.name)||o.restaurantName);
+      document.title=({new:'Order accepted',preparing:'We’re cookin’',served:'Dig in!',ready:'Ready!',collected:'Collected',cancelled:'Cancelled'}[o.orderStatus]||'Your order')+' · '+((o.brand&&o.brand.name)||o.restaurantName);
       render();
     }catch{if(++fails>2){$('live').classList.add('off');$('live').querySelector('span').textContent='Reconnecting…'}}
   }
