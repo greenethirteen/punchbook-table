@@ -65,3 +65,5 @@
 .rate-arrow{display:grid;place-items:center;font-size:26px;color:#c4b184}
 .rate-note{font-size:13px;line-height:1.8;color:#6b6450;max-width:760px;margin:26px 0 0}
 @media(max-width:760px){.directpay-section{padding:56px 0}.rate-compare{grid-template-columns:1fr;gap:12px}.rate-arrow{transform:rotate(90deg);font-size:22px}.rate-card{padding:24px}.directpay-heading h2{letter-spacing:-2px}}
+
+@media(max-width:650px){.nav nav a[href="#contact"]{display:none}}

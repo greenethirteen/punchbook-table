@@ -8,21 +8,14 @@
   const css=`.staff-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px max(16px,calc((100vw - 1200px)/2));background:#244633;color:#fff;font:600 12px/1.4 Inter,system-ui,sans-serif}
 .staff-bar button{border:1px solid #ffffff55;background:transparent;color:#fff;border-radius:16px;padding:6px 12px;min-height:32px;font:inherit;cursor:pointer}
 .staff-bar .sp{margin-left:auto}.staff-warn{background:#963517;color:#fff;padding:10px max(16px,calc((100vw - 1200px)/2));font:600 12px/1.5 Inter,system-ui,sans-serif}
-.staff-login{position:fixed;inset:0;z-index:50;background:#f7f8f1;display:grid;place-items:center;padding:16px;font-family:Inter,system-ui,sans-serif;color:#244633}
-.staff-login form{width:100%;max-width:380px;background:#fff;border:1px solid #e3e5db;border-radius:16px;padding:24px;display:grid;gap:12px}
-.staff-login h2{margin:0;font-size:22px}.staff-login p{margin:0;font-size:13px;color:#697468;line-height:1.5}
-.staff-login input{border:1px solid #e3e5db;border-radius:10px;padding:12px;font-size:16px;min-height:48px}
-.staff-login button{background:#244633;color:#fff;border:0;border-radius:10px;min-height:48px;font-weight:750;font-size:15px;cursor:pointer}
-.staff-login .err{color:#963517;font-size:13px}`;
+`;
   document.head.insertAdjacentHTML('beforeend',`<style>${css}</style>`);
 
+  // Not signed in (or the session ended): go to the sign-in page, then come back here.
   let loginShown=false;
   function showLogin(wrong){
-    if(loginShown)return;loginShown=true;
-    const box=document.createElement('div');box.className='staff-login';
-    box.innerHTML=`<form><h2>Staff sign-in</h2><p>Enter your restaurant’s staff key, or the Punchbook admin key.</p><input type="password" autocomplete="current-password" aria-label="Staff key" required>${wrong?'<p class="err" role="alert">That key didn’t work. Try again.</p>':''}<button>Sign in</button></form>`;
-    box.querySelector('form').addEventListener('submit',e=>{e.preventDefault();write(box.querySelector('input').value.trim());location.reload()});
-    document.body.append(box);box.querySelector('input').focus();
+    if(loginShown)return;loginShown=true;write('');
+    location.replace('/dashboard?next='+encodeURIComponent(location.pathname+location.search+location.hash)+(wrong?'&expired=1':''));
   }
 
   const nativeFetch=window.fetch.bind(window);
@@ -46,7 +39,7 @@
     const bar=document.createElement('div');bar.className='staff-bar';
     bar.innerHTML=`<span>${me.role==='admin'?'Punchbook admin · all restaurants':'Signed in · '+String(me.restaurantName||me.restaurantId).replace(/[<>&]/g,'')}</span><button type="button" data-sound>🔔 Turn on order sound</button><button type="button" data-push hidden>📲 Alerts when closed</button>${me.open?'':'<button type="button" class="sp" data-out>Sign out</button>'}`;
     bar.querySelector('[data-sound]').addEventListener('click',e=>{audio||=new (window.AudioContext||window.webkitAudioContext)();audio.resume?.();e.target.textContent='🔔 Sound on';window.staffAlert()});
-    bar.querySelector('[data-out]')?.addEventListener('click',()=>{write('');location.reload()});
+    bar.querySelector('[data-out]')?.addEventListener('click',()=>{write('');location.replace('/dashboard')});
     // Phone/desktop notifications for new orders, even with this page closed (push-client.js, sw.js).
     const pushBtn=bar.querySelector('[data-push]'),s=document.createElement('script');s.src='/push-client.js?v=1';
     s.onload=async()=>{const p=window.punchbookPush;if(!p.supported)return;const st=await p.state();pushBtn.hidden=false;if(st==='on')pushBtn.textContent='📲 Alerts on';

@@ -17,6 +17,7 @@ import {createPush} from './push.js';
 try{process.loadEnvFile?.()}catch(e){if(e.code!=='ENOENT')throw e}
 
 const app = express();
+app.set('trust proxy',1); // Railway's proxy: req.ip is the visitor (used to slow password guessing)
 // PayPlus posts its result as base64 text, so its notify route reads the raw body itself (payments.js).
 const jsonBody=express.json({limit:'15mb',verify:(req,_res,buf)=>{req.rawBody=buf.toString('utf8')}});
 app.use((req,res,next)=>req.path==='/api/payments/payplus/notify'?next():jsonBody(req,res,next));
@@ -110,6 +111,6 @@ app.get(['/amraleaf','/amraleaf/t/:table'],(_q,r)=>sendPage(r,'amraleaf-v3.html'
 app.get(['/glounge','/glounge/t/:table'],(_q,r)=>sendPage(r,'glounge.html'));
 const menuFor=q=>{const r=q.params.restaurant||'';return r==='amra'?'/amraleaf':r==='glounge'?'/glounge':'/peppermint'};
 app.get(['/peppermint-:v','/peppermint-:v/t/:table','/amraleaf-v3','/amraleaf-v3/t/:table','/r/:restaurant/t/:table'],(q,r)=>{const base=q.path.startsWith('/amraleaf')?'/amraleaf':q.path.startsWith('/r/')?menuFor(q):'/peppermint';r.redirect(301,base+(q.params.table?'/t/'+encodeURIComponent(q.params.table):''))});
-app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>r.redirect('/hq'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/accounts',(_q,r)=>r.redirect('/hq#payouts'));app.get('/hq',(_q,r)=>sendPage(r,'hq.html'));app.get('/restaurant',(_q,r)=>sendPage(r,'restaurant.html'));app.get('/earnings',(q,r)=>r.redirect('/restaurant'+(q.query.restaurant?'?restaurant='+encodeURIComponent(String(q.query.restaurant)):'')+'#earnings'));
+app.get('/admin',(_q,r)=>sendPage(r,'admin.html'));app.get(['/about','/team'],(_q,r)=>sendPage(r,'about.html'));app.get(['/signup','/join','/onboarding'],(_q,r)=>sendPage(r,'onboarding.html'));app.get(['/admin/companies','/companies-admin'],(_q,r)=>sendPage(r,'companies-admin.html'));app.get('/pickup-admin',(_q,r)=>sendPage(r,'pickup-admin.html'));app.get('/owner-admin',(_q,r)=>sendPage(r,'owner-admin.html'));app.get('/pos',(_q,r)=>r.redirect('/hq'));app.get('/rider',(_q,r)=>sendPage(r,'rider.html'));app.get('/accounts',(_q,r)=>r.redirect('/hq#payouts'));app.get('/hq',(_q,r)=>sendPage(r,'hq.html'));app.get('/restaurant',(_q,r)=>sendPage(r,'restaurant.html'));app.get(['/dashboard','/login'],(_q,r)=>sendPage(r,'dashboard.html'));app.get('/earnings',(q,r)=>r.redirect('/restaurant'+(q.query.restaurant?'?restaurant='+encodeURIComponent(String(q.query.restaurant)):'')+'#earnings'));
 app.listen(PORT,()=>console.log(`Punchbook prototype running at ${BASE} · ${orderStore.count()} saved orders loaded`));
 for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>orderStore.flush().then(orderStore.flush).finally(()=>process.exit(0)));
