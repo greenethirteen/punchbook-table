@@ -1,59 +1,103 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#f4f2eb"><title>Your order · Punchbook</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex"><meta name="theme-color" content="#1d3526"><title>Your order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
-:root{--ink:#171713;--muted:#73736d;--paper:#f4f2eb;--card:#fff;--line:#e7e3d8;--accent:#ff5c35;--green:#157d55;--amber:#b7791f}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:480px;margin:0 auto;padding:22px 16px 40px}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.brand{font-weight:900;font-size:22px;letter-spacing:-1px}.brand span{color:var(--accent)}
-.live{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--muted)}
-.live i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(21,125,85,.5);animation:ping 2s infinite}
-.live.off i{background:#bbb;animation:none}
-@keyframes ping{0%{box-shadow:0 0 0 0 rgba(21,125,85,.45)}70%{box-shadow:0 0 0 9px rgba(21,125,85,0)}100%{box-shadow:0 0 0 0 rgba(21,125,85,0)}}
-.test{background:#fff4d6;border:1px solid #f0d98c;color:#7a5410;border-radius:12px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-bottom:14px;text-align:center}
-.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 12px 34px rgba(20,20,12,.06);margin-bottom:14px}
-.where{font-size:13px;color:var(--muted);font-weight:600}
-h1{font-size:28px;line-height:1.15;letter-spacing:-1px;margin:6px 0 4px}
-.lead{color:var(--muted);font-size:15px;line-height:1.5;margin:0}
-.timer{display:flex;align-items:center;gap:16px;margin-top:20px;padding:16px;border-radius:16px;background:#f6f5f0}
-.ring{--p:0;width:64px;height:64px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--p)*1%),#e4e1d6 0)}
-.ring::before{content:"";width:50px;height:50px;border-radius:50%;background:#f6f5f0;grid-area:1/1}
-.ring span{grid-area:1/1;font-size:20px}
-.timer b{display:block;font-size:30px;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1.1}
-.timer small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
-.steps{list-style:none;margin:0;padding:0}
-.step{display:grid;grid-template-columns:34px 1fr;gap:14px;position:relative;padding-bottom:22px}
-.step:last-child{padding-bottom:0}
-.step::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
-.step:last-child::before{display:none}
-.step.done::before{background:var(--green)}
-.dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:800;background:#eeece5;color:#aaa69a;border:2px solid #eeece5;position:relative;z-index:1}
-.step.done .dot{background:var(--green);border-color:var(--green);color:#fff}
-.step.now .dot{background:#fff;border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 5px rgba(255,92,53,.14);animation:glow 1.8s ease-in-out infinite}
-@keyframes glow{50%{box-shadow:0 0 0 9px rgba(255,92,53,.06)}}
-.step h3{margin:6px 0 2px;font-size:16px;color:#aaa69a}
-.step.done h3{color:var(--ink)}
-.step.now h3{color:var(--ink);font-size:18px}
-.step p{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
-.step.next p{color:#b4b1a6}
-.step .when{font-size:12px;color:var(--muted);font-weight:600}
-.now-tag{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:var(--accent);background:rgba(255,92,53,.1);padding:2px 8px;border-radius:20px;vertical-align:2px}
+:root{--brand:#244633;--ink:#1c1b17;--muted:#6f6c63;--paper:#f6f3ec;--card:#fff;--line:#ebe6db;--good:#16855a;--hot:#ff6a3d}
+[hidden]{display:none!important}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:480px;margin:0 auto;padding:0 0 32px}
+
+/* The restaurant, front and centre */
+.hero{position:relative;color:#fff;padding:calc(18px + env(safe-area-inset-top)) 20px 92px;background:var(--brand);overflow:hidden;border-radius:0 0 30px 30px}
+.hero-img{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.35;transform:scale(1.08);filter:saturate(1.1)}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),color-mix(in srgb,var(--brand) 80%,#000) 92%)}
+.hero>*{position:relative;z-index:1}
+.hero-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.22);border-radius:30px;padding:7px 12px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.chip i{width:7px;height:7px;border-radius:50%;background:#5ef0a6;box-shadow:0 0 0 0 rgba(94,240,166,.6);animation:ping 2s infinite}
+.chip.off i{background:#ccc;animation:none}
+.rname{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:clamp(34px,10vw,44px);line-height:1.02;letter-spacing:-1px;margin:26px 0 6px}
+.rmeta{font-size:14px;opacity:.85;font-weight:500}
+.table-tag{display:inline-block;margin-top:14px;background:#fff;color:var(--brand);font-weight:800;font-size:14px;border-radius:12px;padding:8px 14px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+
+/* Status card overlapping the hero */
+.status{position:relative;z-index:2;margin:-70px 14px 14px;background:var(--card);border-radius:26px;padding:26px 20px 22px;box-shadow:0 18px 50px rgba(30,25,10,.14);text-align:center}
+.test{display:inline-block;background:#fff4d6;color:#7a5410;border:1px solid #f0d98c;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;margin-bottom:14px}
+.dial{--p:0;position:relative;width:176px;height:176px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;
+  background:conic-gradient(var(--brand) calc(var(--p)*1%),#efebe2 0);transition:--p .6s}
+.dial::before{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--card)}
+.dial .emoji{position:relative;font-size:64px;line-height:1}
+.dial.s-new .emoji{animation:bob 2.4s ease-in-out infinite}
+.dial.s-cook .emoji{animation:sizzle 1.4s ease-in-out infinite}
+.dial.s-done{background:conic-gradient(var(--good) 100%,#efebe2 0)}
+.dial.s-done .emoji{animation:pop .6s cubic-bezier(.2,1.6,.4,1) both}
+.steam{position:absolute;top:30px;left:50%;width:60px;margin-left:-30px;height:40px;pointer-events:none}
+.steam span{position:absolute;bottom:0;width:8px;height:22px;border-radius:8px;background:linear-gradient(transparent,rgba(160,150,130,.45));animation:steam 2.2s ease-out infinite;opacity:0}
+.steam span:nth-child(1){left:10px}.steam span:nth-child(2){left:26px;animation-delay:.7s}.steam span:nth-child(3){left:42px;animation-delay:1.4s}
+.dial:not(.s-cook) .steam{display:none}
+h1{font-size:25px;line-height:1.2;letter-spacing:-.6px;margin:0 0 6px}
+.lead{color:var(--muted);font-size:15px;line-height:1.5;margin:0 auto;max-width:330px}
+.eta{display:flex;justify-content:center;align-items:baseline;gap:8px;margin-top:16px}
+.eta b{font-size:34px;letter-spacing:-1.2px;font-variant-numeric:tabular-nums;color:var(--brand)}
+.eta small{color:var(--muted);font-size:13px;font-weight:600}
+
+/* Three steps, always shown, current one lit */
+.track{display:grid;grid-template-columns:repeat(3,1fr);margin-top:24px;position:relative}
+.track::before,.track .fill{content:"";position:absolute;top:19px;left:16.6%;height:4px;border-radius:4px}
+.track::before{right:16.6%;background:#efebe2}
+.track .fill{background:var(--good);width:0;transition:width .8s ease}
+.tstep{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 4px}
+.tdot{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:#f3f0e8;color:#b5b0a3;border:3px solid var(--card);box-shadow:0 0 0 2px #efebe2;transition:all .4s}
+.tstep.done .tdot{background:var(--good);color:#fff;box-shadow:0 0 0 2px var(--good)}
+.tstep.now .tdot{background:var(--brand);color:#fff;box-shadow:0 0 0 2px var(--brand),0 0 0 8px color-mix(in srgb,var(--brand) 18%,transparent);animation:glow 1.8s ease-in-out infinite}
+.tlabel{font-size:12.5px;font-weight:700;color:#aaa597;line-height:1.25}
+.tstep.done .tlabel,.tstep.now .tlabel{color:var(--ink)}
+.ttime{font-size:11.5px;color:var(--muted);font-weight:600;min-height:14px}
+.tstep.now .ttime{color:var(--brand)}
+
+.card{margin:0 14px 14px;background:var(--card);border-radius:22px;padding:18px 20px;box-shadow:0 6px 20px rgba(30,25,10,.05)}
+.card h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
 .items{margin:0;padding:0;list-style:none}
-.items li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--line)}
-.items li:last-child{border-bottom:0;font-weight:800}
-.foot{text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;margin-top:6px}
-.foot a{color:var(--ink)}
-.bad h1{color:#b42318}
-@media(prefers-reduced-motion:reduce){.live i,.step.now .dot{animation:none}}
+.items li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;font-size:15px;border-bottom:1px dashed var(--line)}
+.items li span:first-child b{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:7px;background:#f3f0e8;font-size:12.5px;margin-right:8px}
+.items li.total{border-bottom:0;font-weight:800;padding-top:12px;font-size:16px}
+.help{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--muted);line-height:1.45}
+.help span:first-child{font-size:26px}
+.foot{text-align:center;color:#9d988b;font-size:12px;margin-top:20px;line-height:1.7}
+.foot b{color:#5d594f;font-weight:800;letter-spacing:-.3px}.foot b em{color:var(--hot);font-style:normal}
+.cancelled .dial{background:conic-gradient(#d4493b 100%,#efebe2 0)}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.confetti i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall 2.6s linear forwards}
+
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(94,240,166,.55)}70%{box-shadow:0 0 0 8px rgba(94,240,166,0)}100%{box-shadow:0 0 0 0 rgba(94,240,166,0)}}
+@keyframes bob{50%{transform:translateY(-6px) rotate(-4deg)}}
+@keyframes sizzle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(-3px)}}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes steam{0%{transform:translateY(0) scaleX(1);opacity:0}25%{opacity:1}100%{transform:translateY(-34px) scaleX(1.8);opacity:0}}
+@keyframes glow{50%{box-shadow:0 0 0 2px var(--brand),0 0 0 13px color-mix(in srgb,var(--brand) 8%,transparent)}}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style></head><body>
 <div class="wrap">
-  <div class="top"><div class="brand">punchbook<span>.</span></div><span class="live" id="live"><i></i><span>Live updates</span></span></div>
-  <div class="test" id="test" hidden>🧪 Demo order: test payment, no real money.</div>
-  <div class="card" id="head"><div class="where" id="where">Loading your order…</div><h1 id="headline">&nbsp;</h1><p class="lead" id="lead"></p>
-    <div class="timer" id="timer" hidden><div class="ring" id="ring"><span id="ring-icon">🍳</span></div><div><b id="count">--:--</b><small id="count-label"></small></div></div></div>
-  <div class="card"><ol class="steps" id="steps" aria-live="polite"></ol></div>
-  <div class="card"><ul class="items" id="items"></ul></div>
-  <p class="foot">Keep this page open, it updates by itself.<br>Need anything? Just ask a member of staff. <span id="ref"></span></p>
+  <header class="hero" id="hero"><div class="hero-img" id="hero-img"></div>
+    <div class="hero-top"><span class="chip" id="live"><i></i><span>Live</span></span><span class="chip" id="order-no">Order</span></div>
+    <div class="rname" id="rname">&nbsp;</div><div class="rmeta" id="rmeta"></div><div class="table-tag" id="table" hidden></div>
+  </header>
+
+  <section class="status" id="status" aria-live="polite">
+    <span class="test" id="test" hidden>🧪 Demo order · test payment</span>
+    <div class="dial s-new" id="dial"><div class="steam"><span></span><span></span><span></span></div><span class="emoji" id="emoji">🧾</span></div>
+    <h1 id="headline">Loading your order…</h1>
+    <p class="lead" id="lead"></p>
+    <div class="eta" id="eta" hidden><b id="count">--:--</b><small id="count-label"></small></div>
+    <div class="track" id="track" hidden><div class="fill" id="fill"></div></div>
+  </section>
+
+  <section class="card"><h2>Your order</h2><ul class="items" id="items"></ul></section>
+  <section class="card help"><span>🙋</span><span id="help">Need anything? Just wave to a member of staff, they can see your order too.</span></section>
+  <p class="foot">This page updates by itself, no need to refresh.<br>Ordered with <b>punchbook<em>.</em></b></p>
 </div>
 <script>
 (()=>{
@@ -61,66 +105,75 @@ h1{font-size:28px;line-height:1.15;letter-spacing:-1px;margin:6px 0 4px}
   const money=n=>{const v=Math.round(Number(n||0)*100)/100;return'LKR '+v.toLocaleString('en-LK',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2})};
   const hm=iso=>iso?new Date(iso).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let o=null,skew=0,lastKey='',fails=0;
+  let o=null,skew=0,lastKey='',fails=0,branded=false;
 
-  // Three steps for every order; the last one depends on the type of order.
-  function steps(o){
-    const pickup=o.orderType==='pickup',delivery=o.fulfilment==='delivery',t=o.times||{};
-    const last=delivery?['On its way','Your rider is bringing it to you.',t.ready||t.collected]:pickup?['Ready to collect','Come to the counter and give your name.',t.ready||t.collected]:['Served','Your food is at your table. Enjoy!',t.served];
-    const list=[['Order received','Paid and sent to the kitchen.',o.paidAt],['Being prepared','The kitchen is cooking your order.',t.preparing],last];
-    const s=o.orderStatus,at=s==='new'?0:s==='preparing'?1:2;
-    return{list,at,finished:s==='served'||s==='collected'};
+  // Stage: 0 received, 1 being prepared, 2 served / ready / on its way. done = the order is finished.
+  const stageOf=o=>({at:o.orderStatus==='new'?0:o.orderStatus==='preparing'?1:2,done:['served','collected'].includes(o.orderStatus)});
+  const kind=o=>o.fulfilment==='delivery'?'delivery':o.orderType==='pickup'?'pickup':'table';
+  const LAST={table:['Served','🍽️'],pickup:['Ready','🛍️'],delivery:['On its way','🛵']};
+  const COPY={
+    0:['Order received','The kitchen has your order and will start on it shortly. Sit back and relax.','🧾'],
+    1:['Your food is being prepared','The kitchen is cooking your order right now.','🍳'],
+    table:['Enjoy your meal!','Your food is at your table. Thank you for dining with us.','🍽️'],
+    pickup:['Ready to collect!','Head to the counter and give your name.','🛍️'],
+    delivery:['On its way!','Your rider is bringing your order to you.','🛵'],
+  };
+  function brand(o){
+    if(branded)return;branded=true;const b=o.brand||{};
+    document.documentElement.style.setProperty('--brand',b.accent||'#244633');
+    document.querySelector('meta[name=theme-color]').content=b.accent||'#244633';
+    if(b.cover)$('hero-img').style.backgroundImage=`url("${b.cover.replace(/"/g,'%22')}")`;
+    $('rname').textContent=b.name||o.restaurantName;$('rmeta').textContent=b.area||b.cuisine||'';
+    $('order-no').textContent='Order '+o.id.replace(/^PB-/,'#');
   }
-  function readyBy(o){
-    const start=Date.parse(o.times?.preparing||o.paidAt||o.createdAt);
-    return start+(o.prepMinutes+(o.orderStatus==='new'?2:0))*60000;
+  function confetti(){
+    const box=document.createElement('div');box.className='confetti';const colors=['#16855a','#ff6a3d','#ffc93c',getComputedStyle(document.documentElement).getPropertyValue('--brand')];
+    box.innerHTML=Array.from({length:60},(_,i)=>`<i style="left:${Math.random()*100}%;background:${colors[i%colors.length]};animation-delay:${Math.random()*.8}s;transform:rotate(${Math.random()*180}deg)"></i>`).join('');
+    document.body.append(box);setTimeout(()=>box.remove(),3800);
   }
   function render(){
-    if(!o)return;
-    const pickup=o.orderType==='pickup',delivery=o.fulfilment==='delivery';
+    if(!o)return;brand(o);
+    const k=kind(o),{at,done}=stageOf(o),paid=o.paymentStatus==='paid',cancelled=o.orderStatus==='cancelled';
     $('test').hidden=!o.sandbox;
-    $('where').textContent=`${o.restaurantName}${o.table&&!pickup?' · Table '+o.table:''}`;
-    $('ref').textContent='Order '+o.id;
-    document.querySelector('#head').classList.toggle('bad',o.orderStatus==='cancelled');
-    $('items').innerHTML=o.items.map(i=>`<li><span>${esc(i.qty)} × ${esc(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')+`<li><span>Total paid</span><span>${money(o.total)}</span></li>`;
-    if(o.orderStatus==='cancelled'){
-      $('headline').textContent='Order cancelled';$('lead').textContent=o.refunded?'Your payment is being refunded to your card in full. Please ask a member of staff if you have questions.':'You weren’t charged.';
-      $('timer').hidden=true;$('steps').innerHTML='';return;
-    }
-    if(o.paymentStatus!=='paid'){
-      $('headline').textContent='Waiting for payment';$('lead').textContent='Your order goes to the kitchen as soon as the payment is confirmed.';$('timer').hidden=true;
-    }
-    const {list,at,finished}=steps(o);
-    const heads=[['Order received ✓',o.orderType==='pickup'?'The kitchen will start on it shortly.':'The kitchen will start on it shortly. Sit back and relax.'],
-      ['Your food is being prepared','The kitchen is on it.'],
-      delivery?['Your order is on its way','Your rider is heading to you now.']:pickup?['Ready to collect!','Head to the counter and give your name.']:['Served. Enjoy your meal!','Thanks for ordering with Punchbook.']];
-    if(o.paymentStatus==='paid'){$('headline').textContent=heads[at][0];$('lead').textContent=heads[at][1]}
-    $('steps').innerHTML=list.map(([title,text,when],i)=>{
-      const state=o.paymentStatus!=='paid'?'next':i<at||(i===at&&finished)?'done':i===at?'now':'next';
-      return`<li class="step ${state}"><span class="dot">${state==='done'?'✓':i+1}</span><div><h3>${title}${state==='now'?'<span class="now-tag">Now</span>':''}</h3><p>${state==='next'?'Next':text}${when&&state!=='next'?` <span class="when">· ${hm(when)}</span>`:''}</p></div></li>`;
-    }).join('');
+    $('table').hidden=k!=='table'||!o.table;$('table').textContent='Table '+o.table;
+    $('items').innerHTML=o.items.map(i=>`<li><span><b>${esc(i.qty)}</b>${esc(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')+`<li class="total"><span>Total paid</span><span>${money(o.total)}</span></li>`;
+    $('status').classList.toggle('cancelled',cancelled);
+    const dial=$('dial');
+    if(cancelled){dial.className='dial';$('emoji').textContent='🙏';$('headline').textContent='Order cancelled';
+      $('lead').textContent=o.refunded?'Your payment is being refunded to your card in full. A member of staff can help if you have questions.':'You weren’t charged.';
+      $('eta').hidden=true;$('track').hidden=true;return}
+    if(!paid){dial.className='dial s-new';$('emoji').textContent='💳';$('headline').textContent='Waiting for payment';$('lead').textContent='Your order goes to the kitchen as soon as the payment is confirmed.';$('eta').hidden=true;$('track').hidden=true;return}
+    const [h,lead,emoji]=at<2?COPY[at]:COPY[k];
+    dial.className='dial '+(at===0?'s-new':at===1?'s-cook':'s-done');
+    $('emoji').textContent=emoji;$('headline').textContent=h;$('lead').textContent=lead;
+    // The three steps
+    const t=o.times||{},steps=[['Received','✓',o.paidAt],['Preparing','🍳',t.preparing],[LAST[k][0],LAST[k][1],t.served||t.ready||t.collected]];
+    $('track').hidden=false;
+    $('track').innerHTML='<div class="fill" id="fill"></div>'+steps.map(([label,icon,when],i)=>{const st=i<at||(i===at&&done)||(i===2&&at===2)?'done':i===at?'now':'next';
+      return`<div class="tstep ${st}"><span class="tdot">${st==='done'?'✓':st==='now'?icon:i+1}</span><span class="tlabel">${label}</span><span class="ttime">${st==='next'?'':st==='now'&&!when?'now':hm(when)}</span></div>`}).join('');
+    requestAnimationFrame(()=>{$('fill').style.width=(at===0?0:at===1?33.4:66.8)+'%'});
     tick();
   }
-  // Countdown to the estimated time, until the food is served / ready.
+  // The dial fills up and the countdown runs to the estimated time.
   function tick(){
-    if(!o||o.paymentStatus!=='paid'||o.orderStatus==='cancelled'||['served','collected','ready'].includes(o.orderStatus)){if(o&&['served','collected','ready'].includes(o.orderStatus))$('timer').hidden=true;return}
-    $('timer').hidden=false;
-    const now=Date.now()+skew,end=readyBy(o),start=Date.parse(o.paidAt||o.createdAt),left=end-now;
-    const pct=Math.max(4,Math.min(100,(now-start)/Math.max(1,end-start)*100));
-    $('ring').style.setProperty('--p',pct.toFixed(1));$('ring-icon').textContent=o.orderStatus==='new'?'🧾':'🍳';
-    if(left>0){const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);$('count').textContent=`${m}:${String(s).padStart(2,'0')}`;$('count-label').textContent=`Estimated ${o.orderType==='pickup'?'ready':'at your table'} by ${hm(new Date(end).toISOString())}`}
-    else{$('count').textContent='Any minute now';$('count-label').textContent='Thanks for your patience. It’s nearly there.'}
+    if(!o||o.paymentStatus!=='paid'||o.orderStatus==='cancelled')return;
+    const {at}=stageOf(o);
+    if(at===2){$('eta').hidden=true;$('dial').style.setProperty('--p',100);return}
+    const now=Date.now()+skew,start=Date.parse(o.paidAt||o.createdAt),end=Date.parse(o.times?.preparing||o.paidAt||o.createdAt)+(o.prepMinutes+(at===0?2:0))*60000,left=end-now;
+    $('dial').style.setProperty('--p',Math.max(3,Math.min(97,(now-start)/Math.max(1,end-start)*100)).toFixed(1));
+    $('eta').hidden=false;
+    if(left>0){const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);$('count').textContent=m>=1?`~${m+(s>29?1:0)} min`:`${s}s`;$('count-label').textContent=`${kind(o)==='table'?'at your table':'ready'} by ${hm(new Date(end).toISOString())}`}
+    else{$('count').textContent='Any minute';$('count-label').textContent='almost there, thanks for waiting'}
   }
   async function load(){
     try{
       const r=await fetch('/api/track/'+encodeURIComponent(id),{cache:'no-store'});
-      if(r.status===404){$('where').textContent='';$('headline').textContent='Order not found';$('lead').textContent='Check the link, or ask a member of staff.';return}
+      if(r.status===404){$('headline').textContent='Order not found';$('lead').textContent='Check the link, or ask a member of staff.';return}
       const x=await r.json();skew=Date.parse(x.now)-Date.now();
       const key=x.paymentStatus+'|'+x.orderStatus;
-      // A buzz and a title change when the order moves on, so a guest glancing at the tab notices.
-      if(lastKey&&key!==lastKey){try{navigator.vibrate?.([120,80,120])}catch{}}
-      lastKey=key;o=x;fails=0;$('live').classList.remove('off');$('live').querySelector('span').textContent='Live updates';
-      document.title=({new:'Order received',preparing:'Being prepared',served:'Served!',ready:'Ready!',collected:'Collected',cancelled:'Cancelled'}[o.orderStatus]||'Your order')+' · '+(o.restaurantName||'Punchbook');
+      if(lastKey&&key!==lastKey){try{navigator.vibrate?.([120,80,120])}catch{}if(['served','ready','collected'].includes(x.orderStatus))confetti()}
+      lastKey=key;o=x;fails=0;$('live').classList.remove('off');$('live').querySelector('span').textContent='Live';
+      document.title=({new:'Order received',preparing:'Being prepared',served:'Served!',ready:'Ready!',collected:'Collected',cancelled:'Cancelled'}[o.orderStatus]||'Your order')+' · '+((o.brand&&o.brand.name)||o.restaurantName);
       render();
     }catch{if(++fails>2){$('live').classList.add('off');$('live').querySelector('span').textContent='Reconnecting…'}}
   }
