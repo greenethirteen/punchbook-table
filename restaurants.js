@@ -72,5 +72,9 @@ export const restaurants = [
   {id:'amra',name:'Amra Leaf',area:'Negombo · Chilaw Road',cuisine:'Sri Lankan · Kottu · Seafood',lat:7.216,lng:79.84,prepMinutes:20,accent:'#2f5d3a',cover:amraMenu[1].image,menu:amraMenu},
   {id:'glounge',name:'G Lounge',area:'Negombo',cuisine:'Waffles · Bubble tea · Coffee',lat:7.2083,lng:79.8358,prepMinutes:10,accent:'#3b2a4d',cover:gloungeMenu[10].image,menu:gloungeMenu},
   {id:'kade',name:'Kade Hoppers',area:'Wellawatte',cuisine:'Hoppers · Kottu · Street food',lat:6.8747,lng:79.8605,prepMinutes:15,accent:'#9a3b12',cover:'/images/pickup/k1.jpg',menu:kadeMenu},
-  {id:'sunrise',name:'Sunrise Bakehouse',area:'Nugegoda',cuisine:'Bakery · Coffee',lat:6.8728,lng:79.889,prepMinutes:10,accent:'#8a5a14',cover:'/images/pickup/s2.jpg',menu:sunriseMenu}
+  {id:'sunrise',name:'Sunrise Bakehouse',area:'Nugegoda',cuisine:'Bakery · Coffee',lat:6.8728,lng:79.889,prepMinutes:10,accent:'#8a5a14',cover:'/images/pickup/s2.jpg',menu:sunriseMenu},
+  // A sandbox copy of Amra Leaf for showing restaurants how Punchbook works (menu at /amraleaf-demo, login
+  // "amra-demo"). Payments are test payments on a Punchbook test card page: no real money, nothing sent
+  // to Amra's SambaPOS, and it is left out of HQ's payouts and the public pickup list.
+  {id:'amra-demo',name:'Amra Leaf · Demo',area:'Negombo · Chilaw Road',cuisine:'Sri Lankan · Kottu · Seafood',lat:7.216,lng:79.84,prepMinutes:20,accent:'#2f5d3a',cover:amraMenu[1].image,menu:amraMenu,sandbox:true,menuOf:'amra'}
 ];

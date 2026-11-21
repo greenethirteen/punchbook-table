@@ -14,6 +14,9 @@
 // "directpay", the /peppermint-dp menu) or SriPay's hosted Checkout Session (sripay.js, gateway "sripay", the
 // /peppermint-sp menu).
 // The same rules apply: paid only once the gateway confirms the amount.
+//
+// Orders for a sandbox restaurant (o.sandbox, e.g. "Amra Leaf · Demo") never reach a real gateway: the guest
+// goes to Punchbook's own test card page (/sandbox-pay) and the order is marked paid as a test payment.
 import crypto from 'crypto';
 import express from 'express';
 import {createPayhere} from './payhere.js';
@@ -127,6 +130,10 @@ export function createPayments({orders, publicBase, onPaid}) {
     if (o.paymentStatus === 'paid') return {ok: true, order: o};
     if (o.orderStatus === 'cancelled') throw Object.assign(new Error('This order was cancelled.'), {status: 409});
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
+    if (o.sandbox) {
+      o.payment = {provider: 'sandbox', attempts: (o.payment?.attempts || 0) + 1};
+      return {ok: true, simulated: false, redirectUrl: `/sandbox-pay?order=${encodeURIComponent(o.id)}`, order: o};
+    }
     if (gateway === 'payplus') {
       if (!payplus.configured()) throw Object.assign(new Error('PayPlus isn’t set up yet.'), {status: 503});
       if (isPayplus(o)) { await reconcile(o).catch(() => {}); if (o.paymentStatus === 'paid') return {ok: true, order: o}; }
@@ -236,6 +243,23 @@ export function createPayments({orders, publicBase, onPaid}) {
       try { res.json(await start(o, req, {method, returnUrl: b.returnUrl})); }
       catch (e) { console.error('Payment start failed:', e.message); res.status(e.status === 409 || e.status === 503 ? e.status : 502).json({error: e.status === 409 || e.status === 503 ? e.message : 'Couldn’t start the payment. Please try again.'}); }
     };
+    // The sandbox test card page: shows the amount, then "pays" (test money only) or gives up.
+    app.post('/api/payments/sandbox/info', (req, res) => {
+      const o = find(req, res);
+      if (!o) return;
+      if (!o.sandbox) return res.status(404).json({error: 'Order not found'});
+      res.json({id: o.id, total: o.total, restaurantName: o.restaurantName, table: o.table, paid: o.paymentStatus === 'paid', cancelled: o.orderStatus === 'cancelled',
+        back: o.orderType === 'pickup' ? '/' : `/amraleaf-demo/t/${encodeURIComponent(o.table || '12')}`});
+    });
+    app.post('/api/payments/sandbox/pay', (req, res) => {
+      const o = find(req, res);
+      if (!o) return;
+      if (!o.sandbox) return res.status(404).json({error: 'Order not found'});
+      if (o.orderStatus === 'cancelled') return res.status(409).json({error: 'This order was cancelled.'});
+      const last4 = String(req.body?.last4 || '4242').replace(/\D/g, '').slice(-4) || '4242';
+      markPaid(o, {provider: 'sandbox', ref: 'TEST-' + crypto.randomBytes(3).toString('hex').toUpperCase(), card: 'Test card ' + last4, feeCents: null});
+      res.json({ok: true, order: o});
+    });
     app.get('/api/payments/config', (_req, res) => res.json({live: provider() === 'payments.lk'}));
     app.post('/api/payments/card', pay('card'));
     // Kept under its old name for app builds that call it; it is a real checkout once a key is set.

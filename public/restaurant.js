@@ -2,7 +2,7 @@
 // they get) and Earnings (day by day, paid T+2). Restaurant keys see only their restaurant; the admin picks
 // one (?restaurant=) and can switch to Demo. Uses the same API as HQ, scoped by staff.js on the server.
 const $=id=>document.getElementById(id);
-const money=n=>'LKR '+Number(n||0).toLocaleString('en-LK',{minimumFractionDigits:0,maximumFractionDigits:2});
+const money=n=>{const v=Math.round(Number(n||0)*100)/100;return'LKR '+v.toLocaleString('en-LK',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2})};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hm=iso=>iso?new Date(iso).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
 const minsAgo=iso=>Math.max(0,Math.floor((Date.now()-Date.parse(iso))/60000));
@@ -57,7 +57,8 @@ setInterval(pulse,1000);
 const pct=()=>acc?.commissionPct??3;
 const base=o=>(Number(o.subtotal)||0)+(Number(o.service)||0);
 const fee=o=>round(base(o)*pct()/100);
-const counts=o=>o.paymentStatus==='paid'&&o.orderStatus!=='cancelled'&&o.testPayment===false;
+// A sandbox restaurant (the demo) only has test payments, and they count on its page.
+const counts=o=>o.paymentStatus==='paid'&&o.orderStatus!=='cancelled'&&(o.testPayment===false||Boolean(acc?.restaurant.sandbox));
 const paidDay=o=>colomboDay(o.paidAt||o.createdAt);
 
 // ---------- Orders (same steps as HQ and /admin)
@@ -91,6 +92,7 @@ function render(){
   document.querySelectorAll('.tab').forEach(s=>s.hidden=s.id!=='tab-'+tab);
   $('demo-note').hidden=!demo;
   if(!acc)return;
+  $('sandbox-note').hidden=!acc.restaurant.sandbox||demo;
   const R=acc.restaurant;
   $('kicker').textContent={orders:'Live orders',payments:'Payments',earnings:'Earnings'}[tab];
   $('title').textContent=R.name;document.title=R.name+' · Punchbook';
@@ -175,9 +177,9 @@ function renderPayments(){
   $('p-title').textContent=payDay===t?'Today’s payments':nice(payDay);
   $('p-help').innerHTML=`<span class="pill ${pc}">${esc(pl)}</span> Each day is paid to your bank ${acc.settleDays} days later (T+${acc.settleDays}).`;
   const status=o=>o.orderStatus==='cancelled'?`<span class="pill bad">${o.paymentStatus==='refunded'?'Refunded':o.paymentStatus==='refund_pending'?'Refund on its way':'Cancelled'}</span>`
-    :o.testPayment!==false?'<span class="pill plain">Test</span>':'<span class="pill good">Paid</span>';
+    :o.testPayment!==false?(acc.restaurant.sandbox?'<span class="pill good">Paid · test</span>':'<span class="pill plain">Test</span>'):'<span class="pill good">Paid</span>';
   $('p-rows').innerHTML=list.length?list.map(o=>{const c=counts(o);return`<tr${c?'':' class="muted"'}><td style="white-space:nowrap">${hm(o.paidAt||o.createdAt)}</td>
-      <td><b>${esc(title(o))}</b><small>${esc(o.id)} · ${o.items.reduce((n,i)=>n+Number(i.qty||1),0)} items</small></td><td class="hide-m">${{table:'Table',pickup:'Pickup',delivery:'Delivery'}[kind(o)]}</td>
+      <td><b>${esc(title(o))}</b><small>${esc(o.id)} · ${plural(o.items.reduce((n,i)=>n+Number(i.qty||1),0),'item')}</small></td><td class="hide-m">${{table:'Table',pickup:'Pickup',delivery:'Delivery'}[kind(o)]}</td>
       <td class="num">${money(base(o))}</td><td class="num hide-m">${c?'− '+money(fee(o)):'—'}</td><td class="num"><b>${c?money(round(base(o)-fee(o))):'—'}</b></td><td>${status(o)}</td></tr>`}).join('')
     :`<tr><td colspan="7" class="empty">No payments ${payDay===t?'yet today':'on this day'}.</td></tr>`;
   $('p-foot').innerHTML=real.length?`<tr><td colspan="2">Total · ${plural(real.length,'order')}</td><td class="hide-m"></td><td class="num">${money(sales)}</td><td class="num hide-m">− ${money(round(fees))}</td><td class="num">${money(round(sales-fees))}</td><td></td></tr>`:'';

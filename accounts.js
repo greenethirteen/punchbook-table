@@ -39,11 +39,17 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
 
   const auth = staff.requireAdmin;
 
+  // Sandbox restaurants (restaurants.js, e.g. "Amra Leaf · Demo") only take test payments. Their orders count
+  // on their own page (/api/accounts/mine) and never in HQ's accounts or payouts.
+  const sandboxIds = new Set(restaurants.filter(r => r.sandbox).map(r => r.id));
+
   // Paid orders, grouped by Sri Lanka day and restaurant. The payout's saved rate wins over today's.
-  function day(date) {
+  // With sandbox: true, only sandbox restaurants' test orders; otherwise only real payments.
+  function day(date, {sandbox = false} = {}) {
     const rows = {};
     for (const o of orders) {
-      if (o.paymentStatus !== 'paid' || o.testPayment !== false || o.orderStatus === 'cancelled' || dayOf(o.paidAt || o.createdAt) !== date) continue;
+      if (o.paymentStatus !== 'paid' || o.orderStatus === 'cancelled' || dayOf(o.paidAt || o.createdAt) !== date) continue;
+      if (sandbox ? !sandboxIds.has(o.restaurantId) : (o.testPayment !== false || sandboxIds.has(o.restaurantId))) continue;
       const r = rows[o.restaurantId] ||= {restaurantId: o.restaurantId, name: o.restaurantName || restaurants.find(x => x.id === o.restaurantId)?.name || o.restaurantId, orders: 0, food: 0, service: 0, deliveryFees: 0, cardFees: 0, courierCosts: 0, delivery: 0, pickup: 0, table: 0};
       r.orders++;
       r.food += Number(o.subtotal) || 0;
@@ -125,14 +131,14 @@ export async function createAccounts({orders, restaurants, dataDir, staff, push,
       const t = today(), n = Math.min(90, Math.max(7, Number(req.query.days) || 30)), days = [];
       for (let i = 0; i < n; i++) {
         const d = new Date(Date.parse(t + 'T12:00:00Z') - i * 864e5).toISOString().slice(0, 10), dueDate = addDays(d, SETTLE_DAYS);
-        const row = day(d).find(x => x.restaurantId === id);
+        const row = day(d, {sandbox: Boolean(r.sandbox)}).find(x => x.restaurantId === id);
         if (!row) continue;
         const status = row.payout ? 'paid' : d === t ? 'today' : dueDate < t ? 'overdue' : dueDate === t ? 'due' : 'upcoming';
         days.push({date: d, dueDate, status, orders: row.orders, food: row.food, service: row.service, commission: row.commission, commissionPct: row.commissionPct, owed: row.owed,
           payout: row.payout ? {amount: row.payout.amount, sentAt: row.payout.sentAt, reference: row.payout.reference} : null});
       }
       const b = state.banks[id];
-      res.json({restaurant: {id: r.id, name: r.name, area: r.area}, restaurants: req.staff.role === 'admin' ? restaurants.map(x => ({id: x.id, name: x.name})) : null,
+      res.json({restaurant: {id: r.id, name: r.name, area: r.area, sandbox: Boolean(r.sandbox)}, restaurants: req.staff.role === 'admin' ? restaurants.map(x => ({id: x.id, name: x.name})) : null,
         today: t, settleDays: SETTLE_DAYS, commissionPct: state.commissionPct, days, bank: b ? {bankName: b.bankName, last4: b.accountNumber.slice(-4)} : null});
     });
 
