@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#f4f2eb"><title>Your order · Punchbook</title>
+<style>
+:root{--ink:#171713;--muted:#73736d;--paper:#f4f2eb;--card:#fff;--line:#e7e3d8;--accent:#ff5c35;--green:#157d55;--amber:#b7791f}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:480px;margin:0 auto;padding:22px 16px 40px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.brand{font-weight:900;font-size:22px;letter-spacing:-1px}.brand span{color:var(--accent)}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--muted)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(21,125,85,.5);animation:ping 2s infinite}
+.live.off i{background:#bbb;animation:none}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(21,125,85,.45)}70%{box-shadow:0 0 0 9px rgba(21,125,85,0)}100%{box-shadow:0 0 0 0 rgba(21,125,85,0)}}
+.test{background:#fff4d6;border:1px solid #f0d98c;color:#7a5410;border-radius:12px;padding:9px 12px;font-size:12.5px;font-weight:600;margin-bottom:14px;text-align:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 12px 34px rgba(20,20,12,.06);margin-bottom:14px}
+.where{font-size:13px;color:var(--muted);font-weight:600}
+h1{font-size:28px;line-height:1.15;letter-spacing:-1px;margin:6px 0 4px}
+.lead{color:var(--muted);font-size:15px;line-height:1.5;margin:0}
+.timer{display:flex;align-items:center;gap:16px;margin-top:20px;padding:16px;border-radius:16px;background:#f6f5f0}
+.ring{--p:0;width:64px;height:64px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--p)*1%),#e4e1d6 0)}
+.ring::before{content:"";width:50px;height:50px;border-radius:50%;background:#f6f5f0;grid-area:1/1}
+.ring span{grid-area:1/1;font-size:20px}
+.timer b{display:block;font-size:30px;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1.1}
+.timer small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.steps{list-style:none;margin:0;padding:0}
+.step{display:grid;grid-template-columns:34px 1fr;gap:14px;position:relative;padding-bottom:22px}
+.step:last-child{padding-bottom:0}
+.step::before{content:"";position:absolute;left:16px;top:34px;bottom:0;width:2px;background:var(--line)}
+.step:last-child::before{display:none}
+.step.done::before{background:var(--green)}
+.dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:800;background:#eeece5;color:#aaa69a;border:2px solid #eeece5;position:relative;z-index:1}
+.step.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.step.now .dot{background:#fff;border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 5px rgba(255,92,53,.14);animation:glow 1.8s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 9px rgba(255,92,53,.06)}}
+.step h3{margin:6px 0 2px;font-size:16px;color:#aaa69a}
+.step.done h3{color:var(--ink)}
+.step.now h3{color:var(--ink);font-size:18px}
+.step p{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.step.next p{color:#b4b1a6}
+.step .when{font-size:12px;color:var(--muted);font-weight:600}
+.now-tag{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:var(--accent);background:rgba(255,92,53,.1);padding:2px 8px;border-radius:20px;vertical-align:2px}
+.items{margin:0;padding:0;list-style:none}
+.items li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--line)}
+.items li:last-child{border-bottom:0;font-weight:800}
+.foot{text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;margin-top:6px}
+.foot a{color:var(--ink)}
+.bad h1{color:#b42318}
+@media(prefers-reduced-motion:reduce){.live i,.step.now .dot{animation:none}}
+</style></head><body>
+<div class="wrap">
+  <div class="top"><div class="brand">punchbook<span>.</span></div><span class="live" id="live"><i></i><span>Live updates</span></span></div>
+  <div class="test" id="test" hidden>🧪 Demo order: test payment, no real money.</div>
+  <div class="card" id="head"><div class="where" id="where">Loading your order…</div><h1 id="headline">&nbsp;</h1><p class="lead" id="lead"></p>
+    <div class="timer" id="timer" hidden><div class="ring" id="ring"><span id="ring-icon">🍳</span></div><div><b id="count">--:--</b><small id="count-label"></small></div></div></div>
+  <div class="card"><ol class="steps" id="steps" aria-live="polite"></ol></div>
+  <div class="card"><ul class="items" id="items"></ul></div>
+  <p class="foot">Keep this page open, it updates by itself.<br>Need anything? Just ask a member of staff. <span id="ref"></span></p>
+</div>
+<script>
+(()=>{
+  const $=id=>document.getElementById(id),id=decodeURIComponent(location.pathname.split('/').pop()||'');
+  const money=n=>{const v=Math.round(Number(n||0)*100)/100;return'LKR '+v.toLocaleString('en-LK',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2})};
+  const hm=iso=>iso?new Date(iso).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let o=null,skew=0,lastKey='',fails=0;
+
+  // Three steps for every order; the last one depends on the type of order.
+  function steps(o){
+    const pickup=o.orderType==='pickup',delivery=o.fulfilment==='delivery',t=o.times||{};
+    const last=delivery?['On its way','Your rider is bringing it to you.',t.ready||t.collected]:pickup?['Ready to collect','Come to the counter and give your name.',t.ready||t.collected]:['Served','Your food is at your table. Enjoy!',t.served];
+    const list=[['Order received','Paid and sent to the kitchen.',o.paidAt],['Being prepared','The kitchen is cooking your order.',t.preparing],last];
+    const s=o.orderStatus,at=s==='new'?0:s==='preparing'?1:2;
+    return{list,at,finished:s==='served'||s==='collected'};
+  }
+  function readyBy(o){
+    const start=Date.parse(o.times?.preparing||o.paidAt||o.createdAt);
+    return start+(o.prepMinutes+(o.orderStatus==='new'?2:0))*60000;
+  }
+  function render(){
+    if(!o)return;
+    const pickup=o.orderType==='pickup',delivery=o.fulfilment==='delivery';
+    $('test').hidden=!o.sandbox;
+    $('where').textContent=`${o.restaurantName}${o.table&&!pickup?' · Table '+o.table:''}`;
+    $('ref').textContent='Order '+o.id;
+    document.querySelector('#head').classList.toggle('bad',o.orderStatus==='cancelled');
+    $('items').innerHTML=o.items.map(i=>`<li><span>${esc(i.qty)} × ${esc(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')+`<li><span>Total paid</span><span>${money(o.total)}</span></li>`;
+    if(o.orderStatus==='cancelled'){
+      $('headline').textContent='Order cancelled';$('lead').textContent=o.refunded?'Your payment is being refunded to your card in full. Please ask a member of staff if you have questions.':'You weren’t charged.';
+      $('timer').hidden=true;$('steps').innerHTML='';return;
+    }
+    if(o.paymentStatus!=='paid'){
+      $('headline').textContent='Waiting for payment';$('lead').textContent='Your order goes to the kitchen as soon as the payment is confirmed.';$('timer').hidden=true;
+    }
+    const {list,at,finished}=steps(o);
+    const heads=[['Order received ✓',o.orderType==='pickup'?'The kitchen will start on it shortly.':'The kitchen will start on it shortly. Sit back and relax.'],
+      ['Your food is being prepared','The kitchen is on it.'],
+      delivery?['Your order is on its way','Your rider is heading to you now.']:pickup?['Ready to collect!','Head to the counter and give your name.']:['Served. Enjoy your meal!','Thanks for ordering with Punchbook.']];
+    if(o.paymentStatus==='paid'){$('headline').textContent=heads[at][0];$('lead').textContent=heads[at][1]}
+    $('steps').innerHTML=list.map(([title,text,when],i)=>{
+      const state=o.paymentStatus!=='paid'?'next':i<at||(i===at&&finished)?'done':i===at?'now':'next';
+      return`<li class="step ${state}"><span class="dot">${state==='done'?'✓':i+1}</span><div><h3>${title}${state==='now'?'<span class="now-tag">Now</span>':''}</h3><p>${state==='next'?'Next':text}${when&&state!=='next'?` <span class="when">· ${hm(when)}</span>`:''}</p></div></li>`;
+    }).join('');
+    tick();
+  }
+  // Countdown to the estimated time, until the food is served / ready.
+  function tick(){
+    if(!o||o.paymentStatus!=='paid'||o.orderStatus==='cancelled'||['served','collected','ready'].includes(o.orderStatus)){if(o&&['served','collected','ready'].includes(o.orderStatus))$('timer').hidden=true;return}
+    $('timer').hidden=false;
+    const now=Date.now()+skew,end=readyBy(o),start=Date.parse(o.paidAt||o.createdAt),left=end-now;
+    const pct=Math.max(4,Math.min(100,(now-start)/Math.max(1,end-start)*100));
+    $('ring').style.setProperty('--p',pct.toFixed(1));$('ring-icon').textContent=o.orderStatus==='new'?'🧾':'🍳';
+    if(left>0){const m=Math.floor(left/60000),s=Math.floor(left%60000/1000);$('count').textContent=`${m}:${String(s).padStart(2,'0')}`;$('count-label').textContent=`Estimated ${o.orderType==='pickup'?'ready':'at your table'} by ${hm(new Date(end).toISOString())}`}
+    else{$('count').textContent='Any minute now';$('count-label').textContent='Thanks for your patience. It’s nearly there.'}
+  }
+  async function load(){
+    try{
+      const r=await fetch('/api/track/'+encodeURIComponent(id),{cache:'no-store'});
+      if(r.status===404){$('where').textContent='';$('headline').textContent='Order not found';$('lead').textContent='Check the link, or ask a member of staff.';return}
+      const x=await r.json();skew=Date.parse(x.now)-Date.now();
+      const key=x.paymentStatus+'|'+x.orderStatus;
+      // A buzz and a title change when the order moves on, so a guest glancing at the tab notices.
+      if(lastKey&&key!==lastKey){try{navigator.vibrate?.([120,80,120])}catch{}}
+      lastKey=key;o=x;fails=0;$('live').classList.remove('off');$('live').querySelector('span').textContent='Live updates';
+      document.title=({new:'Order received',preparing:'Being prepared',served:'Served!',ready:'Ready!',collected:'Collected',cancelled:'Cancelled'}[o.orderStatus]||'Your order')+' · '+(o.restaurantName||'Punchbook');
+      render();
+    }catch{if(++fails>2){$('live').classList.add('off');$('live').querySelector('span').textContent='Reconnecting…'}}
+  }
+  if(!id){$('headline').textContent='No order';return}
+  try{localStorage.setItem('pb-last-order',JSON.stringify({id,at:Date.now()}))}catch{}
+  load();setInterval(()=>{if(!document.hidden)load()},5000);setInterval(tick,1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+})();
+</script>
+</body></html>

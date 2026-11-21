@@ -18,6 +18,8 @@ function show(icon,title,msg,order){
 async function check(tries){
   try{
     const x=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:id})}).then(r=>r.json());
+    // Table orders go straight to the live tracker; app (pickup) orders are tracked in the app.
+    if(x.ok&&x.order&&x.order.orderType!=='pickup')return location.replace('/track/'+encodeURIComponent(id));
     if(x.ok)return show('✓','Payment confirmed','Your order is with the restaurant. You can close this page.',x.order);
     if(tries>0&&!cancelled&&!x.error)return setTimeout(()=>check(tries-1),2500);
     show('!',cancelled?'Payment cancelled':'Payment not confirmed',cancelled?'You weren’t charged. Go back to try again.':(x.error||'We couldn’t confirm the payment yet. If you were charged, it will show on your order within a few minutes.'),x.order);

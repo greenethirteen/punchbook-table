@@ -12,7 +12,7 @@ const STATUSES = {pickup: ['new', 'preparing', 'ready', 'collected'], table: ['n
 const FINISHED = new Set(['collected', 'served', 'cancelled']);
 const kind = o => o.orderType === 'pickup' ? 'pickup' : 'table';
 
-export async function createKitchen({orders, restaurants, dataDir, staff, payments, onStatus}) {
+export async function createKitchen({orders, restaurants, dataDir, staff, payments, onStatus = () => {}}) {
   const file = path.join(dataDir, 'restaurant-status.json');
   let state = {paused: {}};
   try { state = {...state, ...JSON.parse(await fs.readFile(file, 'utf8'))}; } catch (e) { if (e.code !== 'ENOENT') throw e; }
@@ -52,6 +52,7 @@ export async function createKitchen({orders, restaurants, dataDir, staff, paymen
         return res.status(400).json({error: 'Invalid status.'});
       }
       o.statusChangedAt = now;
+      (o.statusTimes ||= {})[next] ||= now; // when each step happened, for the guest's tracker (/track)
       o.statusSource = req.staff.role === 'admin' ? 'punchbook' : 'restaurant';
       onStatus(o);
       res.json(o);
