@@ -105,7 +105,7 @@
 
   const ok=x=>JSON.parse(JSON.stringify(x));
   async function api(path,body){
-    const [route,q]=path.split('?'),b=body||{};
+    const [route,q]=path.split('?'),b=body||{};let m0;
     st.orders||=[...makeOrders(),...pastOrders()];st.applications||=makeApplications();
     if(route==='/api/accounts')return ok(accounts(new URLSearchParams(q).get('date')));
     if(route==='/api/accounts/settings'){st.pct=Number(b.commissionPct);return{commissionPct:st.pct}}
@@ -141,6 +141,12 @@
       st.banks[b.restaurantId]=bank;return{ok:true};
     }
     if(route==='/api/accounts/applications')return{applications:st.applications.map(c=>({id:c.id,name:c.tradingName,accountName:c.bankAccountName,bankName:c.bankName,branch:c.bankBranch,accountNumber:c.bankAccountNumber}))};
+    m0=route.match(/^\/api\/restaurants\/([^/]+)\/(menu|items\/([^/]+))$/);
+    if(m0){const rid=decodeURIComponent(m0[1]);st.menus||={};st.soldOut||={};
+      if(!st.menus[rid]){const r=await fetch('/api/pickup/restaurants/'+encodeURIComponent(rid)).then(x=>x.json()).catch(()=>({}));st.menus[rid]=(r.restaurant?.menu||[]).map(i=>({id:i.id,name:i.name,category:i.category,price:i.price,image:i.image||null}))}
+      const off=st.soldOut[rid]||={};
+      if(m0[3]){const id=decodeURIComponent(m0[3]);if(b.available===false)off[id]||=new Date().toISOString();else delete off[id];return{id,available:!off[id],soldOutAt:off[id]||null}}
+      return ok({restaurant:{id:rid},items:st.menus[rid].map(i=>({...i,available:!off[i.id],soldOutAt:off[i.id]||null}))})}
     if(route==='/api/orders')return ok(st.orders);
     let m=route.match(/^\/api\/orders\/([^/]+)\/pos-retry$/);
     if(m){const o=st.orders.find(x=>x.id===decodeURIComponent(m[1]));if(!o)throw Error('Order not found.');o.pos={provider:'sambapos',status:'synced',ticketNumber:'4199'};return ok(o)}

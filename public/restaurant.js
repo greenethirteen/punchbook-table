@@ -17,6 +17,7 @@ const LATE_MIN=5,UNPAID_HIDE_MIN=30;
 
 const params=new URLSearchParams(location.search);
 let demo=window.pbMode()==='demo',me=null,pick=params.get('restaurant')||'',tab='orders';
+let menuItems=null,mSearch='',mCat='All',menuBusy=new Set();
 let orders=[],kitchen=null,acc=null,lastOk=null,seen=null,armed=null,fType='all',payDay=null,loaded=false;
 const busy=new Set();
 
@@ -33,6 +34,7 @@ const showError=m=>{$('error').textContent=m;$('error').hidden=!m};
 async function load(){
   const [o,k,a]=await Promise.allSettled([api('/api/orders'),api('/api/restaurants/status'),api('/api/accounts/mine'+(pick?'?restaurant='+encodeURIComponent(pick):''))]);
   if(a.status==='fulfilled'){acc=a.value;pick||=acc.restaurant.id}
+  if(acc&&!menuBusy.size){try{const m=await api('/api/restaurants/'+encodeURIComponent(acc.restaurant.id)+'/menu');menuItems=m.items}catch{}}
   const rid=acc?.restaurant.id;
   if(o.status==='fulfilled'&&Array.isArray(o.value)){
     const mine=o.value.filter(x=>x.restaurantId===rid);
@@ -94,16 +96,19 @@ function render(){
   if(!acc)return;
   $('sandbox-note').hidden=!acc.restaurant.sandbox||demo;
   const R=acc.restaurant;
-  $('kicker').textContent={orders:'Live orders',payments:'Payments',earnings:'Earnings'}[tab];
+  $('kicker').textContent={orders:'Live orders',menu:'Menu',payments:'Payments',earnings:'Earnings'}[tab];
   $('title').textContent=R.name;document.title=R.name+' · Punchbook';
   $('sub').textContent=acc.bank?`Paid to ${acc.bank.bankName} ••••${acc.bank.last4}`:'Bank account not set up yet. Ask Punchbook to add it.';
   if(acc.restaurants&&me.role==='admin'){$('picker-wrap').hidden=false;$('picker').innerHTML=acc.restaurants.map(r=>`<button type="button" data-pick="${esc(r.id)}" aria-pressed="${r.id===R.id}">${esc(r.name)}</button>`).join('')}
   const pb=$('pause');pb.hidden=!kitchen;
   if(kitchen){pb.textContent=kitchen.accepting?'Pause new orders':'Resume orders';pb.className='btn small '+(kitchen.accepting?'ghost':'primary');pb.dataset.paused=String(kitchen.accepting)}
   const waiting=orders.filter(o=>isPaid(o)&&o.orderStatus==='new').length,late=acc.days.filter(d=>d.status==='overdue').length;
+  const off=(menuItems||[]).filter(i=>!i.available).length;$('b-menu').hidden=!off;$('b-menu').textContent=off;
   $('b-orders').hidden=!waiting;$('b-orders').textContent=waiting;$('b-earn').hidden=!late;$('b-earn').textContent=late;
   // Don't redraw while a button is mid-tap or someone is typing.
-  ({orders:renderOrders,payments:renderPayments,earnings:renderEarnings})[tab]();
+  // Don't redraw the menu while someone is typing in its search box.
+  if(tab==='menu'&&document.activeElement===$('m-search'))return renderMenuList();
+  ({orders:renderOrders,menu:renderMenu,payments:renderPayments,earnings:renderEarnings})[tab]();
 }
 const tiles=(id,list)=>{$(id).innerHTML=list.map(([c,l,v,s])=>`<div class="tile ${c}"><span><i></i>${l}</span><strong>${esc(v)}</strong><small>${esc(s)}</small></div>`).join('')};
 
@@ -151,6 +156,32 @@ function orderCard(o){
     <div class="where">${esc(o.id)}</div><div class="tags">${tags.join('')}</div>
     <ul>${o.items.map(i=>`<li><span>${esc(i.qty)} × ${esc(i.name)}</span><span>${money(i.price*i.qty)}</span></li>`).join('')}${o.deliveryFee?`<li><span>Delivery</span><span>${money(o.deliveryFee)}</span></li>`:''}</ul>
     <div class="total"><span>Total</span><span>${money(o.total)}</span></div>${extra}${done}${main||cancel||posRetry?`<div class="acts">${main}${posRetry}${cancel}</div>`:''}</article>`;
+}
+
+// ---------- Menu: switch items off when they run out (guests see "Sold out")
+function renderMenu(){
+  if(!menuItems){$('m-list').innerHTML='<div class="empty">Loading the menu…</div>';return}
+  const cats=['All',...new Set(menuItems.map(i=>i.category))],off=menuItems.filter(i=>!i.available);
+  if(!cats.includes(mCat))mCat='All';
+  $('m-cats').innerHTML=cats.map(c=>`<button type="button" data-mcat="${esc(c)}" aria-pressed="${c===mCat}">${esc(c)}${c==='All'&&off.length?` · ${off.length} off`:''}</button>`).join('');
+  $('m-all').hidden=!off.length;$('m-all').textContent=`Turn all ${off.length} back on`;
+  renderMenuList();
+}
+function renderMenuList(){
+  const q=mSearch.trim().toLowerCase(),list=menuItems.filter(i=>(mCat==='All'||i.category===mCat)&&(!q||i.name.toLowerCase().includes(q)));
+  const groups={};for(const i of list)(groups[i.category]||=[]).push(i);
+  $('m-list').innerHTML=list.length?Object.entries(groups).map(([c,items])=>`<h3>${esc(c)}</h3>`+items.map(i=>`<div class="mrow${i.available?'':' off'}">
+      ${i.image?`<img src="${esc(i.image)}" alt="" loading="lazy">`:'<span class="noimg"></span>'}
+      <div><b>${esc(i.name)}</b><small>${money(i.price)}${i.available?'':` · sold out since ${hm(i.soldOutAt)}`}</small></div>
+      <label class="switch"><span class="${i.available?'on':'off'}">${i.available?'Available':'Sold out'}</span><input type="checkbox" data-item="${esc(i.id)}" ${i.available?'checked':''} ${menuBusy.has(i.id)?'disabled':''} aria-label="${esc(i.name)} available"></label></div>`).join('')).join('')
+    :'<div class="empty">No items match.</div>';
+}
+async function setAvailable(ids,available){
+  ids.forEach(id=>menuBusy.add(id));renderMenuList();
+  try{for(const id of ids){const r=await api('/api/restaurants/'+encodeURIComponent(acc.restaurant.id)+'/items/'+encodeURIComponent(id),{body:{available}});menuItems=menuItems.map(i=>i.id===id?{...i,available:r.available,soldOutAt:r.soldOutAt}:i)}
+    $('live-status').textContent=ids.length===1?`${menuItems.find(i=>i.id===ids[0]).name} is now ${available?'available':'sold out'}.`:`${ids.length} items are available again.`}
+  catch(err){showError(err.message)}
+  ids.forEach(id=>menuBusy.delete(id));render();
 }
 
 // ---------- Payments: every order on a day, the card fee and what the restaurant gets
@@ -220,9 +251,11 @@ document.addEventListener('click',async e=>{
   const row=e.target.closest('tr[data-open]');
   if(row){const d=row.dataset.open;if(d>=addDays(acc.today,-6)){payDay=d;location.hash='payments'}return}
   const t=e.target.closest('button');if(!t)return;
-  if(t.dataset.mode){const want=t.dataset.mode==='demo';if(want===demo)return;demo=want;window.pbSetMode(demo?'demo':'live');orders=[];acc=null;seen=null;loaded=false;render();await load();return}
-  if(t.dataset.pick){pick=t.dataset.pick;history.replaceState(null,'','/restaurant?restaurant='+encodeURIComponent(pick)+location.hash);seen=null;await load();return}
+  if(t.dataset.mode){const want=t.dataset.mode==='demo';if(want===demo)return;demo=want;window.pbSetMode(demo?'demo':'live');orders=[];menuItems=null;acc=null;seen=null;loaded=false;render();await load();return}
+  if(t.dataset.pick){pick=t.dataset.pick;menuItems=null;history.replaceState(null,'','/restaurant?restaurant='+encodeURIComponent(pick)+location.hash);seen=null;await load();return}
   if(t.dataset.ftype){fType=t.dataset.ftype;renderOrders();return}
+  if(t.dataset.mcat){mCat=t.dataset.mcat;renderMenu();return}
+  if(t.id==='m-all'){t.disabled=true;await setAvailable(menuItems.filter(i=>!i.available).map(i=>i.id),true);t.disabled=false;return}
   if(t.dataset.pday){payDay=t.dataset.pday;renderPayments();return}
   if(t.id==='pause'){t.disabled=true;
     try{const r=await api('/api/restaurants/'+encodeURIComponent(acc.restaurant.id)+'/pause',{body:{paused:t.dataset.paused==='true'}});kitchen={...kitchen,accepting:r.accepting}}catch(err){showError(err.message)}
@@ -244,7 +277,9 @@ document.addEventListener('click',async e=>{
   }
 });
 
-function route(){const h=location.hash.slice(1);tab=['orders','payments','earnings'].includes(h)?h:'orders';render();scrollTo(0,0)}
+function route(){const h=location.hash.slice(1);tab=['orders','menu','payments','earnings'].includes(h)?h:'orders';render();scrollTo(0,0)}
+document.addEventListener('change',e=>{const box=e.target.closest('[data-item]');if(box)setAvailable([box.dataset.item],box.checked)});
+document.addEventListener('input',e=>{if(e.target.id==='m-search'){mSearch=e.target.value;renderMenuList()}});
 addEventListener('hashchange',route);
 
 window.staffReady.then(m=>{

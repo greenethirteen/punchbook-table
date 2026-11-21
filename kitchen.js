@@ -14,7 +14,8 @@ const kind = o => o.orderType === 'pickup' ? 'pickup' : 'table';
 
 export async function createKitchen({orders, restaurants, dataDir, staff, payments, onStatus = () => {}}) {
   const file = path.join(dataDir, 'restaurant-status.json');
-  let state = {paused: {}};
+  // paused: restaurants not taking orders. soldOut: {restaurantId: {itemId: when}} for menu items that are off today.
+  let state = {paused: {}, soldOut: {}};
   try { state = {...state, ...JSON.parse(await fs.readFile(file, 'utf8'))}; } catch (e) { if (e.code !== 'ENOENT') throw e; }
   const save = async () => {
     await fs.mkdir(dataDir, {recursive: true});
@@ -23,6 +24,9 @@ export async function createKitchen({orders, restaurants, dataDir, staff, paymen
   };
 
   const accepting = id => !state.paused[id];
+  const isAvailable = (restaurantId, itemId) => !state.soldOut[restaurantId]?.[itemId];
+  /** The restaurant's menu with available: true/false on each item. */
+  const withAvailability = r => (r?.menu || []).map(i => ({...i, available: isAvailable(r.id, i.id)}));
 
   const own = (req, res) => {
     const o = orders.find(x => x.id === req.params.id);
@@ -86,7 +90,31 @@ export async function createKitchen({orders, restaurants, dataDir, staff, paymen
       await save();
       res.json({id: r.id, accepting: accepting(r.id)});
     });
+
+    // Menu availability: the restaurant marks items sold out (and back) from its dashboard.
+    const mine = (req, res) => {
+      const r = restaurants.find(x => x.id === req.params.id);
+      if (!r || !(req.staff.role === 'admin' || req.staff.restaurantId === r.id)) { res.status(404).json({error: 'Restaurant not found.'}); return null; }
+      return r;
+    };
+    app.get('/api/restaurants/:id/menu', staff.requireStaff, (req, res) => {
+      const r = mine(req, res);
+      if (!r) return;
+      res.json({restaurant: {id: r.id, name: r.name}, items: r.menu.map(i => ({id: i.id, name: i.name, category: i.category, price: i.price, image: i.image || null,
+        available: isAvailable(r.id, i.id), soldOutAt: state.soldOut[r.id]?.[i.id] || null}))});
+    });
+    app.post('/api/restaurants/:id/items/:itemId', staff.requireStaff, async (req, res) => {
+      const r = mine(req, res);
+      if (!r) return;
+      const item = r.menu.find(i => i.id === req.params.itemId);
+      if (!item) return res.status(404).json({error: 'Menu item not found.'});
+      const list = state.soldOut[r.id] ||= {};
+      if (req.body?.available === false) list[item.id] ||= new Date().toISOString(); else delete list[item.id];
+      if (!Object.keys(list).length) delete state.soldOut[r.id];
+      await save();
+      res.json({id: item.id, available: isAvailable(r.id, item.id), soldOutAt: state.soldOut[r.id]?.[item.id] || null});
+    });
   }
 
-  return {mount, accepting};
+  return {mount, accepting, isAvailable, withAvailability};
 }

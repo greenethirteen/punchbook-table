@@ -2,10 +2,11 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080c17"><script>try{document.documentElement.dataset.theme=localStorage.getItem("pb-theme")||(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark")}catch(e){}</script><title>Restaurant · Punchbook</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap">
-<link rel="stylesheet" href="/hq.css?v=281b6a461e07"></head><body>
+<link rel="stylesheet" href="/hq.css?v=1a703b5e33ff"></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></symbol>
   <symbol id="i-payments" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 10h18M7 15h4"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></symbol>
   <symbol id="i-earnings" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
   <symbol id="i-hq" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z"/></symbol>
 </svg>
@@ -14,6 +15,7 @@
     <a class="brand" href="/restaurant"><span class="logo">p</span><span>punchbook<em>.</em></span></a>
     <nav class="nav" aria-label="Sections">
       <a href="#orders" data-tab="orders"><svg><use href="#i-orders"/></svg><span>Live orders</span><b class="badge" id="b-orders" hidden></b></a>
+      <a href="#menu" data-tab="menu"><svg><use href="#i-menu"/></svg><span>Menu</span><b class="badge" id="b-menu" hidden></b></a>
       <a href="#payments" data-tab="payments"><svg><use href="#i-payments"/></svg><span>Payments</span></a>
       <a href="#earnings" data-tab="earnings"><svg><use href="#i-earnings"/></svg><span>Earnings</span><b class="badge" id="b-earn" hidden></b></a>
       <a href="/hq" id="hq-link" hidden><svg><use href="#i-hq"/></svg><span>Back to HQ</span></a>
@@ -41,6 +43,15 @@
       <p class="fine">New paid orders appear here straight away. Unpaid orders show for 30 minutes while the guest pays; don’t cook them until they say <b>Paid</b>.</p>
     </section>
 
+    <section id="tab-menu" class="tab" hidden>
+      <div class="panel">
+        <div class="panel-head"><div><h2>What’s available today</h2><p class="help" id="m-help">Switch an item off when it runs out. Guests see it as “Sold out” straight away and can’t order it.</p></div>
+          <button type="button" class="btn small ghost" id="m-all" hidden>Turn everything back on</button></div>
+        <div class="filters menu-tools"><input id="m-search" type="search" placeholder="Search the menu" aria-label="Search the menu" autocomplete="off"><div class="chips" id="m-cats" role="group" aria-label="Category"></div></div>
+        <div id="m-list" class="menu-list"></div>
+      </div>
+    </section>
+
     <section id="tab-payments" class="tab" hidden>
       <div class="filters"><div class="chips" id="p-days" role="group" aria-label="Day"></div></div>
       <div class="tiles" id="p-tiles"></div>
@@ -66,4 +77,4 @@
     </section>
   </main>
 </div>
-<script src="/theme.js?v=15ec769fae04"></script><script src="/staff-auth.js?v=f8720f0ce3f6"></script><script src="/demo-data.js?v=cb8838db7386"></script><script src="/restaurant.js?v=2810ca0fce19"></script></body></html>
+<script src="/theme.js?v=15ec769fae04"></script><script src="/staff-auth.js?v=f8720f0ce3f6"></script><script src="/demo-data.js?v=0ea0845f10c7"></script><script src="/restaurant.js?v=c36355451697"></script></body></html>
