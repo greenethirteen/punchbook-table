@@ -231,14 +231,24 @@ function LiveOrder({ order: o }: { order: PickupOrder }) {
 }
 
 function RestaurantCard({ restaurant: r, delivery }: { restaurant: Restaurant; delivery: boolean }) {
+  const soon = !!r.comingSoon;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${r.name}, ${r.cuisine}, ${r.area}, ready in about ${r.prepMinutes} minutes`}
+      accessibilityLabel={soon ? `${r.name}, coming soon` : `${r.name}, ${r.cuisine}, ${r.area}, ready in about ${r.prepMinutes} minutes`}
+      accessibilityState={{ disabled: soon }}
+      disabled={soon}
       onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: r.id } })}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}
+      style={({ pressed }) => [styles.card, soon && styles.cardSoon, pressed && { opacity: 0.9 }]}
     >
-      <Image source={covers[r.id] ?? { uri: imageUrl(r.cover) }} style={styles.cover} contentFit="cover" transition={200} />
+      <View>
+        <Image source={covers[r.id] ?? { uri: imageUrl(r.cover) }} style={[styles.cover, soon && styles.coverSoon]} contentFit="cover" transition={200} blurRadius={soon ? 6 : 0} />
+        {soon && (
+          <View style={styles.soonVeil}>
+            <Text style={styles.soonBadge}>Coming soon</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.cardBody}>
         <View style={{ flex: 1 }}>
           <Text style={styles.cardTitle}>{r.name}</Text>
@@ -248,12 +258,14 @@ function RestaurantCard({ restaurant: r, delivery }: { restaurant: Restaurant; d
           <Text style={styles.cardArea} numberOfLines={1}>
             {r.area}
           </Text>
-          {r.accepting === false && <Text style={styles.closed}>Not taking orders right now</Text>}
+          {r.accepting === false && !soon && <Text style={styles.closed}>Not taking orders right now</Text>}
         </View>
-        <View style={styles.minutes}>
-          <Text style={styles.minutesValue}>{r.prepMinutes}</Text>
-          <Text style={styles.minutesUnit}>{delivery ? 'min prep' : 'min'}</Text>
-        </View>
+        {!soon && (
+          <View style={styles.minutes}>
+            <Text style={styles.minutesValue}>{r.prepMinutes}</Text>
+            <Text style={styles.minutesUnit}>{delivery ? 'min prep' : 'min'}</Text>
+          </View>
+        )}
       </View>
     </Pressable>
   );
@@ -335,6 +347,10 @@ const styles = StyleSheet.create({
   empty: { fontSize: 14, color: colors.muted, marginTop: 10 },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
   cover: { height: 170, backgroundColor: colors.line },
+  cardSoon: { opacity: 0.55 },
+  coverSoon: { opacity: 0.6 },
+  soonVeil: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(240,240,240,0.35)' },
+  soonBadge: { backgroundColor: colors.ink, color: '#fff', fontSize: 13, fontWeight: '800', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, overflow: 'hidden' },
   cardBody: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 16 },
   cardTitle: { fontSize: 20, fontWeight: '900', letterSpacing: -0.4, color: colors.ink },
   cardMeta: { fontSize: 14, color: colors.muted, marginTop: 3 },

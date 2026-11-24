@@ -18,6 +18,8 @@ export type Restaurant = {
   itemCount: number;
   /** False while the restaurant has paused new orders. Missing on older servers. */
   accepting?: boolean;
+  /** True for restaurants that aren't on Punchbook yet; shown greyed out. */
+  comingSoon?: boolean;
   menu?: MenuItem[];
 };
 
