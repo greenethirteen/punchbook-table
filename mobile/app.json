@@ -7,8 +7,15 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "order.punchbook.com"
+      "supportsTablet": false,
+      "bundleIdentifier": "order.punchbook.com",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Punchbook uses your location to fill in your delivery address."
+      }
     },
     "android": {
       "adaptiveIcon": {
