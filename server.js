@@ -62,9 +62,13 @@ const DELIVERY_FEE=250,DELIVERY_RADIUS_KM=Number(process.env.DELIVERY_RADIUS_KM)
 // Straight-line distance; roads add roughly a third, which the arrival estimate allows for.
 function distanceKm(a,b){const rad=x=>x*Math.PI/180,dLat=rad(b.lat-a.lat),dLng=rad(b.lng-a.lng),h=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLng/2)**2;return 12742*Math.asin(Math.sqrt(h))}
 const rideMinutes=km=>Math.ceil((10+km*1.35*3)/5)*5;
+// App Review / demo: an Amra Leaf order with this phone number goes to the sandbox copy (amra-demo),
+// so it pays on the test card page and never reaches the real kitchen.
+const DEMO_PHONE=(process.env.DEMO_PHONE||'0770000000').replace(/\D/g,'');
 app.post('/api/pickup/orders',(req,res)=>{
-  const b=req.body||{},r=restaurants.find(x=>x.id===b.restaurantId);if(!r)return res.status(400).json({error:'Choose a restaurant.'});
+  const b=req.body||{};let r=restaurants.find(x=>x.id===b.restaurantId);if(!r)return res.status(400).json({error:'Choose a restaurant.'});
   if(!pickupLive(r.id))return res.status(409).json({error:`${r.name} is coming soon to Punchbook. Order from Amra Leaf for now.`});
+  if(DEMO_PHONE&&String(b.customer?.phone||'').replace(/\D/g,'')===DEMO_PHONE)r=restaurants.find(x=>x.sandbox&&x.menuOf===r.id)||r;
   if(!kitchen.accepting(r.id))return res.status(409).json({error:`${r.name} isn’t taking orders right now. Please try again later.`});
   const items=(Array.isArray(b.items)?b.items:[]).map(i=>{const m=r.menu.find(x=>x.id===i.id);return m?{id:m.id,name:m.name,price:m.price,qty:Math.min(50,Math.max(1,Math.floor(Number(i.qty))||1))}:null}).filter(Boolean);
   if(!items.length)return res.status(400).json({error:'Your bag is empty.'});

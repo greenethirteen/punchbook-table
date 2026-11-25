@@ -44,11 +44,13 @@ button{min-height:52px;border-radius:12px;font:inherit;font-size:16px;font-weigh
   const $=id=>document.getElementById(id),id=new URLSearchParams(location.search).get('order');
   const money=n=>{const v=Math.round(Number(n||0)*100)/100;return'LKR '+v.toLocaleString('en-LK',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2})};
   const post=(path,body)=>fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(async r=>{const x=await r.json().catch(()=>({}));if(!r.ok)throw Error(x.error||'Something went wrong.');return x});
-  const done=extra=>location.replace('/payment-return.html?order='+encodeURIComponent(id)+(extra||''));
+  let appReturn=null;
+  const done=extra=>location.replace(appReturn&&!extra?appReturn:'/payment-return.html?order='+encodeURIComponent(id)+(extra||''));
   const fail=m=>{$('err').textContent=m;$('err').hidden=false};
   let back='/';
   if(!id)return fail('This link is missing its order number.');
   post('/api/payments/sandbox/info',{orderId:id}).then(o=>{
+    appReturn=o.appReturn||null;
     if(o.paid)return done();
     back=o.back;$('merchant').textContent=o.restaurantName;$('amount').textContent=money(o.total);
     $('ref').textContent=`Order ${o.id}${o.table?' · Table '+o.table:''}`;$('pay').textContent='Pay '+money(o.total);$('pay').disabled=o.cancelled;

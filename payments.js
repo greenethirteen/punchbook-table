@@ -131,8 +131,10 @@ export function createPayments({orders, publicBase, onPaid}) {
     if (o.orderStatus === 'cancelled') throw Object.assign(new Error('This order was cancelled.'), {status: 409});
     o.paymentMethod = method === 'justpay' ? 'justpay' : 'card';
     if (o.sandbox) {
-      o.payment = {provider: 'sandbox', attempts: (o.payment?.attempts || 0) + 1};
-      return {ok: true, simulated: false, redirectUrl: `/sandbox-pay?order=${encodeURIComponent(o.id)}`, order: o};
+      // From the app, the test card page sends the guest back with the app's own link (punchbook://paid).
+      const appReturn = returnUrl && APP_RETURN.test(returnUrl) ? returnUrl : null;
+      o.payment = {provider: 'sandbox', attempts: (o.payment?.attempts || 0) + 1, ...(appReturn ? {appReturn} : {})};
+      return {ok: true, simulated: false, redirectUrl: `${publicBase(req)}/sandbox-pay?order=${encodeURIComponent(o.id)}`, order: o};
     }
     if (gateway === 'payplus') {
       if (!payplus.configured()) throw Object.assign(new Error('PayPlus isn’t set up yet.'), {status: 503});
@@ -249,7 +251,8 @@ export function createPayments({orders, publicBase, onPaid}) {
       if (!o) return;
       if (!o.sandbox) return res.status(404).json({error: 'Order not found'});
       res.json({id: o.id, total: o.total, restaurantName: o.restaurantName, table: o.table, paid: o.paymentStatus === 'paid', cancelled: o.orderStatus === 'cancelled',
-        back: o.orderType === 'pickup' ? '/' : `/amraleaf-demo/t/${encodeURIComponent(o.table || '12')}`});
+        back: o.payment?.appReturn ? `${o.payment.appReturn}${o.payment.appReturn.includes('?') ? '&' : '?'}cancelled=1` : o.orderType === 'pickup' ? '/' : `/amraleaf-demo/t/${encodeURIComponent(o.table || '12')}`,
+        appReturn: o.payment?.appReturn || null});
     });
     app.post('/api/payments/sandbox/pay', (req, res) => {
       const o = find(req, res);
