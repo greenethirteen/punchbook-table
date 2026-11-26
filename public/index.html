@@ -82,7 +82,7 @@ h1 em{font-style:normal;color:var(--orange)}
 
 /* ---------- phone ---------- */
 .phone-zone{position:relative;display:flex;justify-content:center;align-self:end}
-.phone{width:330px;background:#1a1511;border-radius:52px 52px 0 0;padding:12px 12px 0;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);transform:translateY(0);animation:rise 1s cubic-bezier(.2,.8,.2,1) both}
+.phone{width:330px;background:#1a1511;border-radius:52px 52px 0 0;padding:12px 12px 0;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);}
 @keyframes rise{from{transform:translateY(60px);opacity:0}}
 .screen{background:#fff;border-radius:42px 42px 0 0;overflow:hidden;height:540px}
 .dish{position:relative;background:#fde3b3;height:210px;display:grid;place-items:center}
@@ -251,7 +251,48 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
   .phone{width:290px}.screen{height:500px}
   .nav-cta .link{display:none}
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+
+/* ---------- polish ---------- */
+::selection{background:var(--orange);color:#fff}
+html{scroll-padding-top:90px}
+.nav{position:fixed;transition:background .35s,padding .35s,box-shadow .35s,backdrop-filter .35s}
+.nav .logo{transition:width .35s,height .35s,font-size .35s,border-radius .35s,transform .25s}
+.nav.scrolled{padding:10px 0!important;background:rgba(27,56,45,.82);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);box-shadow:0 1px 0 rgba(255,255,255,.08),0 10px 30px -18px rgba(0,0,0,.6)}
+.nav.scrolled .logo{width:50px;height:50px;border-radius:14px;font-size:14px}
+/* film grain on green sections */
+.hero,.final{isolation:isolate}
+.hero .grain,.final .grain{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* soft glow behind the phone */
+.phone-zone:before{content:"";position:absolute;width:420px;height:420px;left:50%;top:40%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(242,106,61,.28),transparent 65%);filter:blur(10px);z-index:-1}
+.phone-zone{isolation:isolate}
+/* hero entrance */
+@keyframes up{from{opacity:0;transform:translateY(18px)}}
+.hero-text>*{animation:up .8s cubic-bezier(.2,.7,.2,1) both}
+.hero-text>*:nth-child(1){animation-delay:.05s}.hero-text>*:nth-child(2){animation-delay:.12s}.hero-text>*:nth-child(3){animation-delay:.22s}.hero-text>*:nth-child(4){animation-delay:.3s}.hero-text>*:nth-child(5){animation-delay:.38s}
+.hero-grid>.get{animation:pop .9s .45s cubic-bezier(.2,.9,.3,1.25) both}
+@keyframes pop{from{opacity:0;transform:translateY(24px) rotate(-6deg) scale(.96)}}
+.phone{animation:rise 1s .2s cubic-bezier(.2,.8,.2,1) both}
+/* sheet overlap: cream section slides over the hero */
+.compare{position:relative;z-index:2;margin-top:-32px;background:var(--cream);border-radius:32px 32px 0 0;box-shadow:0 -20px 40px -30px rgba(0,0,0,.5)}
+/* receipts: draw the strike line, stagger */
+.receipt.them .total b{text-decoration:none;position:relative}
+.receipt.them .total b:after{content:"";position:absolute;left:-4px;right:-4px;top:52%;height:3px;border-radius:3px;background:var(--orange);transform:scaleX(0);transform-origin:left;transition:transform .6s .5s cubic-bezier(.6,0,.2,1)}
+.receipts.in .receipt.them .total b:after{transform:scaleX(1)}
+.receipts .receipt{transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s}
+.receipts.rv .receipt.us{transition-delay:.15s}
+.receipt:hover{box-shadow:0 26px 40px -24px rgba(31,64,51,.55)}
+/* staggered reveals in grids */
+.step-grid .step:nth-child(2){transition-delay:.08s}.step-grid .step:nth-child(3){transition-delay:.16s}.step-grid .step:nth-child(4){transition-delay:.24s}
+.step{border:1.5px solid transparent;transition:transform .3s,border-color .3s,box-shadow .3s,opacity .7s,background .3s}
+.step:hover{border-color:#ecdcc6;background:#fff;box-shadow:0 22px 40px -28px rgba(31,64,51,.45)}
+.step .ico{transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
+.step:hover .ico{transform:rotate(-8deg) scale(1.06)}
+/* buttons */
+a:focus-visible{outline:3px solid var(--orange);outline-offset:3px;border-radius:12px}
+.final .store:hover{box-shadow:0 14px 28px -12px rgba(0,0,0,.6),0 0 0 3px var(--orange)}
+.qr-card{animation:float 6s ease-in-out infinite}
+.nav-cta .pill{box-shadow:0 6px 16px -8px rgba(0,0,0,.5)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}.receipt.them .total b:after{transform:scaleX(1)}}
 </style>
 </head>
 <body>
@@ -268,7 +309,7 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
 
 <main>
 <!-- HERO -->
-<section class="hero">
+<section class="hero"><div class="grain" aria-hidden="true"></div>
   <div class="wrap hero-grid">
     <div class="hero-text" style="padding-bottom:90px">
       <span class="tag">PICKUP</span>
@@ -379,7 +420,7 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
 </section>
 
 <!-- FINAL CTA -->
-<section class="final">
+<section class="final"><div class="grain" aria-hidden="true"></div>
   <div class="wrap final-grid">
     <div class="rv">
       <p class="eyebrow">Free download</p>
@@ -419,6 +460,8 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
   if(os) document.querySelectorAll('[data-store="'+os+'"]').forEach(function(a){a.style.boxShadow='0 0 0 3px #f26a3d'});
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
   document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
+  var nav=document.querySelector('.nav');function sc(){nav.classList.toggle('scrolled',scrollY>40)}sc();addEventListener('scroll',sc,{passive:true});
+  var pill=document.querySelector('.saved');if(pill&&!matchMedia('(prefers-reduced-motion:reduce)').matches){var t=pill.textContent,io2=new IntersectionObserver(function(es){if(!es[0].isIntersecting)return;io2.disconnect();var st=performance.now();(function f(n){var k=Math.min(1,(n-st)/900),v=Math.round(300*(1-Math.pow(1-k,3)));pill.textContent=t.replace('300',v);if(k<1)requestAnimationFrame(f)})(st)},{threshold:.6});io2.observe(pill)}
 })();
 </script>
 </body>
