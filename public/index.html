@@ -187,6 +187,10 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
 /* ---------- responsive ---------- */
 /* desktop: fit the whole pitch + badges in the first screen */
 @media (min-width:961px){
+  .hero-grid{grid-template-columns:1.1fr .9fr;grid-template-areas:"text get" "text phone";grid-template-rows:auto 1fr;column-gap:40px;align-items:start}
+  .hero-text{grid-area:text}
+  .hero-grid>.get{grid-area:get;margin:34px 0 0;justify-self:end;width:100%;max-width:460px}
+  .phone-zone{grid-area:phone;align-self:end;margin-top:30px}
   .hero{padding-top:118px}
   .logo{width:70px;height:70px;border-radius:19px;font-size:19px}
   .nav{padding:18px 0}
@@ -204,6 +208,8 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
 @media (max-width:960px){
   .hero-grid,.cmp-grid,.final-grid{grid-template-columns:minmax(0,1fr)}
   .hero-grid>div:first-child{padding-bottom:20px!important}
+  .hero-grid{row-gap:0}.hero-grid>.get{margin-top:8px}
+  .phone-zone{margin-top:56px}
   .phone-zone{margin-top:30px}
   .chip.a{left:0}.chip.b{right:0}
   .steps-head{flex-direction:column;align-items:start}
@@ -246,7 +252,7 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
 <!-- HERO -->
 <section class="hero">
   <div class="wrap hero-grid">
-    <div style="padding-bottom:90px">
+    <div class="hero-text" style="padding-bottom:90px">
       <span class="tag">PICKUP</span>
       <h1>The Pick Up<br>Order <em>App.</em></h1>
       <p class="lede"><strong>Order ahead. Pick up at the counter.</strong><br><span class="hl">At restaurant prices.</span></p>
@@ -256,7 +262,9 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
         <div class="them">Other apps <span>Up to LKR 300 more</span></div>
       </div>
 
-      <div class="get" id="get">
+    </div>
+
+    <div class="get" id="get">
         <div class="get-head"><strong>Get Punchbook</strong><span>Free on iPhone &amp; Android</span></div>
         <div class="stores">
           <a class="store" href="#" data-store="ios" aria-label="Download on the App Store">
@@ -273,7 +281,6 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
           <strong>Free</strong>
         </div>
       </div>
-    </div>
 
     <div class="phone-zone" aria-hidden="true">
       <div class="chip a"><i>⏱</i><span>Skip the queue<small>Walk straight to the counter</small></span></div>
