@@ -1,0 +1,83 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--green:#1f4033;--green-2:#2a5242;--orange:#f26a3d;--orange-2:#ff8a5c;--cream:#fbf5ea;--ink:#1b1712;--ok:#2f7a3e;--mint:#e9f3e4;--yellow:#ffd45c;--u:min(1vw,1vh*1.25)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100vw;height:100vh;overflow:hidden}
+body{font-family:Inter,sans-serif;background:var(--green);color:#fff;position:relative;-webkit-font-smoothing:antialiased}
+.blob{position:absolute;border-radius:50%;background:var(--green-2)}
+.b1{width:70vmin;height:70vmin;right:-22vmin;top:-26vmin}.b2{width:60vmin;height:60vmin;left:-30vmin;bottom:-14vmin;opacity:.8}
+.wrap{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:7vmin}
+.top{display:flex;justify-content:space-between;align-items:center}
+.logo{display:grid;place-items:center;width:13vmin;height:13vmin;border-radius:3.6vmin;border:.35vmin solid rgba(255,255,255,.45);font-weight:800;font-size:3.4vmin;line-height:.86;letter-spacing:-.055em}
+.logo b{color:var(--orange)}
+.tag{background:var(--orange);font-weight:800;font-size:2.3vmin;letter-spacing:.16em;padding:1.2vmin 2.4vmin;border-radius:99px}
+h1{font-weight:900;letter-spacing:-.055em;line-height:.9;font-size:12.5vmin;margin-top:5vmin}
+h1 em{font-style:normal;color:var(--orange)}
+.hl{display:inline-block;background:var(--yellow);color:var(--green);font-weight:900;letter-spacing:-.03em;padding:.8vmin 2.6vmin 1.2vmin;border-radius:1vmin 2.4vmin 1.4vmin 2vmin;transform:rotate(-1.5deg)}
+.sub{font-size:4.2vmin;font-weight:700;margin-top:3.5vmin;letter-spacing:-.02em}
+.save{color:var(--orange-2);font-weight:800;letter-spacing:-.035em;font-size:6vmin;line-height:1.05;margin-top:3vmin}
+.save sup{font-size:.5em}
+.cmp{display:grid;gap:1.6vmin;margin-top:3.5vmin;max-width:78vmin}
+.cmp div{display:flex;justify-content:space-between;padding:2.4vmin 3.2vmin;border-radius:2.6vmin;font-size:3.6vmin}
+.cmp .us{background:#fff;color:var(--ink);font-weight:800}.cmp .us span{color:var(--ok)}
+.cmp .them{border:.3vmin solid rgba(255,255,255,.4);font-weight:500}.cmp .them span{font-weight:700}
+.spacer{flex:1}
+.stores{display:flex;gap:2vmin}
+.store{display:flex;align-items:center;gap:1.6vmin;background:#000;border:.25vmin solid #444;border-radius:2.4vmin;padding:1.8vmin 3vmin}
+.store svg{width:4.6vmin;height:4.6vmin}
+.store small{display:block;font-size:1.7vmin;opacity:.85}.store b{display:block;font-size:3.4vmin;font-weight:600;letter-spacing:-.02em;line-height:1.05}
+.fine{font-size:1.7vmin;opacity:.6;margin-top:2.2vmin}
+.url{font-weight:700;font-size:2.6vmin;opacity:.85}
+/* phone card */
+.phone{background:#1a1511;border-radius:6vmin;padding:1.4vmin;width:44vmin;box-shadow:0 4vmin 7vmin -3vmin rgba(0,0,0,.6)}
+.screen{background:#fff;border-radius:4.8vmin;overflow:hidden;color:var(--ink)}
+.dish{background:#fde3b3;height:22vmin;display:grid;place-items:center}
+.bowl{position:relative;width:20vmin;height:9vmin;margin-top:4vmin;background:#c9452c;border-radius:0 0 10vmin 10vmin}
+.bowl:before{content:"";position:absolute;left:-.8vmin;right:-.8vmin;top:-1.8vmin;height:3.4vmin;border-radius:50%;background:#f3c560}
+.bowl i{position:absolute;border-radius:50%;top:-2.6vmin}
+.card{padding:2.6vmin 3vmin 3vmin}
+.card .k{font-size:1.9vmin;color:#9a6b4b;font-weight:600}
+.card h3{font-size:3.8vmin;letter-spacing:-.035em;margin:.4vmin 0 1.6vmin}
+.row{display:flex;justify-content:space-between;font-size:2.2vmin;color:#7d6b5d;padding:.6vmin 0}.row b{color:var(--ink)}
+.ready{background:var(--mint);color:var(--ok);font-weight:700;font-size:2vmin;border-radius:1.6vmin;padding:1.4vmin 1.8vmin;margin:1.4vmin 0}
+.btn{background:var(--green);color:#fff;text-align:center;font-weight:700;font-size:2.2vmin;border-radius:2vmin;padding:2vmin}
+/* ticket */
+.ticket{background:#fff;color:var(--ink);border-radius:4vmin;padding:4vmin 5vmin;text-align:center;transform:rotate(-3deg);box-shadow:0 4vmin 7vmin -3vmin rgba(0,0,0,.6);width:78vmin}
+.ticket .k{font-size:2.2vmin;letter-spacing:.2em;font-weight:800;color:#8a7a6c}
+.ticket .code{white-space:nowrap;font-size:8.6vmin;font-weight:900;letter-spacing:.06em;margin:1vmin 0}
+.ticket .st{display:inline-flex;gap:1.2vmin;align-items:center;background:var(--mint);color:var(--ok);font-weight:800;font-size:2.8vmin;padding:1.4vmin 2.4vmin;border-radius:99px}
+.steps{display:flex;gap:1.4vmin;margin-top:3vmin;justify-content:center;font-size:2.2vmin;font-weight:600;color:#8a7a6c}
+.steps span:nth-child(-n+3){color:var(--ok)}
+.center{display:flex;justify-content:center;align-items:center}
+/* landscape (Google 1.91:1) */
+.feed .stores{flex-direction:column;align-items:flex-start}.feed .fine{max-width:52%}
+.land .wrap{flex-direction:row;align-items:center;gap:5vmin;padding:6vmin 8vmin}
+.land .col{flex:1;display:flex;flex-direction:column;height:100%}
+.land h1{font-size:13vmin;margin-top:3vmin}
+.land .side{flex:none;display:flex;align-items:center;justify-content:center;height:100%}
+</style></head>
+<body><div class="blob b1"></div><div class="blob b2"></div><div class="wrap" id="w"></div>
+<script>
+const P=new URLSearchParams(location.search),c=P.get('c')||'1',land=innerWidth/innerHeight>1.4,story=innerHeight/innerWidth>1.6;
+if(land)document.body.classList.add('land');
+const apple='<svg viewBox="0 0 24 24" fill="#fff"><path d="M16.37 12.6c-.02-2.24 1.83-3.32 1.91-3.37-1.04-1.52-2.66-1.73-3.24-1.75-1.38-.14-2.69.81-3.39.81-.7 0-1.78-.79-2.92-.77-1.5.02-2.89.87-3.66 2.21-1.56 2.71-.4 6.72 1.12 8.92.75 1.07 1.63 2.28 2.79 2.24 1.12-.05 1.54-.73 2.89-.73 1.35 0 1.73.73 2.91.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.33-.9-2.35-3.56zM14.15 6.02c.62-.75 1.03-1.78.92-2.82-.89.04-1.97.59-2.6 1.34-.57.66-1.07 1.72-.94 2.73.99.08 2.01-.5 2.62-1.25z"/></svg>';
+const play='<svg viewBox="0 0 24 24"><path fill="#00d7fe" d="M3.6 2.3c-.3.3-.4.7-.4 1.3v16.8c0 .6.2 1 .4 1.3l9.5-9.7z"/><path fill="#ffce00" d="M16.3 15.2 13.1 12l3.2-3.2 3.8 2.2c1.1.6 1.1 1.6 0 2.2z"/><path fill="#ff3a44" d="M16.3 15.2 13.1 12l-9.5 9.7c.4.4.9.4 1.6.1z"/><path fill="#00f076" d="M16.3 8.8 5.2 2.2c-.7-.4-1.2-.3-1.6.1l9.5 9.7z"/></svg>';
+const head=`<div class="top"><div class="logo"><span>punch<br>book<b>.</b></span></div><span class="tag">PICKUP</span></div>`;
+const stores=`<div class="stores"><div class="store">${apple}<span><small>Download on the</small><b>App Store</b></span></div><div class="store">${play}<span><small>GET IT ON</small><b>Google Play</b></span></div></div>`;
+const fine=`<p class="fine">*vs. in-app prices on other food apps for the same order. Savings vary by restaurant and order.</p>`;
+const phone=`<div class="phone"><div class="screen"><div class="dish"><div class="bowl"><i style="width:3.4vmin;height:3.4vmin;background:#ee7d2f;left:2.6vmin"></i><i style="width:3vmin;height:3vmin;background:#69a43c;left:7vmin;top:-3.2vmin"></i><i style="width:3.6vmin;height:3.6vmin;background:#a6452c;left:11vmin;top:-3vmin"></i><i style="width:3vmin;height:3vmin;background:#69a43c;left:15vmin"></i></div></div><div class="card"><div class="k">Amra Leaf · Negombo</div><h3>Mix Kottu</h3><div class="row"><span>Menu price</span><b>LKR 1,995</b></div><div class="ready">◷ Ready in 15 min</div><div class="btn">Order for pickup</div></div></div></div>`;
+const ticket=`<div class="ticket"><div class="k">PICKUP CODE</div><div class="code">PB-7KQ2M</div><span class="st">✓ Ready at the counter</span></div>`;
+const C={
+ '1':{h:`The Pick Up<br>Order <em>App.</em>`,body:`<p class="sub"><span class="hl">At restaurant prices.</span></p><p class="save">Save up to LKR 300<br>every order<sup>*</sup></p>`,side:phone,fine:1},
+ '2':{h:`Same kottu.<br><em>Less to pay.</em>`,body:`<div class="cmp"><div class="us">Punchbook <span>Menu price</span></div><div class="them">Other apps <span>Up to LKR 300 more</span></div></div>`,side:phone,fine:1},
+ '3':{h:`Skip<br>the <em>queue.</em>`,body:`<p class="sub">Order ahead. Walk in. Show your code.<br>Walk out with your food.</p>`,side:ticket,fine:0},
+};
+const d=C[c];let html;
+if(land){html=`<div class="col">${head}<h1>${d.h}</h1>${d.body}<div class="spacer"></div>${stores}${d.fine?fine:''}</div><div class="side">${d.side}</div>`}
+else{html=`${head}<h1>${d.h}</h1>${d.body}<div class="spacer"></div>${story?`<div class="center" style="margin:4vmin 0">${d.side}</div><div class="spacer"></div>`:''}${stores}${d.fine?fine:''}`}
+document.getElementById('w').innerHTML=html;
+const sq=Math.abs(innerWidth/innerHeight-1)<.1;
+if(!land&&!story&&!sq){document.body.classList.add('feed');const s=document.createElement('div');s.style.cssText=c==='3'?'position:absolute;right:5vmin;bottom:12vmin;z-index:0;transform:scale(.6);transform-origin:right bottom':'position:absolute;right:-3vmin;bottom:-12vmin;z-index:0;transform:rotate(6deg)';s.innerHTML=d.side;document.body.appendChild(s);document.querySelector('.wrap').style.paddingRight='7vmin'}
+</script></body></html>
