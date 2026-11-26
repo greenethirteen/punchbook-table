@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Punchbook · The pick up order app</title>
-<meta name="description" content="Order ahead for pickup at restaurant menu prices, plus just LKR 30 an order. Other apps add up to LKR 300. Get Punchbook on the App Store and Google Play.">
+<meta name="description" content="Order ahead for pickup at restaurant menu prices. Other apps add up to LKR 300. Get Punchbook on the App Store and Google Play.">
 <meta name="theme-color" content="#1f4033">
 <link rel="icon" href="/images/punchbook-icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -194,12 +194,17 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
   .qr-card{display:none}
 }
 @media (max-width:560px){
-  .stores{grid-template-columns:1fr}
+  .stores{grid-template-columns:1fr 1fr;gap:8px}
+  .store{padding:10px;gap:8px;border-radius:13px}
+  .store svg{width:22px;height:22px}
+  .store small{font-size:9px}.store b{font-size:15px}
+  .get{padding:18px 14px}.get-head{margin-bottom:12px}
+  .final .store{padding:12px}.final .store b{font-size:16px}
   .step-grid{grid-template-columns:minmax(0,1fr)}
   .lede{font-size:19px}
   .mini-cmp div{font-size:16px;padding:12px 16px}
   .get{transform:rotate(-1deg);padding:22px 18px}
-  .stamp{width:84px;height:84px;right:-10px;bottom:-34px}.stamp strong{font-size:18px}
+  .stamp{width:62px;height:62px;right:-8px;bottom:-50px}.stamp strong{font-size:14px}
   .receipts{grid-template-columns:minmax(0,1fr)}.get-head span{display:none}.receipt.us{transform:rotate(-1deg)}
   .phone{width:290px}.screen{height:500px}
   .nav-cta .link{display:none}
@@ -229,7 +234,7 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
       <p class="lede"><strong>Order ahead. Pick up at the counter.</strong><br>Restaurant prices.</p>
       <p class="save">Save up to LKR 300<br>every order<sup>*</sup></p>
       <div class="mini-cmp">
-        <div class="us">Punchbook <span>Menu price + LKR 30</span></div>
+        <div class="us">Punchbook <span>Menu price</span></div>
         <div class="them">Other apps <span>Up to LKR 300 more</span></div>
       </div>
 
@@ -254,7 +259,7 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
 
     <div class="phone-zone" aria-hidden="true">
       <div class="chip a"><i>⏱</i><span>Skip the queue<small>Walk straight to the counter</small></span></div>
-      <div class="chip b"><i>✓</i><span>Menu prices<small>+ just LKR 30 an order</small></span></div>
+      <div class="chip b"><i>✓</i><span>Menu prices<small>Same as the counter</small></span></div>
       <div class="phone">
         <div class="screen">
           <div class="dish">
@@ -271,7 +276,6 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
             <div class="k">Amra Leaf · Negombo</div>
             <h3>Mix Kottu</h3>
             <div class="row"><span>Menu price</span><b>LKR 1,995</b></div>
-            <div class="row"><span>Punchbook fee</span><b class="z">LKR 30</b></div>
             <div class="ready">◷ Ready in 15 min</div>
             <span class="order">Order for pickup</span>
           </div>
@@ -286,9 +290,9 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
   <div class="wrap cmp-grid">
     <div class="rv">
       <p class="eyebrow">Same order. Less to pay.</p>
-      <h2>Menu prices. Plus just <em>LKR 30.</em></h2>
-      <p class="sub">Other food apps quietly add to every item. Punchbook keeps the restaurant’s own menu prices and adds one small LKR 30 fee per order.</p>
-      <span class="saved">↓ LKR 270 back in your pocket on this order</span>
+      <h2>Pay the <em>menu price.</em></h2>
+      <p class="sub">Other food apps quietly add to every item. On Punchbook you pay the restaurant’s own menu prices.</p>
+      <span class="saved">↓ LKR 300 back in your pocket on this order</span>
     </div>
     <div class="receipts rv">
       <div class="receipt them">
@@ -298,8 +302,8 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
       </div>
       <div class="receipt us">
         <h4>Punchbook <span>MENU PRICE</span></h4>
-        <ul><li><span>Mix Kottu</span><span>1,995</span></li><li class="mk"><span>Punchbook fee</span><span>+ 30</span></li></ul>
-        <div class="total"><span>Total</span><b>LKR 2,025</b></div>
+        <ul><li><span>Mix Kottu</span><span>1,995</span></li></ul>
+        <div class="total"><span>Total</span><b>LKR 1,995</b></div>
       </div>
     </div>
   </div>
@@ -314,7 +318,7 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
     <div class="step-grid">
       <article class="step rv"><div class="ico">↓</div><h3>Get the app</h3><p>Download Punchbook free on iPhone or Android. No sign-up needed.</p><div class="mini-stores"><a href="#" data-store="ios">App Store ↗</a><a href="https://play.google.com/store/apps/details?id=order.punchbook.com" data-store="android">Google Play ↗</a></div></article>
       <article class="step rv"><div class="ico">☰</div><h3>Order ahead</h3><p>Pick a restaurant in the app, choose your food and a pickup time: now or later today.</p></article>
-      <article class="step rv"><div class="ico">₨</div><h3>Pay in the app</h3><p>Pay by card on your phone: menu prices plus LKR 30. Your name and number are saved for next time.</p></article>
+      <article class="step rv"><div class="ico">₨</div><h3>Pay in the app</h3><p>Pay by card on your phone, at the menu price. Your name and number are saved for next time.</p></article>
       <article class="step rv"><div class="ico">✓</div><h3>Skip the queue</h3><p>The app tells you when it’s ready. Show your code at the counter.</p><span class="code">PB-7KQ2M</span></article>
     </div>
   </div>
@@ -336,7 +340,7 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
   <div class="wrap final-grid">
     <div class="rv">
       <p class="eyebrow">Free download</p>
-      <h2>Skip the markup.<br>Pay just <em>LKR 30.</em></h2>
+      <h2>Skip the markup.<br>Pay the <em>menu price.</em></h2>
       <div class="stores">
         <a class="store" href="#" data-store="ios" aria-label="Download on the App Store">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.24 1.83-3.32 1.91-3.37-1.04-1.52-2.66-1.73-3.24-1.75-1.38-.14-2.69.81-3.39.81-.7 0-1.78-.79-2.92-.77-1.5.02-2.89.87-3.66 2.21-1.56 2.71-.4 6.72 1.12 8.92.75 1.07 1.63 2.28 2.79 2.24 1.12-.05 1.54-.73 2.89-.73 1.35 0 1.73.73 2.91.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.33-.9-2.35-3.56zM14.15 6.02c.62-.75 1.03-1.78.92-2.82-.89.04-1.97.59-2.6 1.34-.57.66-1.07 1.72-.94 2.73.99.08 2.01-.5 2.62-1.25z"/></svg>
