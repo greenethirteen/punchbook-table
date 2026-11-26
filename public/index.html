@@ -44,11 +44,19 @@ a{color:inherit;text-decoration:none}
 h1{font-size:clamp(52px,8.4vw,112px);line-height:.9;letter-spacing:-.055em;font-weight:900;margin:22px 0 26px}
 h1 em{font-style:normal;color:var(--orange)}
 .lede{font-size:clamp(20px,2.2vw,26px);line-height:1.3;font-weight:500;opacity:.95}
+.lede strong{font-weight:800;letter-spacing:-.02em}
 .save{margin-top:22px;font-size:clamp(24px,2.8vw,34px);font-weight:800;letter-spacing:-.03em;color:var(--orange-2);line-height:1.1}
 .save sup{font-size:.55em}
 
+.mini-cmp{margin-top:20px;display:grid;gap:10px;max-width:440px}
+.mini-cmp div{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 20px;border-radius:16px;font-size:18px}
+.mini-cmp .us{background:#fff;color:var(--ink);font-weight:800;letter-spacing:-.02em}
+.mini-cmp .us span{color:var(--ok);font-weight:700;letter-spacing:0}
+.mini-cmp .them{border:1.5px solid rgba(255,255,255,.35);font-weight:500}
+.mini-cmp .them span{font-weight:600}
+.mini-note{margin-top:12px;font-size:13px;opacity:.7;max-width:440px;line-height:1.4}
 /* ---------- THE STICKERS ---------- */
-.get{position:relative;margin:40px 0 0;padding:26px 26px 26px;max-width:540px;background:var(--paper);color:var(--ink);border-radius:28px;transform:rotate(-2deg);box-shadow:0 24px 50px -18px rgba(0,0,0,.45),0 0 0 6px rgba(255,255,255,.08);transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
+.get{position:relative;margin:34px 0 0;padding:26px 26px 26px;max-width:540px;background:var(--paper);color:var(--ink);border-radius:28px;transform:rotate(-2deg);box-shadow:0 24px 50px -18px rgba(0,0,0,.45),0 0 0 6px rgba(255,255,255,.08);transition:transform .35s cubic-bezier(.2,.9,.3,1.4)}
 .get:hover{transform:rotate(0deg) scale(1.015)}
 .get:before{ /* peel corner */
   content:"";position:absolute;right:0;top:0;width:46px;height:46px;border-top-right-radius:28px;
@@ -181,6 +189,8 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
   .qr-card{display:none}
 }
 @media (max-width:560px){
+  .lede{font-size:19px}
+  .mini-cmp div{font-size:16px;padding:12px 16px}
   .stores{grid-template-columns:1fr}
   .get{transform:rotate(-1deg);padding:22px 18px}
   .stamp{width:84px;height:84px;right:-10px;bottom:-34px}.stamp strong{font-size:18px}
@@ -210,8 +220,13 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
     <div style="padding-bottom:90px">
       <span class="tag">PICKUP</span>
       <h1>The Pick Up<br>Order <em>App.</em></h1>
-      <p class="lede">Restaurant prices.<br>Zero app markup.</p>
+      <p class="lede"><strong>Order ahead. Pick up at the counter.</strong><br>Restaurant prices. Zero app markup.</p>
       <p class="save">Save up to LKR 300<br>every order<sup>*</sup></p>
+      <div class="mini-cmp">
+        <div class="us">Punchbook <span>Menu price</span></div>
+        <div class="them">Other apps <span>Up to LKR 300 more</span></div>
+      </div>
+      <p class="mini-note">*vs. in-app prices on other food apps for the same order. Savings vary by restaurant and order.</p>
 
       <div class="get" id="get">
         <div class="get-head"><strong>Get Punchbook</strong><span>Free on iPhone &amp; Android</span></div>
