@@ -133,12 +133,15 @@ h2 em{font-style:normal;color:var(--orange)}
 /* ---------- steps ---------- */
 .steps{background:var(--paper);padding:100px 0;border-top:1.5px solid #efe3d1;border-bottom:1.5px solid #efe3d1}
 .steps-head{display:flex;justify-content:space-between;align-items:end;gap:30px;margin-bottom:50px}
-.step-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
+.step-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;counter-reset:s}
 .step{background:var(--cream);border-radius:26px;padding:30px 28px 32px;position:relative;overflow:hidden;transition:transform .3s}
 .step:hover{transform:translateY(-6px)}
 .step:before{counter-increment:s;content:"0" counter(s);position:absolute;right:20px;top:6px;font-size:90px;font-weight:900;letter-spacing:-.06em;color:rgba(31,64,51,.07)}
 .step .ico{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;background:var(--green);color:#fff;font-size:24px;margin-bottom:46px}
-.step:nth-child(2) .ico{background:var(--orange)}
+.step:nth-child(1) .ico,.step:nth-child(3) .ico{background:var(--orange)}
+.mini-stores{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.mini-stores a{background:#000;color:#fff;font-weight:700;font-size:13px;padding:9px 13px;border-radius:10px;transition:transform .2s}
+.mini-stores a:hover{transform:translateY(-2px)}
 .step h3{font-size:25px;letter-spacing:-.035em;margin-bottom:8px}
 .step p{color:#5b4f45;line-height:1.5}
 .code{display:inline-block;margin-top:16px;font-family:ui-monospace,Menlo,monospace;font-weight:800;letter-spacing:.12em;background:#fff;border:1.5px dashed var(--green);padding:8px 12px;border-radius:10px;color:var(--green)}
@@ -184,11 +187,12 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
   .phone-zone{margin-top:30px}
   .chip.a{left:0}.chip.b{right:0}
   .steps-head{flex-direction:column;align-items:start}
-  .step-grid{grid-template-columns:1fr}
+  .step-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .live-card{grid-template-columns:auto 1fr}.soon{grid-column:1/-1}
   .qr-card{display:none}
 }
 @media (max-width:560px){
+  .step-grid{grid-template-columns:minmax(0,1fr)}
   .lede{font-size:19px}
   .mini-cmp div{font-size:16px;padding:12px 16px}
   .stores{grid-template-columns:1fr}
@@ -305,12 +309,13 @@ footer .b{color:#fff;font-weight:800;letter-spacing:-.03em}footer .b i{color:var
 <section class="steps" id="how">
   <div class="wrap">
     <div class="steps-head rv">
-      <div><p class="eyebrow">How it works</p><h2>Order. Pay.<br>Walk in. Walk out.</h2></div>
+      <div><p class="eyebrow">How it works</p><h2>Tap. Order. Pay.<br>Walk in. Walk out.</h2></div>
     </div>
     <div class="step-grid">
-      <article class="step rv"><div class="ico">☰</div><h3>Order ahead</h3><p>Pick a restaurant, browse the menu and choose a time: as soon as possible or later today.</p></article>
-      <article class="step rv"><div class="ico">₨</div><h3>Pay on your phone</h3><p>Pay securely by card. No account needed — your name and number are saved for next time.</p></article>
-      <article class="step rv"><div class="ico">✓</div><h3>Skip the queue</h3><p>Live updates from the kitchen. When it’s ready, show your code at the counter.</p><span class="code">PB-7KQ2M</span></article>
+      <article class="step rv"><div class="ico">↓</div><h3>Get the app</h3><p>Download Punchbook free on iPhone or Android. No sign-up needed.</p><div class="mini-stores"><a href="#" data-store="ios">App Store ↗</a><a href="https://play.google.com/store/apps/details?id=order.punchbook.com" data-store="android">Google Play ↗</a></div></article>
+      <article class="step rv"><div class="ico">☰</div><h3>Order ahead</h3><p>Pick a restaurant in the app, choose your food and a pickup time: now or later today.</p></article>
+      <article class="step rv"><div class="ico">₨</div><h3>Pay in the app</h3><p>Pay by card on your phone, at the menu price. Your name and number are saved for next time.</p></article>
+      <article class="step rv"><div class="ico">✓</div><h3>Skip the queue</h3><p>The app tells you when it’s ready. Show your code at the counter.</p><span class="code">PB-7KQ2M</span></article>
     </div>
   </div>
 </section>
