@@ -36,7 +36,9 @@ Images: `google/landscape-*.png` (1200 × 628), `google/square-*.png` (1200 × 1
 Short headlines (30 max)
 - The Pick Up Order App
 - Same Food. Less to Pay.
-- Ready When You Are
+- Walk In. Walk Out.
+- Your Food’s Ready
+- Still Calling to Order Food?
 
 Long headline (90 max)
 - Order ahead and pick up at the counter, at restaurant prices. Save up to LKR 400 an order.
@@ -61,10 +63,20 @@ Caption 2 (with feed-2, Same food. Less to pay.)
 > Order on Punchbook and pay the menu price, not an app price.
 > Now live at Amra Leaf, Negombo.
 
-Caption 3 (with feed-3, Ready when you are)
+Caption 3 (with feed-3, Walk in. Walk out.)
 > Order ahead, walk in, show your code, walk out. ⏱️
 > Your food's waiting for you, not the other way round. No queue.
 > Get Punchbook free. Link in bio.
+
+Caption 4 (with feed-4, Your food’s ready. The line isn’t.)
+> Your kottu’s ready. The queue can wait. 🥡
+> Order ahead on Punchbook and walk straight to the pickup counter.
+> At restaurant prices. Free on iPhone and Android.
+
+Caption 5 (with feed-5, Still calling to order food?)
+> No hold music. No “can you repeat that?” 📞
+> Order your food in the Punchbook app at the menu price, and pick it up when it’s ready.
+> Get the app free. Link in bio.
 
 Call-to-action button: Install now (app install ads) or Learn more (to punchbook.online)
 
