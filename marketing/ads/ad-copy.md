@@ -1,6 +1,6 @@
 # Punchbook ads: copy
 
-Images are in `instagram/` and `google/`. Source: `src/ad.html` (open in Chrome with `?c=1`, `?c=2` or `?c=3`; size the window to the ad size).
+Images are in `instagram/` and `google/`. Every image uses the headline “The Pick Up Order App.” with a yellow subhead for one benefit. Source: `src/ad.html` (open in Chrome with `?c=1`, `?c=2` or `?c=3`; size the window to the ad size).
 
 Final URL for every ad: https://punchbook.online
 
@@ -37,8 +37,8 @@ Short headlines (30 max)
 - The Pick Up Order App
 - Same Food. Less to Pay.
 - Walk In. Walk Out.
-- Your Food’s Ready
-- Still Calling to Order Food?
+- Skip the Queue
+- No More Calling to Order
 
 Long headline (90 max)
 - Order ahead and pick up at the counter, at restaurant prices. Save up to LKR 400 an order.
@@ -58,22 +58,22 @@ Caption 1 (with feed-1, The Pick Up Order App)
 > Other food apps add up to LKR 400 to every order. Punchbook doesn't.
 > Free on the App Store and Google Play. Link in bio.
 
-Caption 2 (with feed-2, Same food. Less to pay.)
+Caption 2 (with feed-2, subhead: Same food. Less to pay.)
 > Same food. Same restaurant. Up to LKR 400 less. 🍛
 > Order on Punchbook and pay the menu price, not an app price.
 > Now live at Amra Leaf, Negombo.
 
-Caption 3 (with feed-3, Walk in. Walk out.)
+Caption 3 (with feed-3, subhead: Walk in. Walk out.)
 > Order ahead, walk in, show your code, walk out. ⏱️
 > Your food's waiting for you, not the other way round. No queue.
 > Get Punchbook free. Link in bio.
 
-Caption 4 (with feed-4, Your food’s ready. The line isn’t.)
+Caption 4 (with feed-4, subhead: Skip the queue.)
 > Your kottu’s ready. The queue can wait. 🥡
 > Order ahead on Punchbook and walk straight to the pickup counter.
 > At restaurant prices. Free on iPhone and Android.
 
-Caption 5 (with feed-5, Still calling to order food?)
+Caption 5 (with feed-5, subhead: No more calling to order.)
 > No hold music. No “can you repeat that?” 📞
 > Order your food in the Punchbook app at the menu price, and pick it up when it’s ready.
 > Get the app free. Link in bio.
