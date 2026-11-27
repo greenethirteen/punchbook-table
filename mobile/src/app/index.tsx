@@ -73,8 +73,8 @@ export default function Home() {
       </View>
 
       <Text style={styles.title}>
-        Skip the queue.{'\n'}
-        <Text style={{ color: colors.green }}>Eat on time.</Text>
+        Pick up at the{'\n'}
+        <Text style={{ color: colors.green }}>best prices.</Text>
       </Text>
 
       <View style={styles.search}>

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Splash } from '@/components/Splash';
 import { Welcome } from '@/components/Welcome';
 import { orderIdOf } from '@/lib/push';
 import { colors } from '@/lib/theme';
@@ -16,6 +17,7 @@ const WELCOME_KEY = 'punchbook.welcomeSeen';
 
 export default function RootLayout() {
   const [welcomed, setWelcomed] = useState<boolean | null>(null);
+  const [splash, setSplash] = useState(true);
   useEffect(() => {
     AsyncStorage.getItem(WELCOME_KEY)
       .then(v => setWelcomed(v === '1'))
@@ -39,7 +41,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <OrdersProvider>
         <CartProvider>
-          <StatusBar style="dark" />
+          <StatusBar style={splash ? 'light' : 'dark'} />
           <Stack
             screenOptions={{
               headerStyle: { backgroundColor: colors.paper },
@@ -59,6 +61,7 @@ export default function RootLayout() {
           {/* Covers the home screen until we know whether to show the tour, so it never flashes. */}
           {welcomed === null && <View style={{ position: 'absolute', inset: 0, backgroundColor: colors.paper }} />}
           {welcomed === false && <Welcome onDone={finishWelcome} />}
+          {splash && <Splash onDone={() => setSplash(false)} />}
         </CartProvider>
       </OrdersProvider>
     </SafeAreaProvider>

@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PaymentSheet } from '@/components/PaymentSheet';
 import { Button, Notice, Stepper } from '@/components/ui';
 import { DELIVERY_ENABLED, DELIVERY_FEE, payByCard, placeOrder, verifyPayment, type PaymentMethod, type PickupOrder } from '@/lib/api';
 
@@ -35,6 +36,11 @@ export default function Checkout() {
   const [error, setError] = useState('');
   // If payment fails after the order is created, retrying pays for the same order.
   const [unpaid, setUnpaid] = useState<PickupOrder | null>(null);
+  // The card page shows in a sheet inside the app; closing it resolves the wait in submit().
+  const [payUrl, setPayUrl] = useState<string | null>(null);
+  const payClosed = useRef<(() => void) | null>(null);
+  const showPayment = (url: string) => new Promise<void>(resolve => { payClosed.current = resolve; setPayUrl(url); });
+  const closePayment = () => { setPayUrl(null); payClosed.current?.(); payClosed.current = null; };
 
   // The saved profile loads asynchronously on first launch.
   useEffect(() => {
@@ -93,10 +99,12 @@ export default function Checkout() {
         }));
       setUnpaid(order);
 
-      // Payments.lk's card page opens in the system browser and sends the customer back to the app.
+      // Payments.lk's card page opens in a sheet inside the app (the browser on the web build),
+      // and sends the customer to PAYMENT_RETURN when they finish or cancel.
       let result = await payByCard(order.id, PAYMENT_RETURN);
       if (result.redirectUrl) {
-        await WebBrowser.openAuthSessionAsync(result.redirectUrl, PAYMENT_RETURN);
+        if (Platform.OS === 'web') await WebBrowser.openAuthSessionAsync(result.redirectUrl, PAYMENT_RETURN);
+        else await showPayment(result.redirectUrl);
         result = await verifyPayment(order.id);
       }
       if (result.order.paymentStatus !== 'paid') throw new Error('Payment wasn’t completed. You can try again.');
@@ -217,12 +225,19 @@ export default function Checkout() {
           <View style={styles.divider} />
           <Row label="Total" value={money(total)} strong />
         </View>
-        <Text style={styles.payNote}>You’ll pay on a secure payment page. Your card details never reach Punchbook.</Text>
+        <Text style={styles.payNote}>You’ll pay on Payments.lk’s secure page. Your card details never reach Punchbook.</Text>
         {!!error && <Notice message={error} />}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
         <Button label={`Pay ${money(total)}`} onPress={submit} loading={busy} />
       </View>
+      <PaymentSheet
+        url={payUrl}
+        returnUrl={PAYMENT_RETURN}
+        summary={`${restaurant.name} · ${cart.count} item${cart.count === 1 ? '' : 's'}`}
+        amount={money(total)}
+        onClose={closePayment}
+      />
     </KeyboardAvoidingView>
   );
 }

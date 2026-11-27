@@ -48,6 +48,12 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#244633"
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#244633"
+        }
       ]
     ],
     "scheme": "punchbook",
