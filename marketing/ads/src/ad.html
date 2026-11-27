@@ -123,10 +123,10 @@ const queue=`<div class="scene"><svg class="arc" viewBox="0 0 100 20" preserveAs
 const call=`<div class="call"><div class="cphone"><div class="cscr"><div class="av">AL</div><div class="cn">Amra Leaf</div><div class="cs">calling…</div><div class="hold">On hold 12:47</div><div class="notes">♪ ♫ ♪</div><div class="cbtns"><i></i><i></i><i class="end"></i></div></div></div><span class="bub" style="left:0;top:4vmin">Sorry, can you repeat that?</span><span class="bub red r" style="right:0;top:13vmin">Line busy</span><span class="bub" style="left:3vmin;top:27vmin">One kottu or two?</span><span class="bub red r" style="right:2vmin;top:28vmin">📞 Missed call ×3</span><div class="notif"><div class="ni"><span>punch<br>book<b>.</b></span></div><div><small>PUNCHBOOK · NOW</small><strong>Your Mix Kottu is <em>ready for pickup.</em></strong></div></div></div>`;
 const C={
  '1':{h:`The Pick Up<br>Order <em>App.</em>`,body:`<p class="sub"><span class="hl">At restaurant prices.</span></p><p class="save">Save up to LKR 400<br>every order<sup>*</sup></p>`,side:phone,fine:1},
- '2':{h:`Same food.<br><em>Less to pay.</em>`,body:`<div class="cmp"><div class="us">Punchbook <span>Menu price</span></div><div class="them">Other apps <span>Up to LKR 400 more</span></div></div>`,side:phone,fine:1},
+ '2':{h:`Pick up food.<br><em>Less to pay.</em>`,body:`<div class="cmp"><div class="us">Punchbook <span>Menu price</span></div><div class="them">Other apps <span>Up to LKR 400 more</span></div></div>`,side:phone,fine:1},
  '3':{h:`Walk in.<br>Walk <em>out.</em>`,body:`<p class="sub">Order ahead. Show your code.<br>Grab your food and go.</p>`,side:ticket,fine:0},
- '4':{h:`Your food’s ready.<br>The line <em>isn’t.</em>`,body:`<p class="sub">Order food ahead in the app.<br>Walk straight to the pickup counter.</p>`,side:queue,fine:0,scene:1},
- '5':{h:`Still calling to<br><em>order food?</em>`,body:`<p class="sub">Order in the app at the menu price.<br>Pick it up when it’s ready.</p>`,side:call,fine:0,scene:1},
+ '4':{h:`Pick up orders online.<br>Skip the <em>queue.</em>`,body:`<p class="sub">Order food ahead in the app.<br>Walk straight to the pickup counter.</p>`,side:queue,fine:0,scene:1},
+ '5':{h:`Still calling?<br>Try <em>Punchbook.</em>`,body:`<p class="sub">Order in the app at the menu price.<br>Pick it up when it’s ready.</p>`,side:call,fine:0,scene:1},
 };
 const d=C[c];let html;
 if(land){html=`<div class="col">${head}<h1>${d.h}</h1>${d.body}<div class="spacer"></div>${stores}${d.fine?fine:''}</div><div class="side">${d.side}</div>`}
