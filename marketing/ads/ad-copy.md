@@ -11,7 +11,7 @@ Headlines (30 characters max)
 2. Order Ahead, Skip the Queue
 3. At Restaurant Prices
 4. Save Up to LKR 300 an Order
-5. Same Kottu. Less to Pay.
+5. Same Food. Less to Pay.
 6. Pay the Menu Price
 7. Order Food for Pickup
 8. Ready in 15 Minutes
@@ -35,8 +35,8 @@ Images: `google/landscape-*.png` (1200 × 628), `google/square-*.png` (1200 × 1
 
 Short headlines (30 max)
 - The Pick Up Order App
-- Same Kottu. Less to Pay.
-- Skip the Queue
+- Same Food. Less to Pay.
+- Ready When You Are
 
 Long headline (90 max)
 - Order ahead and pick up at the counter, at restaurant prices. Save up to LKR 300 an order.
@@ -56,14 +56,14 @@ Caption 1 (with feed-1, The Pick Up Order App)
 > Other food apps add up to LKR 300 to every order. Punchbook doesn't.
 > Free on the App Store and Google Play. Link in bio.
 
-Caption 2 (with feed-2, Same kottu. Less to pay.)
-> Same kottu. Same restaurant. Up to LKR 300 less. 🍛
+Caption 2 (with feed-2, Same food. Less to pay.)
+> Same food. Same restaurant. Up to LKR 300 less. 🍛
 > Order on Punchbook and pay the menu price, not an app price.
 > Now live at Amra Leaf, Negombo.
 
-Caption 3 (with feed-3, Skip the queue)
+Caption 3 (with feed-3, Ready when you are)
 > Order ahead, walk in, show your code, walk out. ⏱️
-> Your food's ready when you are. No queue, no waiting.
+> Your food's waiting for you, not the other way round. No queue.
 > Get Punchbook free. Link in bio.
 
 Call-to-action button: Install now (app install ads) or Learn more (to punchbook.online)

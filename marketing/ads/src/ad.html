@@ -71,8 +71,8 @@ const phone=`<div class="phone"><div class="screen"><div class="dish"><div class
 const ticket=`<div class="ticket"><div class="k">PICKUP CODE</div><div class="code">PB-7KQ2M</div><span class="st">✓ Ready at the counter</span></div>`;
 const C={
  '1':{h:`The Pick Up<br>Order <em>App.</em>`,body:`<p class="sub"><span class="hl">At restaurant prices.</span></p><p class="save">Save up to LKR 300<br>every order<sup>*</sup></p>`,side:phone,fine:1},
- '2':{h:`Same kottu.<br><em>Less to pay.</em>`,body:`<div class="cmp"><div class="us">Punchbook <span>Menu price</span></div><div class="them">Other apps <span>Up to LKR 300 more</span></div></div>`,side:phone,fine:1},
- '3':{h:`Skip<br>the <em>queue.</em>`,body:`<p class="sub">Order ahead. Walk in. Show your code.<br>Walk out with your food.</p>`,side:ticket,fine:0},
+ '2':{h:`Same food.<br><em>Less to pay.</em>`,body:`<div class="cmp"><div class="us">Punchbook <span>Menu price</span></div><div class="them">Other apps <span>Up to LKR 300 more</span></div></div>`,side:phone,fine:1},
+ '3':{h:`Ready when<br>you <em>are.</em>`,body:`<p class="sub">Order ahead. Walk in. Show your code.<br>Walk out with your food.</p>`,side:ticket,fine:0},
 };
 const d=C[c];let html;
 if(land){html=`<div class="col">${head}<h1>${d.h}</h1>${d.body}<div class="spacer"></div>${stores}${d.fine?fine:''}</div><div class="side">${d.side}</div>`}
