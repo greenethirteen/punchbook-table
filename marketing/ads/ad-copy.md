@@ -10,7 +10,7 @@ Headlines (30 characters max)
 1. The Pick Up Order App
 2. Order Ahead, Skip the Queue
 3. At Restaurant Prices
-4. Save Up to LKR 300 an Order
+4. Save Up to LKR 400 an Order
 5. Same Food. Less to Pay.
 6. Pay the Menu Price
 7. Order Food for Pickup
@@ -25,7 +25,7 @@ Headlines (30 characters max)
 
 Descriptions (90 characters max)
 1. Order ahead, pay on your phone and pick up at the counter. At restaurant menu prices.
-2. Other food apps add up to LKR 300 an order. On Punchbook you pay the menu price.
+2. Other food apps add up to LKR 400 an order. On Punchbook you pay the menu price.
 3. Live updates from the kitchen and a pickup code to show at the counter. Free to download.
 4. Now taking orders at Amra Leaf, Negombo. More restaurants coming soon. Get the app.
 
@@ -39,10 +39,10 @@ Short headlines (30 max)
 - Ready When You Are
 
 Long headline (90 max)
-- Order ahead and pick up at the counter, at restaurant prices. Save up to LKR 300 an order.
+- Order ahead and pick up at the counter, at restaurant prices. Save up to LKR 400 an order.
 
 Descriptions (90 max)
-- Other food apps add up to LKR 300. On Punchbook you pay the menu price.
+- Other food apps add up to LKR 400. On Punchbook you pay the menu price.
 - Order ahead, pay on your phone, show your code at the counter. Free on iPhone and Android.
 
 Business name: Punchbook
@@ -53,11 +53,11 @@ Images: `instagram/feed-*.png` (1080 × 1350, feed), `instagram/story-*.png` (10
 
 Caption 1 (with feed-1, The Pick Up Order App)
 > Order ahead. Pick up at the counter. At restaurant prices. 🥡
-> Other food apps add up to LKR 300 to every order. Punchbook doesn't.
+> Other food apps add up to LKR 400 to every order. Punchbook doesn't.
 > Free on the App Store and Google Play. Link in bio.
 
 Caption 2 (with feed-2, Same food. Less to pay.)
-> Same food. Same restaurant. Up to LKR 300 less. 🍛
+> Same food. Same restaurant. Up to LKR 400 less. 🍛
 > Order on Punchbook and pay the menu price, not an app price.
 > Now live at Amra Leaf, Negombo.
 

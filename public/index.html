@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Punchbook · The pick up order app</title>
-<meta name="description" content="Order ahead for pickup at restaurant menu prices. Other apps add up to LKR 300. Get Punchbook on the App Store and Google Play.">
+<meta name="description" content="Order ahead for pickup at restaurant menu prices. Other apps add up to LKR 400. Get Punchbook on the App Store and Google Play.">
 <meta name="theme-color" content="#1f4033">
 <link rel="icon" href="/images/punchbook-icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -315,10 +315,10 @@ a:focus-visible{outline:3px solid var(--orange);outline-offset:3px;border-radius
       <span class="tag">PICKUP</span>
       <h1>The Pick Up<br>Order <em>App.</em></h1>
       <p class="lede"><strong>Order ahead. Pick up at the counter.</strong><br><span class="hl">At restaurant prices.</span></p>
-      <p class="save">Save up to LKR 300<br>every order<sup>*</sup></p>
+      <p class="save">Save up to LKR 400<br>every order<sup>*</sup></p>
       <div class="mini-cmp">
         <div class="us">Punchbook <span>Menu price</span></div>
-        <div class="them">Other apps <span>Up to LKR 300 more</span></div>
+        <div class="them">Other apps <span>Up to LKR 400 more</span></div>
       </div>
 
     </div>
@@ -376,13 +376,13 @@ a:focus-visible{outline:3px solid var(--orange);outline-offset:3px;border-radius
       <p class="eyebrow">Why Punchbook</p>
       <h2>Pay the <em>menu price.</em></h2>
       <p class="sub">Other apps add to every item. We don’t.</p>
-      <span class="saved">↓ LKR 300 back in your pocket</span>
+      <span class="saved">↓ LKR 400 back in your pocket</span>
     </div>
     <div class="receipts rv">
       <div class="receipt them">
         <h4>Other apps <span>MARKED UP</span></h4>
-        <ul><li><span>Mix Kottu</span><span>1,995</span></li><li class="mk"><span>App markup</span><span>+ 300</span></li></ul>
-        <div class="total"><span>Total</span><b>2,295</b></div>
+        <ul><li><span>Mix Kottu</span><span>1,995</span></li><li class="mk"><span>App markup</span><span>+ 400</span></li></ul>
+        <div class="total"><span>Total</span><b>2,395</b></div>
       </div>
       <div class="receipt us">
         <h4>Punchbook <span>MENU PRICE</span></h4>
@@ -461,7 +461,7 @@ a:focus-visible{outline:3px solid var(--orange);outline-offset:3px;border-radius
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
   document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
   var nav=document.querySelector('.nav');function sc(){nav.classList.toggle('scrolled',scrollY>40)}sc();addEventListener('scroll',sc,{passive:true});
-  var pill=document.querySelector('.saved');if(pill&&!matchMedia('(prefers-reduced-motion:reduce)').matches){var t=pill.textContent,io2=new IntersectionObserver(function(es){if(!es[0].isIntersecting)return;io2.disconnect();var st=performance.now();(function f(n){var k=Math.min(1,(n-st)/900),v=Math.round(300*(1-Math.pow(1-k,3)));pill.textContent=t.replace('300',v);if(k<1)requestAnimationFrame(f)})(st)},{threshold:.6});io2.observe(pill)}
+  var pill=document.querySelector('.saved');if(pill&&!matchMedia('(prefers-reduced-motion:reduce)').matches){var t=pill.textContent,io2=new IntersectionObserver(function(es){if(!es[0].isIntersecting)return;io2.disconnect();var st=performance.now();(function f(n){var k=Math.min(1,(n-st)/900),v=Math.round(400*(1-Math.pow(1-k,3)));pill.textContent=t.replace('400',v);if(k<1)requestAnimationFrame(f)})(st)},{threshold:.6});io2.observe(pill)}
 })();
 </script>
 </body>

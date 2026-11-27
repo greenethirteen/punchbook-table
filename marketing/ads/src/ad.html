@@ -57,6 +57,39 @@ h1 em{font-style:normal;color:var(--orange)}
 .land .col{flex:1;display:flex;flex-direction:column;height:100%}
 .land h1{font-size:13vmin;margin-top:3vmin}
 .land .side{flex:none;display:flex;align-items:center;justify-content:center;height:100%}
+/* ---------- scene: queue ---------- */
+.scene{position:relative;width:86vmin;margin:0 auto}
+.q{position:relative;height:40vmin;display:flex;align-items:flex-end;gap:1.5vmin;padding:0 2vmin;border-bottom:.5vmin solid rgba(255,255,255,.25)}
+.p{position:relative;flex:none;width:6.4vmin;height:var(--h);background:var(--c);border-radius:3.2vmin 3.2vmin .8vmin .8vmin}
+.p:before{content:"";position:absolute;width:5vmin;height:5vmin;border-radius:50%;background:var(--c);left:.7vmin;top:-5.8vmin}
+.p.you{--c:var(--orange);margin-left:auto}
+.p.you:after{content:"";position:absolute;width:4.4vmin;height:4.4vmin;right:-3.4vmin;top:45%;background:#f3e2c4;border-radius:.6vmin .6vmin 1vmin 1vmin;box-shadow:inset 0 1vmin 0 #e1c999}
+.counter{flex:none;width:15vmin;height:17vmin;background:var(--cream);border-radius:1.4vmin 1.4vmin 0 0;position:relative;margin-left:3vmin}
+.counter:before{content:"PICKUP";position:absolute;left:0;right:0;top:-5vmin;height:4vmin;border-radius:1vmin;background:var(--orange);color:#fff;font-weight:900;font-size:1.9vmin;letter-spacing:.14em;display:grid;place-items:center}
+.bub{position:absolute;background:#fff;color:var(--ink);font-weight:700;font-size:2.1vmin;padding:1vmin 1.6vmin;border-radius:1.6vmin;white-space:nowrap;box-shadow:0 1vmin 2vmin -1vmin rgba(0,0,0,.4)}
+.bub:after{content:"";position:absolute;left:1.6vmin;bottom:-1vmin;border:1vmin solid transparent;border-top-color:#fff;border-bottom:0}
+.chip{position:absolute;background:#fff;color:var(--ok);font-weight:800;font-size:2.2vmin;padding:1.1vmin 1.8vmin;border-radius:99px;white-space:nowrap;box-shadow:0 1vmin 2vmin -1vmin rgba(0,0,0,.45)}
+.arc{position:absolute;left:4vmin;right:16vmin;top:0;height:14vmin;overflow:visible}
+/* ---------- scene: on hold ---------- */
+.call{position:relative;width:86vmin;height:50vmin;margin:0 auto}
+.cphone{position:absolute;left:50%;top:0;transform:translateX(-50%) rotate(-4deg);width:32vmin;height:50vmin;background:#1a1511;border-radius:5vmin;padding:1.2vmin;box-shadow:0 4vmin 7vmin -3vmin rgba(0,0,0,.6)}
+.cscr{height:100%;border-radius:4vmin;background:linear-gradient(#3a3f46,#1d2126);display:flex;flex-direction:column;align-items:center;padding-top:6vmin;color:#fff}
+.av{width:11vmin;height:11vmin;border-radius:50%;background:#6b7380;display:grid;place-items:center;font-weight:800;font-size:4vmin}
+.cn{font-size:3.2vmin;font-weight:700;margin-top:2vmin;letter-spacing:-.02em}
+.cs{font-size:2vmin;opacity:.75;margin-top:.6vmin}
+.hold{margin-top:2.6vmin;font-size:3.4vmin;font-weight:400;white-space:nowrap;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.notes{font-size:2.6vmin;opacity:.6;margin-top:1vmin;letter-spacing:.6vmin}
+.cbtns{margin-top:auto;margin-bottom:5vmin;display:flex;gap:3vmin}
+.cbtns i{width:6vmin;height:6vmin;border-radius:50%;background:rgba(255,255,255,.18)}
+.cbtns i.end{background:#e5484d;position:relative}
+.cbtns i.end:after{content:"";position:absolute;left:1.5vmin;right:1.5vmin;top:2.6vmin;height:.9vmin;border-radius:1vmin;background:#fff}
+.call .bub{font-size:2.3vmin;padding:1.3vmin 2vmin}
+.call .bub.r:after{left:auto;right:1.6vmin}
+.call .bub.red{background:#ffe1dc;color:#b42318}.call .bub.red:after{border-top-color:#ffe1dc}
+.scene-feed h1{font-size:11vmin}
+.c4 h1{font-size:8.6vmin}
+.sq.scene-feed h1{font-size:8vmin;margin-top:3vmin}.sq .sub{font-size:3.4vmin;margin-top:2vmin}.sq .scene,.sq .call{zoom:.7}
+.cscr>*{flex:none}
 </style></head>
 <body><div class="blob b1"></div><div class="blob b2"></div><div class="wrap" id="w"></div>
 <script>
@@ -69,15 +102,20 @@ const stores=`<div class="stores"><div class="store">${apple}<span><small>Downlo
 const fine=`<p class="fine">*vs. in-app prices on other food apps for the same order. Savings vary by restaurant and order.</p>`;
 const phone=`<div class="phone"><div class="screen"><div class="dish"><div class="bowl"><i style="width:3.4vmin;height:3.4vmin;background:#ee7d2f;left:2.6vmin"></i><i style="width:3vmin;height:3vmin;background:#69a43c;left:7vmin;top:-3.2vmin"></i><i style="width:3.6vmin;height:3.6vmin;background:#a6452c;left:11vmin;top:-3vmin"></i><i style="width:3vmin;height:3vmin;background:#69a43c;left:15vmin"></i></div></div><div class="card"><div class="k">Amra Leaf · Negombo</div><h3>Mix Kottu</h3><div class="row"><span>Menu price</span><b>LKR 1,995</b></div><div class="ready">◷ Ready in 15 min</div><div class="btn">Order for pickup</div></div></div></div>`;
 const ticket=`<div class="ticket"><div class="k">PICKUP CODE</div><div class="code">PB-7KQ2M</div><span class="st">✓ Ready at the counter</span></div>`;
+const queue=`<div class="scene"><svg class="arc" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M2 19 Q50 -12 98 17" fill="none" stroke="#ff8a5c" stroke-width=".7" stroke-dasharray="2 1.6" vector-effect="non-scaling-stroke" style="stroke-width:.5vmin"/></svg><div class="q"><i class="p" style="--h:21vmin;--c:#4f7d69"></i><i class="p" style="--h:24vmin;--c:#5d8a75"></i><i class="p" style="--h:19vmin;--c:#47735f"></i><i class="p" style="--h:23vmin;--c:#628f7a"></i><i class="p" style="--h:20vmin;--c:#507e6a"></i><i class="p" style="--h:25vmin;--c:#5a8771"></i><i class="p" style="--h:18vmin;--c:#4a7763"></i><i class="p you" style="--h:23vmin"></i><div class="counter"></div></div><span class="bub" style="left:16vmin;top:7.5vmin">ugh.</span><span class="bub" style="left:46vmin;top:8.5vmin">20 min already…</span><span class="chip" style="right:1vmin;top:3vmin">✓ PB-7KQ2M ready</span></div>`;
+const call=`<div class="call"><div class="cphone"><div class="cscr"><div class="av">AL</div><div class="cn">Amra Leaf</div><div class="cs">calling…</div><div class="hold">On hold 12:47</div><div class="notes">♪ ♫ ♪</div><div class="cbtns"><i></i><i></i><i class="end"></i></div></div></div><span class="bub" style="left:0;top:4vmin">Sorry, can you repeat that?</span><span class="bub red r" style="right:0;top:13vmin">Line busy</span><span class="bub" style="left:3vmin;top:27vmin">One kottu or two?</span><span class="bub red r" style="right:2vmin;top:36vmin">📞 Missed call ×3</span></div>`;
 const C={
- '1':{h:`The Pick Up<br>Order <em>App.</em>`,body:`<p class="sub"><span class="hl">At restaurant prices.</span></p><p class="save">Save up to LKR 300<br>every order<sup>*</sup></p>`,side:phone,fine:1},
- '2':{h:`Same food.<br><em>Less to pay.</em>`,body:`<div class="cmp"><div class="us">Punchbook <span>Menu price</span></div><div class="them">Other apps <span>Up to LKR 300 more</span></div></div>`,side:phone,fine:1},
- '3':{h:`Ready when<br>you <em>are.</em>`,body:`<p class="sub">Order ahead. Walk in. Show your code.<br>Walk out with your food.</p>`,side:ticket,fine:0},
+ '1':{h:`The Pick Up<br>Order <em>App.</em>`,body:`<p class="sub"><span class="hl">At restaurant prices.</span></p><p class="save">Save up to LKR 400<br>every order<sup>*</sup></p>`,side:phone,fine:1},
+ '2':{h:`Same food.<br><em>Less to pay.</em>`,body:`<div class="cmp"><div class="us">Punchbook <span>Menu price</span></div><div class="them">Other apps <span>Up to LKR 400 more</span></div></div>`,side:phone,fine:1},
+ '3':{h:`Walk in.<br>Walk <em>out.</em>`,body:`<p class="sub">Order ahead. Show your code.<br>Grab your food and go.</p>`,side:ticket,fine:0},
+ '4':{h:`Everyone’s in line.<br>Except <em>you.</em>`,body:`<p class="sub">Order ahead. Walk straight to the counter.</p>`,side:queue,fine:0,scene:1},
+ '5':{h:`Still on <em>hold?</em>`,body:`<p class="sub">Skip the call. Order in the app,<br>at the menu price.</p>`,side:call,fine:0,scene:1},
 };
 const d=C[c];let html;
 if(land){html=`<div class="col">${head}<h1>${d.h}</h1>${d.body}<div class="spacer"></div>${stores}${d.fine?fine:''}</div><div class="side">${d.side}</div>`}
-else{html=`${head}<h1>${d.h}</h1>${d.body}<div class="spacer"></div>${story?`<div class="center" style="margin:4vmin 0">${d.side}</div><div class="spacer"></div>`:''}${stores}${d.fine?fine:''}`}
+else{html=`${head}<h1>${d.h}</h1>${d.body}<div class="spacer"></div>${(story||d.scene)?`<div class="center" style="margin:4vmin 0">${d.side}</div><div class="spacer"></div>`:''}${stores}${d.fine?fine:''}`}
 document.getElementById('w').innerHTML=html;
-const sq=Math.abs(innerWidth/innerHeight-1)<.1;
-if(!land&&!story&&!sq){document.body.classList.add('feed');const s=document.createElement('div');s.style.cssText=c==='3'?'position:absolute;right:5vmin;bottom:12vmin;z-index:0;transform:scale(.6);transform-origin:right bottom':'position:absolute;right:-3vmin;bottom:-12vmin;z-index:0;transform:rotate(6deg)';s.innerHTML=d.side;document.body.appendChild(s);document.querySelector('.wrap').style.paddingRight='7vmin'}
+const sq=Math.abs(innerWidth/innerHeight-1)<.1;if(sq)document.body.classList.add('sq');
+if(d.scene&&!land)document.body.classList.add('scene-feed');document.body.classList.add('c'+c);
+if(!land&&!story&&!sq&&!d.scene){document.body.classList.add('feed');const s=document.createElement('div');s.style.cssText=c==='3'?'position:absolute;right:5vmin;bottom:12vmin;z-index:0;transform:scale(.6);transform-origin:right bottom':'position:absolute;right:-3vmin;bottom:-12vmin;z-index:0;transform:rotate(6deg)';s.innerHTML=d.side;document.body.appendChild(s);document.querySelector('.wrap').style.paddingRight='7vmin'}
 </script></body></html>
