@@ -8,6 +8,7 @@
   <symbol id="i-orders" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></symbol>
   <symbol id="i-restaurants" viewBox="0 0 24 24"><path d="M4 10l1.5-6h13L20 10M4 10h16M4 10a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5 10v10h14V10M10 20v-5h4v5"/></symbol>
   <symbol id="i-payouts" viewBox="0 0 24 24"><path d="M3 7h18v12H3zM3 11h18M7 15h3M16 4l-4 3-4-3"/></symbol>
+  <symbol id="i-waitlist" viewBox="0 0 24 24"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></symbol>
   <symbol id="i-applications" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13l2 2 4-4"/></symbol>
 </svg>
 <div class="shell">
@@ -19,6 +20,7 @@
       <a href="#restaurants" data-tab="restaurants"><svg><use href="#i-restaurants"/></svg><span>Restaurants</span></a>
       <a href="#payouts" data-tab="payouts"><svg><use href="#i-payouts"/></svg><span>Payouts</span><b class="badge" id="b-payouts" hidden></b></a>
       <a href="#applications" data-tab="applications"><svg><use href="#i-applications"/></svg><span>Applications</span><b class="badge" id="b-apps" hidden></b></a>
+      <a href="#waitlist" data-tab="waitlist"><svg><use href="#i-waitlist"/></svg><span>Waitlist</span></a>
     </nav>
     <div class="side-foot">
       <button type="button" class="theme" id="theme" aria-label="Switch theme"></button>
@@ -99,6 +101,11 @@
       </div>
     </section>
 
+    <section id="tab-waitlist" class="tab" hidden>
+      <div class="panel"><h2>Most requested restaurants</h2><div class="table-wrap"><table class="list"><thead><tr><th>Restaurant</th><th class="num">Votes</th></tr></thead><tbody id="wl-top"></tbody></table></div></div>
+      <div class="panel"><h2 id="wl-count">Sign-ups</h2><p style="margin:-6px 0 12px"><button type="button" class="btn" id="wl-csv">Download CSV</button> <a href="/negombo" target="_blank" rel="noopener">Open the Negombo page ↗</a></p><div class="table-wrap"><table class="list"><thead><tr><th>Joined</th><th>Contact</th><th>Restaurant</th><th class="hide-m">Source</th></tr></thead><tbody id="wl-rows"></tbody></table></div></div>
+    </section>
+
     <section id="tab-applications" class="tab" hidden>
       <div class="filters"><div class="chips" id="f-status" role="group" aria-label="Status"></div></div>
       <div class="apps"><div id="app-list" class="app-list"></div><div id="app-detail" class="app-detail" hidden></div></div>
@@ -106,4 +113,4 @@
   </main>
 </div>
 <div id="toast" class="toast" role="status" hidden></div>
-<script src="/theme.js?v=15ec769fae04"></script><script src="/staff-auth.js?v=f8720f0ce3f6"></script><script src="/demo-data.js?v=0ea0845f10c7"></script><script src="/hq.js?v=2c74f693a3a0"></script></body></html>
+<script src="/theme.js?v=15ec769fae04"></script><script src="/staff-auth.js?v=f8720f0ce3f6"></script><script src="/demo-data.js?v=0ea0845f10c7"></script><script src="/hq.js?v=495a706b18d5"></script></body></html>

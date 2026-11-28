@@ -91,7 +91,7 @@ function render(){
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.mode==='demo')===demo)));
   document.querySelectorAll('[data-tab]').forEach(a=>a.dataset.tab===tab?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
   document.body.dataset.tab=tab;
-  const H={overview:['Command centre','Overview','Today across every restaurant'],orders:['Kitchen','Orders','New, cooking and done, as it happens'],restaurants:['Network','Restaurants','Who’s open, their till and their bank'],payouts:['Money · T+2','Payouts','Each day’s sales are paid two days later'],applications:['Onboarding','Applications','Restaurants that want to join']}[tab];
+  const H={overview:['Command centre','Overview','Today across every restaurant'],orders:['Kitchen','Orders','New, cooking and done, as it happens'],restaurants:['Network','Restaurants','Who’s open, their till and their bank'],payouts:['Money · T+2','Payouts','Each day’s sales are paid two days later'],applications:['Onboarding','Applications','Restaurants that want to join'],waitlist:['Pre-launch','Waitlist','Who wants Punchbook, and where']}[tab];
   $('kicker').textContent=H[0];$('page-title').textContent=H[1];$('page-sub').textContent=H[2];document.title=H[1]+' · Punchbook HQ';
   document.querySelectorAll('.tab').forEach(s=>s.hidden=s.id!=='tab-'+tab);
   $('demo-note').hidden=!demo;
@@ -101,7 +101,7 @@ function render(){
   // Don't redraw a tab while someone is typing in it.
   const typing=document.activeElement?.closest?.('.tab form, .tab textarea, .filebar');
   if(typing&&!typing.closest('#tab-orders'))return;
-  ({overview:renderOverview,orders:renderOrders,restaurants:renderRestaurants,payouts:renderPayouts,applications:renderApps})[tab]();
+  ({overview:renderOverview,orders:renderOrders,restaurants:renderRestaurants,payouts:renderPayouts,applications:renderApps,waitlist:renderWaitlist})[tab]();
 }
 const badge=(id,n)=>{$(id).hidden=!n;$(id).textContent=n};
 
@@ -506,7 +506,7 @@ async function markFileSent(btn){
 }
 
 // ---------- Tabs
-function route(){const t=location.hash.slice(1);tab=['overview','orders','restaurants','payouts','applications'].includes(t)?t:'overview';render();scrollTo(0,0);if(tab==='payouts')loadRange()}
+function route(){const t=location.hash.slice(1);tab=['overview','orders','restaurants','payouts','applications','waitlist'].includes(t)?t:'overview';render();scrollTo(0,0);if(tab==='payouts')loadRange();if(tab==='waitlist')loadWaitlist()}
 addEventListener('hashchange',route);
 
 window.staffReady.then(me=>{
@@ -516,4 +516,23 @@ window.staffReady.then(me=>{
   setInterval(()=>{if(!document.hidden)load()},8000);
   setInterval(()=>{if(!document.hidden&&tab==='orders'&&!document.activeElement?.closest('.tab'))renderOrders()},30000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+});
+
+// ---------- Waitlist (sign-ups from /negombo)
+let WL=null;
+async function loadWaitlist(){
+  if(demo){WL={total:0,top:[],entries:[]};renderWaitlist();return}
+  try{WL=await api('/api/waitlist');renderWaitlist()}catch(err){showError(err.message)}
+}
+function renderWaitlist(){
+  if(!WL){$('wl-rows').innerHTML='<tr><td colspan="4">Loading…</td></tr>';return}
+  $('wl-count').textContent=`Sign-ups (${WL.total})`;
+  $('wl-top').innerHTML=WL.top.length?WL.top.map(t=>`<tr><td>${esc(t.name)}</td><td class="num">${t.votes}</td></tr>`).join(''):'<tr><td colspan="2">No requests yet.</td></tr>';
+  $('wl-rows').innerHTML=WL.entries.length?WL.entries.map(e=>`<tr><td>${esc(new Date(e.createdAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</td><td>${esc(e.contact)}</td><td>${esc(e.restaurant)}</td><td class="hide-m">${esc(e.source||'')}</td></tr>`).join(''):'<tr><td colspan="4">No sign-ups yet. Share punchbook.online/negombo.</td></tr>';
+}
+document.addEventListener('click',e=>{
+  if(e.target.id!=='wl-csv'||!WL)return;
+  const cell=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const csv=[['Joined','Contact','Type','Restaurant','Area','Source'],...WL.entries.map(x=>[x.createdAt,x.contact,x.kind,x.restaurant,x.area,x.source])].map(r=>r.map(cell).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='punchbook-waitlist.csv';a.click();
 });

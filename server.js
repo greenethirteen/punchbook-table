@@ -12,6 +12,7 @@ import {createStaff} from './staff.js';
 import {createPayments} from './payments.js';
 import {createKitchen} from './kitchen.js';
 import {createPush} from './push.js';
+import {createWaitlist} from './waitlist.js';
 
 // Load .env locally when present; hosted env vars (e.g. Railway) are left untouched.
 try{process.loadEnvFile?.()}catch(e){if(e.code!=='ENOENT')throw e}
@@ -23,7 +24,7 @@ const jsonBody=express.json({limit:'15mb',verify:(req,_res,buf)=>{req.rawBody=bu
 app.use((req,res,next)=>req.path==='/api/payments/payplus/notify'?next():jsonBody(req,res,next));
 app.get('/table-demo-qr.svg', async (req,res)=>{const svg=await QRCode.toString(`${publicBase(req)}/peppermint/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});res.type('svg').send(svg)});
 function sendPage(res,name){res.set('Cache-Control','no-store');res.sendFile(process.cwd()+'/public/'+name)}
-app.get('/',(_req,res)=>sendPage(res,'index.html'));app.get(['/business','/restaurants'],(_req,res)=>sendPage(res,'business.html'));
+app.get('/',(_req,res)=>sendPage(res,'index.html'));app.get(['/negombo','/join-negombo'],(_req,res)=>sendPage(res,'negombo.html'));app.get(['/business','/restaurants'],(_req,res)=>sendPage(res,'business.html'));
 const MENU_FILES={'/peppermint.html':'/peppermint','/amraleaf-v3.html':'/amraleaf','/glounge.html':'/glounge'};
 app.use((q,r,next)=>MENU_FILES[q.path]?r.redirect(301,MENU_FILES[q.path]):next());
 app.use(express.static('public',{etag:true,lastModified:true,setHeaders(res,filePath){res.set('Cache-Control',filePath.endsWith('.html')?'no-store':'no-cache, must-revalidate')}}));
@@ -100,6 +101,7 @@ app.post('/api/companies',async(req,res)=>{try{const b=req.body||{},required=['c
 payments.mount(app);
 // Staff sign-in and restaurant order controls. See staff.js and kitchen.js.
 staff.mount(app);kitchen.mount(app);
+(await createWaitlist({dataDir:DATA_DIR,staff})).mount(app);
 // Local POS bridges (e.g. SambaPOS via bridge/). See pos-bridge.js.
 posBridge.mount(app);
 // Delivery riders (page at /rider). See rider.js.
