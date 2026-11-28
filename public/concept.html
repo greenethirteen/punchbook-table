@@ -221,6 +221,9 @@ h1 .serif{font-size:1.1em}
 .p-charcoal{--bg:#111111;--bgr:17,17,17;--g1:70,70,70;--g2:255,107,61;--sheet:#1b1b1b}
 .p-espresso{--bg:#1a100a;--bgr:26,16,10;--g1:120,72,36;--g2:255,170,70;--sheet:#25170e}
 .p-plum{--bg:#160d1e;--bgr:22,13,30;--g1:96,52,140;--g2:255,107,61;--sheet:#20142b}
+.p-cream{--bg:#f6f1e7;--bgr:246,241,231;--g1:0,0,0;--g2:0,0,0;--sheet:#fbf8f1}
+.vm.light .tabs{background:#171713;border:0;box-shadow:0 18px 36px -12px rgba(0,0,0,.4)}
+.vm.light .swatches,.vm.light .switch{background:rgba(23,23,19,.8)}
 .p-teal{--bg:#06201f;--bgr:6,32,31;--g1:28,110,104;--g2:255,190,90;--sheet:#0d2c2a}
 .swatches{position:absolute;top:calc(62px + var(--st));left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:7px;padding:5px 8px;border-radius:99px;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .swatches button{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.25);padding:0;transition:transform .2s,border-color .2s}
@@ -238,7 +241,7 @@ h1 .serif{font-size:1.1em}
 .switch button.on{background:#fff;color:#0d1f17}
 .pad{padding-top:calc(74px + var(--st))}
 .home-b,.home-c{display:none}
-.light .home-a{display:none}
+.vb .home-a,.vc .home-a{display:none}
 .vb .home-b{display:block}.vc .home-c{display:block}
 
 /* light theme (B and C) */
@@ -251,6 +254,9 @@ h1 .serif{font-size:1.1em}
 .light .search input::placeholder,.light .fields input::placeholder{color:#9b9284}
 .light .cat span{color:var(--soft)}
 .light .cat.on img{box-shadow:0 0 0 2px #1f6b45,0 0 0 5px var(--bg)}
+.light .feat:after{background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(0,0,0,.72))}
+.light .feat{box-shadow:0 22px 40px -24px rgba(60,40,20,.55)}
+.light .mins span{color:rgba(255,255,255,.8)}
 .light .feat .tag{background:#fff;color:#1f6b45}
 .light .feat .nm,.light .feat b{color:#fff}
 .light .feat .cu{color:rgba(255,255,255,.8)}
@@ -361,7 +367,7 @@ h1 .serif{font-size:1.1em}
   <div class="sky"></div><div class="grain"></div>
   <span class="concept">Concept · no real orders</span>
   <div class="switch" role="tablist" aria-label="Design"><button type="button" data-v="m">Mix</button><button type="button" data-v="a">A · Dark</button><button type="button" data-v="b">B · Light</button><button type="button" data-v="c">C · Photo</button></div>
-  <div class="swatches" id="swatches" aria-label="Background colour" hidden><button type="button" data-p="forest" style="background:#1f4a33" aria-label="Forest"></button><button type="button" data-p="midnight" style="background:#1c2f5a" aria-label="Midnight"></button><button type="button" data-p="charcoal" style="background:#2b2b2b" aria-label="Charcoal"></button><button type="button" data-p="espresso" style="background:#4a2d18" aria-label="Espresso"></button><button type="button" data-p="plum" style="background:#3e2357" aria-label="Plum"></button><button type="button" data-p="teal" style="background:#155550" aria-label="Teal"></button></div>
+  <div class="swatches" id="swatches" aria-label="Background colour" hidden><button type="button" data-p="cream" style="background:#f6f1e7" aria-label="Light cream"></button><button type="button" data-p="forest" style="background:#1f4a33" aria-label="Forest"></button><button type="button" data-p="midnight" style="background:#1c2f5a" aria-label="Midnight"></button><button type="button" data-p="charcoal" style="background:#2b2b2b" aria-label="Charcoal"></button><button type="button" data-p="espresso" style="background:#4a2d18" aria-label="Espresso"></button><button type="button" data-p="plum" style="background:#3e2357" aria-label="Plum"></button><button type="button" data-p="teal" style="background:#155550" aria-label="Teal"></button></div>
 
   <!-- HOME -->
   <section class="view on" id="v-home">
@@ -554,16 +560,17 @@ h1 .serif{font-size:1.1em}
     v = ['m', 'a', 'b', 'c'].includes(v) ? v : 'm';
     const d = $('#device'); d.classList.remove('vm', 'va', 'vb', 'vc', 'light'); d.classList.add('v' + v); if (v === 'b' || v === 'c') d.classList.add('light');
     $('#swatches').hidden = v !== 'm';
-    setP(v === 'm' ? localStorage.getItem('pb-concept-p') || 'forest' : 'forest', false);
+    setP(v === 'm' ? localStorage.getItem('pb-concept-p2') || 'cream' : 'forest', false);
     $$('.switch button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
     if (v === 'b' || v === 'c') document.querySelector('meta[name=theme-color]').content = '#f6f1e7';
     localStorage.setItem('pb-concept-v', v); history.replaceState(null, '', '?v=' + v);
   }
   function setP(p, keep) {
     const d = $('#device');
-    ['forest', 'midnight', 'charcoal', 'espresso', 'plum', 'teal'].forEach(x => d.classList.toggle('p-' + x, x === p));
+    ['cream', 'forest', 'midnight', 'charcoal', 'espresso', 'plum', 'teal'].forEach(x => d.classList.toggle('p-' + x, x === p));
+    if (d.classList.contains('vm')) d.classList.toggle('light', p === 'cream');
     $$('#swatches button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
-    if (keep) localStorage.setItem('pb-concept-p', p);
+    if (keep) localStorage.setItem('pb-concept-p2', p);
     document.querySelector('meta[name=theme-color]').content = getComputedStyle(d).getPropertyValue('--bg').trim();
   }
   $$('#swatches button').forEach(b => b.addEventListener('click', () => setP(b.dataset.p, true)));
