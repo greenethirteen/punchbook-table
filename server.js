@@ -13,6 +13,7 @@ import {createPayments} from './payments.js';
 import {createKitchen} from './kitchen.js';
 import {createPush} from './push.js';
 import {createWaitlist} from './waitlist.js';
+import {createCustomers} from './customers.js';
 
 // Load .env locally when present; hosted env vars (e.g. Railway) are left untouched.
 try{process.loadEnvFile?.()}catch(e){if(e.code!=='ENOENT')throw e}
@@ -102,6 +103,7 @@ payments.mount(app);
 // Staff sign-in and restaurant order controls. See staff.js and kitchen.js.
 staff.mount(app);kitchen.mount(app);
 (await createWaitlist({dataDir:DATA_DIR,staff})).mount(app);
+(await createCustomers({dataDir:DATA_DIR})).mount(app);
 // Local POS bridges (e.g. SambaPOS via bridge/). See pos-bridge.js.
 posBridge.mount(app);
 // Delivery riders (page at /rider). See rider.js.

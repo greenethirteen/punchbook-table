@@ -46,3 +46,43 @@ export const CloseIcon = (p: IconProps) => (
     <Path d="M6 6l12 12M18 6 6 18" />
   </Icon>
 );
+
+export const HomeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M3 11 12 4l9 7v9H3z" />
+    <Path d="M9 20v-6h6v6" />
+  </Icon>
+);
+
+export const UserIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+    <Path d="M4 21a8 8 0 0 1 16 0" />
+  </Icon>
+);
+
+export const PinIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" />
+    <Path d="M12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+  </Icon>
+);
+
+export const ChevronIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M9 6l6 6-6 6" />
+  </Icon>
+);
+
+export const CheckIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Icon>
+);
+
+export const PhoneIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <Path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+    <Path d="M11 18h2" />
+  </Icon>
+);

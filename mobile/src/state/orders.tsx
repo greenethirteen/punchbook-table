@@ -15,7 +15,8 @@ const POLL_MS = 5000;
 
 /** A spot picked on the map. `line` comes from reverse geocoding; `details` is what the customer types. */
 export type Address = { line: string; area: string; details: string; lat: number; lng: number; accuracy: number | null };
-export type Profile = { name: string; phone: string; address?: Address };
+/** `token` is set once the customer has signed in with their mobile number. */
+export type Profile = { name: string; phone: string; address?: Address; token?: string; verified?: boolean };
 
 type Store = {
   ready: boolean;
@@ -27,6 +28,8 @@ type Store = {
   saveOrder: (order: PickupOrder) => void;
   /** Merges the given fields into the saved profile. */
   saveProfile: (patch: Partial<Profile>) => void;
+  /** Forgets the sign-in and contact details (keeps nothing but the saved address). */
+  signOut: () => void;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -74,6 +77,14 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const signOut = useCallback(() => {
+    setProfile(prev => {
+      const next: Profile = { name: '', phone: '', address: prev.address };
+      AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
   // Keep unfinished orders fresh so the home banner and order screen show the kitchen's progress.
   const activeIds = orders.filter(o => isActive(o) && !stale.has(o.id)).map(o => o.id).join(',');
   useEffect(() => {
@@ -97,8 +108,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   }, [activeIds, saveOrder]);
 
   const value = useMemo(
-    () => ({ ready, orders, stale, activeOrders: orders.filter(o => isActive(o) && !stale.has(o.id)), profile, saveOrder, saveProfile }),
-    [ready, orders, stale, profile, saveOrder, saveProfile],
+    () => ({ ready, orders, stale, activeOrders: orders.filter(o => isActive(o) && !stale.has(o.id)), profile, saveOrder, saveProfile, signOut }),
+    [ready, orders, stale, profile, saveOrder, saveProfile, signOut],
   );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

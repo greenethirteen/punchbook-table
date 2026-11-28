@@ -44,8 +44,9 @@ export default function Checkout() {
 
   // The saved profile loads asynchronously on first launch.
   useEffect(() => {
-    setName(n => n || profile.name);
-    setPhone(p => p || profile.phone);
+    // Signed in: the order uses the account's name and number.
+    if (profile.token) { setName(profile.name); setPhone(profile.phone); }
+    else { setName(n => n || profile.name); setPhone(p => p || profile.phone); }
   }, [profile]);
 
   // Any change to the order means the next attempt places a fresh one.
@@ -74,6 +75,7 @@ export default function Checkout() {
 
   const submit = async () => {
     setError('');
+    if (!profile.token) return router.push('/signin');
     if (!name.trim()) return setError('Enter your name so the restaurant can call it out.');
     if (phone.replace(/\D/g, '').length < 9) return setError('Enter a valid mobile number.');
     if (delivery && !profile.address) return setError('Add your delivery address.');
@@ -157,26 +159,23 @@ export default function Checkout() {
 
         <Text style={styles.label}>Your details</Text>
         <View style={styles.card}>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Name for the order"
-            placeholderTextColor="#9b9a93"
-            autoComplete="name"
-            textContentType="name"
-            style={styles.input}
-          />
-          <View style={styles.divider} />
-          <TextInput
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Mobile number (07X XXX XXXX)"
-            placeholderTextColor="#9b9a93"
-            keyboardType="phone-pad"
-            autoComplete="tel"
-            textContentType="telephoneNumber"
-            style={styles.input}
-          />
+          {profile.token ? (
+            <Pressable accessibilityRole="button" accessibilityHint="Change your details" onPress={() => router.push('/signin')} style={styles.me}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lineName}>{profile.name}</Text>
+                <Text style={styles.muted}>{profile.phone}</Text>
+              </View>
+              <Text style={styles.addressAction}>Change</Text>
+            </Pressable>
+          ) : (
+            <Pressable accessibilityRole="button" onPress={() => router.push('/signin')} style={styles.me}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lineName}>Add your name and number</Text>
+                <Text style={styles.muted}>Quick sign-in with your mobile. No password.</Text>
+              </View>
+              <Text style={styles.addressAction}>Add</Text>
+            </Pressable>
+          )}
           <View style={styles.divider} />
           <TextInput
             value={note}
@@ -229,7 +228,7 @@ export default function Checkout() {
         {!!error && <Notice message={error} />}
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
-        <Button label={`Pay ${money(total)}`} onPress={submit} loading={busy} />
+        <Button label={profile.token ? `Pay ${money(total)}` : 'Continue'} onPress={submit} loading={busy} />
       </View>
       <PaymentSheet
         url={payUrl}
@@ -271,6 +270,7 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 
 const styles = StyleSheet.create({
   scroll: { padding: 18, paddingBottom: 40 },
+  me: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 6 },
   restaurant: { fontSize: 26, fontWeight: '900', letterSpacing: -0.8, color: colors.ink },
   muted: { fontSize: 14, color: colors.muted, marginTop: 2 },
   card: {

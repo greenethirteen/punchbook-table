@@ -120,3 +120,21 @@ export const payByJustPay = (orderId: string) =>
 
 export const verifyPayment = (orderId: string) =>
   request<PaymentResult>('/api/payments/verify', { method: 'POST', body: JSON.stringify({ orderId }) });
+
+// ---------- Customer sign-in (name + mobile, confirmed by SMS code when the server has SMS set up)
+export type Customer = { id: string; name: string; phone: string; verified: boolean; createdAt: string };
+const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
+
+export const startSignIn = (name: string, phone: string) =>
+  request<{ otp: true; resendIn?: number } | { otp: false; token: string; customer: Customer }>('/api/auth/start', {
+    method: 'POST',
+    body: JSON.stringify({ name, phone }),
+  });
+
+export const verifySignIn = (phone: string, code: string) =>
+  request<{ token: string; customer: Customer }>('/api/auth/verify', { method: 'POST', body: JSON.stringify({ phone, code }) });
+
+export const updateMe = (token: string, name: string) =>
+  request<{ customer: Customer }>('/api/auth/me', { method: 'PATCH', headers: auth(token), body: JSON.stringify({ name }) });
+
+export const deleteMe = (token: string) => request<{ ok: true }>('/api/auth/me', { method: 'DELETE', headers: auth(token) });

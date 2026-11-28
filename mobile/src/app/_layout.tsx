@@ -1,3 +1,4 @@
+import { InstrumentSerif_400Regular_Italic, useFonts } from '@expo-google-fonts/instrument-serif';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { router, Stack } from 'expo-router';
@@ -18,6 +19,7 @@ const WELCOME_KEY = 'punchbook.welcomeSeen';
 export default function RootLayout() {
   const [welcomed, setWelcomed] = useState<boolean | null>(null);
   const [splash, setSplash] = useState(true);
+  useFonts({ InstrumentSerif_400Regular_Italic });
   useEffect(() => {
     AsyncStorage.getItem(WELCOME_KEY)
       .then(v => setWelcomed(v === '1'))
@@ -55,7 +57,9 @@ export default function RootLayout() {
             <Stack.Screen name="restaurant/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="checkout" options={{ title: 'Your bag' }} />
             <Stack.Screen name="order/[id]" options={{ title: 'Your order' }} />
-            <Stack.Screen name="orders" options={{ title: 'My orders' }} />
+            <Stack.Screen name="orders" options={{ headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="account" options={{ headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="signin" options={{ headerShown: false, presentation: 'modal' }} />
             <Stack.Screen name="address" options={{ title: 'Set your address' }} />
           </Stack>
           {/* Covers the home screen until we know whether to show the tour, so it never flashes. */}

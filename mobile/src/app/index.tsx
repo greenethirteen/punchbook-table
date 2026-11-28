@@ -1,13 +1,15 @@
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BagIcon, CloseIcon, ReceiptIcon, ScooterIcon, SearchIcon } from '@/components/icons';
+import { FloatingNav, NAV_SPACE } from '@/components/FloatingNav';
+import { BagIcon, CloseIcon, PinIcon, ScooterIcon, SearchIcon } from '@/components/icons';
 import { Notice } from '@/components/ui';
 import { DELIVERY_ENABLED, getRestaurants, imageUrl, type PickupOrder, type PickupStatus, type Restaurant } from '@/lib/api';
 import { clock } from '@/lib/format';
-import { colors, radius } from '@/lib/theme';
+import { colors, radius, serif } from '@/lib/theme';
 import { useCart } from '@/state/cart';
 import { useOrders } from '@/state/orders';
 
@@ -20,8 +22,16 @@ const covers: Record<string, number> = {
   sunrise: require('../../assets/covers/sunrise.jpg'),
 };
 
-// Quick filters, shown when at least one restaurant lists that cuisine.
-const cravings = ['Kottu', 'Coffee', 'Hoppers', 'Bakery', 'Burgers', 'Seafood', 'Waffles', 'Pasta'];
+// Quick filters with a photo each, shown when at least one restaurant lists that cuisine.
+const cravings: { name: string; photo: number }[] = [
+  { name: 'Kottu', photo: require('../../assets/food/kottu.jpg') },
+  { name: 'Burgers', photo: require('../../assets/food/burger.jpg') },
+  { name: 'Hoppers', photo: require('../../assets/food/hoppers.jpg') },
+  { name: 'Seafood', photo: require('../../assets/food/rice.jpg') },
+  { name: 'Waffles', photo: require('../../assets/food/sweets.jpg') },
+  { name: 'Coffee', photo: require('../../assets/food/drinks.jpg') },
+  { name: 'Bakery', photo: require('../../assets/food/sweets.jpg') },
+];
 
 const steps: PickupStatus[] = ['new', 'preparing', 'ready', 'collected'];
 
@@ -48,13 +58,16 @@ export default function Home() {
     load();
   }, [load]);
 
-  const chips = useMemo(() => cravings.filter(c => restaurants?.some(r => r.cuisine.includes(c))), [restaurants]);
+  const chips = useMemo(() => cravings.filter(c => restaurants?.some(r => r.cuisine.includes(c.name))), [restaurants]);
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (restaurants ?? []).filter(
       r => (!craving || r.cuisine.includes(craving)) && (!q || `${r.name} ${r.cuisine} ${r.area}`.toLowerCase().includes(q)),
     );
   }, [restaurants, query, craving]);
+  const open = shown.filter(r => !r.comingSoon), soon = shown.filter(r => r.comingSoon);
+  const hour = new Date().getHours();
+  const hello = hour < 11 ? 'Morning!' : hour < 16 ? 'Lunch?' : 'Hungry?';
 
   const delivery = fulfilment === 'delivery';
 
@@ -64,17 +77,15 @@ export default function Home() {
         <Text style={styles.brand}>
           punchbook<Text style={{ color: colors.accent }}>.</Text>
         </Text>
-        <Link href="/orders" asChild>
-          <Pressable accessibilityRole="button" accessibilityLabel="My orders" style={styles.ordersButton}>
-            <ReceiptIcon size={18} />
-            <Text style={styles.ordersText}>Orders</Text>
-          </Pressable>
-        </Link>
+        <View style={styles.ordersButton} accessibilityLabel="Location: Negombo">
+          <PinIcon size={16} color={colors.green} />
+          <Text style={styles.ordersText}>Negombo</Text>
+        </View>
       </View>
 
       <Text style={styles.title}>
-        Pick up at the{'\n'}
-        <Text style={{ color: colors.green }}>best prices.</Text>
+        {hello} Pick up at{'\n'}
+        <Text style={styles.serif}>menu prices.</Text>
       </Text>
 
       <View style={styles.search}>
@@ -131,28 +142,32 @@ export default function Home() {
       )}
 
       {chips.length > 0 && (
-        <>
-          <Text style={styles.section}>Craving</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={styles.chipsRow}>
-            {[null, ...chips].map(c => {
-              const on = craving === c;
-              return (
-                <Pressable
-                  key={c ?? 'all'}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                  onPress={() => setCraving(c)}
-                  style={[styles.chip, on && styles.chipOn]}
-                >
-                  <Text style={[styles.chipText, on && { color: '#fff' }]}>{c ?? 'All'}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={styles.chipsRow}>
+          {chips.map(c => {
+            const on = craving === c.name;
+            return (
+              <Pressable
+                key={c.name}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={c.name}
+                onPress={() => setCraving(on ? null : c.name)}
+                style={styles.crave}
+              >
+                <View style={[styles.craveRing, on && styles.craveRingOn]}>
+                  <Image source={c.photo} style={styles.craveImg} contentFit="cover" />
+                </View>
+                <Text style={[styles.craveText, on && styles.craveTextOn]}>{c.name}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       )}
 
-      <Text style={styles.heading}>{craving || query ? 'Results' : 'All restaurants'}</Text>
+      <View style={styles.secRow}>
+        <Text style={styles.heading}>{craving || query ? 'Results' : 'Open now'}</Text>
+        <Text style={styles.secNote}>Menu prices</Text>
+      </View>
       {!!error && <Notice message={error} onRetry={load} />}
       {!restaurants && !error && <ActivityIndicator color={colors.ink} style={{ marginTop: 40 }} />}
       {restaurants && shown.length === 0 && (
@@ -162,12 +177,30 @@ export default function Home() {
   );
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.paper }}>
     <FlatList
-      data={shown}
+      data={open}
       keyExtractor={r => r.id}
       ListHeaderComponent={header}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[styles.list, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 32 }]}
+      contentContainerStyle={[styles.list, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + NAV_SPACE }]}
+      ListFooterComponent={
+        soon.length > 0 ? (
+          <View>
+            <Text style={[styles.heading, { marginTop: 14 }]}>Coming soon</Text>
+            {soon.map(r => (
+              <View key={r.id} style={styles.soonRow} accessibilityLabel={`${r.name}, coming soon`}>
+                <Image source={covers[r.id] ?? { uri: imageUrl(r.cover) }} style={styles.soonImg} contentFit="cover" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.soonName}>{r.name}</Text>
+                  <Text style={styles.cardMeta} numberOfLines={1}>{r.cuisine} · {r.area}</Text>
+                </View>
+                <Text style={styles.soonPill}>Soon</Text>
+              </View>
+            ))}
+          </View>
+        ) : null
+      }
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -180,6 +213,8 @@ export default function Home() {
       }
       renderItem={({ item }) => <RestaurantCard restaurant={item} delivery={delivery} />}
     />
+    <FloatingNav active="home" badge={activeOrders.length} />
+    </View>
   );
 }
 
@@ -231,41 +266,26 @@ function LiveOrder({ order: o }: { order: PickupOrder }) {
 }
 
 function RestaurantCard({ restaurant: r, delivery }: { restaurant: Restaurant; delivery: boolean }) {
-  const soon = !!r.comingSoon;
+  const closed = r.accepting === false;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={soon ? `${r.name}, coming soon` : `${r.name}, ${r.cuisine}, ${r.area}, ready in about ${r.prepMinutes} minutes`}
-      accessibilityState={{ disabled: soon }}
-      disabled={soon}
+      accessibilityLabel={`${r.name}, ${r.cuisine}, ${r.area}, ready in about ${r.prepMinutes} minutes`}
       onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: r.id } })}
-      style={({ pressed }) => [styles.card, soon && styles.cardSoon, pressed && { opacity: 0.9 }]}
+      style={({ pressed }) => [styles.feat, pressed && { transform: [{ scale: 0.985 }] }]}
     >
-      <View>
-        <Image source={covers[r.id] ?? { uri: imageUrl(r.cover) }} style={[styles.cover, soon && styles.coverSoon]} contentFit="cover" transition={200} blurRadius={soon ? 6 : 0} />
-        {soon && (
-          <View style={styles.soonVeil}>
-            <Text style={styles.soonBadge}>Coming soon</Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.cardBody}>
+      <Image source={covers[r.id] ?? { uri: imageUrl(r.cover) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+      <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.72)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
+      <Text style={styles.featTag}>{closed ? 'NOT TAKING ORDERS' : 'MENU PRICES'}</Text>
+      <View style={styles.featMeta}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.cardTitle}>{r.name}</Text>
-          <Text style={styles.cardMeta} numberOfLines={1}>
-            {r.cuisine}
-          </Text>
-          <Text style={styles.cardArea} numberOfLines={1}>
-            {r.area}
-          </Text>
-          {r.accepting === false && !soon && <Text style={styles.closed}>Not taking orders right now</Text>}
+          <Text style={styles.featName}>{r.name}</Text>
+          <Text style={styles.featCuisine} numberOfLines={1}>{r.cuisine}</Text>
         </View>
-        {!soon && (
-          <View style={styles.minutes}>
-            <Text style={styles.minutesValue}>{r.prepMinutes}</Text>
-            <Text style={styles.minutesUnit}>{delivery ? 'min prep' : 'min'}</Text>
-          </View>
-        )}
+        <View style={styles.featMins}>
+          <Text style={styles.featMinsValue}>{r.prepMinutes}</Text>
+          <Text style={styles.featMinsUnit}>{delivery ? 'min prep' : 'min'}</Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -288,7 +308,28 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   ordersText: { fontWeight: '700', fontSize: 14, color: colors.ink },
-  title: { fontSize: 34, lineHeight: 36, fontWeight: '900', letterSpacing: -1.2, color: colors.ink, marginTop: 22 },
+  title: { fontSize: 38, lineHeight: 40, fontWeight: '800', letterSpacing: -1.8, color: colors.ink, marginTop: 22 },
+  serif: { fontFamily: serif, fontWeight: '400', fontSize: 44, letterSpacing: -0.5, color: colors.green },
+  crave: { alignItems: 'center', gap: 7, width: 64 },
+  craveRing: { width: 64, height: 64, borderRadius: 32, padding: 2, borderWidth: 2, borderColor: 'transparent' },
+  craveRingOn: { borderColor: colors.green },
+  craveImg: { width: '100%', height: '100%', borderRadius: 30 },
+  craveText: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  craveTextOn: { color: colors.ink, fontWeight: '800' },
+  secRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 24, marginBottom: 2 },
+  secNote: { fontSize: 12, fontWeight: '800', color: colors.green },
+  feat: { height: 210, borderRadius: 24, overflow: 'hidden', backgroundColor: colors.line, shadowColor: '#3c2814', shadowOpacity: 0.25, shadowRadius: 20, shadowOffset: { width: 0, height: 14 }, elevation: 6 },
+  featTag: { position: 'absolute', top: 14, left: 14, backgroundColor: '#fff', color: colors.green, fontSize: 11, fontWeight: '900', letterSpacing: 0.4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 99, overflow: 'hidden' },
+  featMeta: { position: 'absolute', left: 16, right: 16, bottom: 14, flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+  featName: { fontSize: 24, fontWeight: '800', letterSpacing: -0.6, color: '#fff' },
+  featCuisine: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
+  featMins: { alignItems: 'center', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+  featMinsValue: { fontSize: 18, fontWeight: '900', color: '#fff', lineHeight: 20 },
+  featMinsUnit: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
+  soonRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 20, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line, marginTop: 10 },
+  soonImg: { width: 56, height: 56, borderRadius: 14, backgroundColor: colors.line },
+  soonName: { fontSize: 16, fontWeight: '800', color: colors.ink },
+  soonPill: { fontSize: 11, fontWeight: '800', color: '#5a4410', backgroundColor: '#f3e3bd', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 99, overflow: 'hidden' },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -330,8 +371,8 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: 24,
   },
-  chipsRow: { marginHorizontal: -18, marginTop: 10 },
-  chips: { gap: 8, paddingHorizontal: 18 },
+  chipsRow: { marginHorizontal: -18, marginTop: 18 },
+  chips: { gap: 12, paddingHorizontal: 18 },
   chip: {
     minHeight: 44,
     paddingHorizontal: 16,
