@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Punchbook · Coming soon to Negombo</title>
+<title>Punchbook | The Pick Up Order App · Coming soon to Negombo</title>
 <meta name="description" content="Pick up food at restaurant prices. Up to LKR 400 less per order than other apps. Coming soon to Negombo.">
 <meta name="theme-color" content="#0d1f17">
 <meta property="og:title" content="Punchbook · Coming soon to Negombo">
@@ -43,10 +43,15 @@ input,button{font:inherit;color:inherit}
 /* ---------- chrome ---------- */
 header{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:calc(18px + env(safe-area-inset-top)) 22px 0;max-width:560px;margin:0 auto}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.logo .mk{width:38px;height:38px;border-radius:11px;background:#fff;color:var(--bg);display:grid;place-items:center;font-weight:900;font-size:10.5px;line-height:.86;letter-spacing:-.05em;text-align:left;padding-left:4px}
+.logo .mk{width:38px;height:38px;flex:none;border-radius:11px;background:#fff;color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;line-height:.86;letter-spacing:-.05em}
+.logo .mk em{display:block;font-style:normal;text-align:left;padding-bottom:1px}
 .logo .mk b{color:var(--orange)}
-.logo span{font-weight:800;letter-spacing:-.03em;font-size:17px}
-.dots{display:flex;gap:5px}
+.logo .nm{font-weight:800;letter-spacing:-.03em;font-size:16px;white-space:nowrap}
+.logo .nm i{font-style:normal;color:var(--faint);margin:0 2px;font-weight:400}
+.logo .nm small{font-size:13px;font-weight:600;color:var(--soft);letter-spacing:-.01em}
+@media (max-width:370px){.logo .nm{font-size:15px}.logo .nm small{font-size:12px}}
+.dots{position:fixed;z-index:10;left:50%;transform:translateX(-50%);top:calc(80px + env(safe-area-inset-top));display:flex;gap:5px;transition:opacity .3s}
+.dots.off{opacity:0}
 .dots i{width:6px;height:6px;border-radius:9px;background:var(--faint);transition:all .4s}
 .dots i.on{width:20px;background:#fff}
 .backbtn{position:fixed;z-index:10;left:12px;top:calc(68px + env(safe-area-inset-top));background:none;border:0;color:var(--soft);font-size:14px;font-weight:600;padding:8px 10px;cursor:pointer}
@@ -117,7 +122,10 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
 .seg button.on{background:#fff;color:var(--bg)}
 .bell{width:64px;height:64px;border-radius:20px;background:linear-gradient(145deg,#ffd27a,#ff8a5c);display:grid;place-items:center;margin-bottom:20px;box-shadow:0 20px 40px -14px rgba(255,138,92,.7);animation:ring 2.4s ease-in-out infinite}
 .bell svg{width:30px;height:30px;stroke:#3b1d0d}
+.bell.gift{animation:wiggle 2.6s ease-in-out infinite}
+@keyframes wiggle{0%,70%,100%{transform:rotate(0) scale(1)}75%{transform:rotate(-8deg) scale(1.06)}82%{transform:rotate(8deg) scale(1.06)}89%{transform:rotate(-4deg)}}
 @keyframes ring{0%,60%,100%{transform:rotate(0)}65%,75%,85%{transform:rotate(-12deg)}70%,80%{transform:rotate(12deg)}}
+.perk100{margin-top:12px;font-size:16px;font-weight:600;color:var(--gold)}
 .fine{font-size:12px;color:var(--soft);text-align:center;margin-top:14px}
 .fine a{text-decoration:underline}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
@@ -133,6 +141,7 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
 @keyframes conf{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r))}}
 .done h2{font-size:clamp(44px,13vw,60px)}
 .done .sub{color:var(--soft);font-size:16px;margin-top:10px;line-height:1.45}
+.hook-save{margin-top:20px}
 .save{margin-top:22px;width:100%;border-radius:20px;padding:16px;background:var(--glass);border:1px solid var(--faint);display:flex;align-items:center;gap:14px;text-align:left}
 .save .n{font-size:30px;font-weight:900;letter-spacing:-.04em;color:var(--gold);line-height:1;white-space:nowrap}
 .save .n small{font-size:14px;letter-spacing:0}
@@ -165,9 +174,9 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
 </div>
 
 <header>
-  <a class="logo" href="/" aria-label="Punchbook home"><span class="mk">punch<br>book<b>.</b></span><span>punchbook</span></a>
-  <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i></div>
+  <a class="logo" href="/" aria-label="Punchbook home"><span class="mk"><em>punch<br>book<b>.</b></em></span><span class="nm">Punchbook <i>|</i> <small>The Pick Up Order App</small></span></a>
 </header>
+<div class="dots off" id="dots"><i></i><i></i><i></i><i></i></div>
 <button class="backbtn" id="back" type="button" hidden>← Back</button>
 
 <form class="screens" id="form" novalidate>
@@ -175,13 +184,9 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
   <section class="screen on" data-i="0">
     <span class="pill"><i></i>Coming soon · Negombo</span>
     <h1>Pick up at the <span class="serif">best prices.</span></h1>
-    <div class="perks">
-      <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Order ahead</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>Menu prices</span>
-      <span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>No queue</span>
-    </div>
+    <div class="save hook-save"><span class="n"><small>up to</small><br>LKR 400</span><p><b>Less per order*</b>Restaurant prices, not app prices.</p></div>
     <button class="cta" type="button" data-next>Get early access <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-    <p class="small">3 quick taps</p>
+    <p class="small">3 quick taps · *vs. other food apps</p>
   </section>
 
   <!-- 1 -->
@@ -227,19 +232,16 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
 
   <!-- 4 -->
   <section class="screen" data-i="4">
-    <div class="bell"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
-    <h2>Get <span class="serif">notified.</span></h2>
-    <div class="seg" role="tablist" aria-label="Contact method">
-      <button type="button" class="on" data-m="wa" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.3-5.1-4.5-.2-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.2.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3.1.2.1.8-.1 1.5Z"/></svg>WhatsApp</button>
-      <button type="button" data-m="email" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>Email</button>
-    </div>
+    <div class="bell gift"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5M12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5"/></svg></div>
+    <h2>Get early <span class="serif">access.</span></h2>
+    <p class="perk100">🎁 The first 100 get launch goodies.</p>
     <div class="field">
-      <svg id="c-ico" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
-      <input id="contact" name="contact" maxlength="120" type="tel" inputmode="tel" autocomplete="tel" placeholder="07X XXX XXXX" aria-label="WhatsApp number" enterkeyhint="send">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
+      <input id="contact" name="contact" maxlength="120" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" aria-label="Email address" enterkeyhint="send">
     </div>
     <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
     <p class="err" id="e2" role="alert"></p>
-    <button class="cta" type="submit" id="send">Notify me <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    <button class="cta" type="submit" id="send">I’m in <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     <p class="fine">Only about Punchbook. No spam. <a href="/privacy-policy">Privacy</a></p>
   </section>
 
@@ -292,7 +294,8 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
   const show = i => {
     screens.forEach((s, j) => { s.classList.toggle('on', j === i); s.classList.toggle('past', j < i); s.inert = j !== i; });
     at = i; place(i);
-    dots.forEach((d, j) => d.classList.toggle('on', j === Math.min(i, 4)));
+    dots.forEach((d, j) => d.classList.toggle('on', j === i - 1));
+    $('#dots').classList.toggle('off', i === 0 || i === 5);
     $('#back').hidden = i === 0 || i === 5;
     if (i === 4) setTimeout(() => $('#contact').focus(), 450);
   };
@@ -325,28 +328,13 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
   $('#r-next').addEventListener('click', typed);
   $('#restaurant').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); typed(); } });
 
-  // contact method toggle
-  let mode = 'wa';
-  const ICON = {wa: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>', email: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/>'};
-  $('.seg').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    mode = b.dataset.m;
-    $$('.seg button').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); });
-    const c = $('#contact');
-    c.value = ''; $('#e2').textContent = '';
-    c.type = mode === 'wa' ? 'tel' : 'email'; c.inputMode = mode === 'wa' ? 'tel' : 'email';
-    c.autocomplete = mode === 'wa' ? 'tel' : 'email'; c.placeholder = mode === 'wa' ? '07X XXX XXXX' : 'you@email.com';
-    c.setAttribute('aria-label', mode === 'wa' ? 'WhatsApp number' : 'Email address');
-    $('#c-ico').innerHTML = ICON[mode]; c.focus();
-  });
-
-  const okPhone = v => /^(?:\+?94|0)?7\d{8}$/.test(v.replace(/[\s()-]/g, '')), okEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  const okEmail = v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
   $('#form').addEventListener('submit', async e => {
     e.preventDefault();
     if (at === 3) return typed();
     if (at !== 4) return;
     const contact = $('#contact').value.trim(), err = $('#e2');
-    if (mode === 'wa' ? !okPhone(contact) : !okEmail(contact)) { err.textContent = mode === 'wa' ? 'Enter a mobile like 077 123 4567.' : 'Enter a valid email.'; return $('#contact').focus(); }
+    if (!okEmail(contact)) { err.textContent = 'Enter a valid email.'; return $('#contact').focus(); }
     err.textContent = ''; const btn = $('#send'); btn.disabled = true;
     try {
       const p = new URLSearchParams(location.search);
@@ -355,7 +343,7 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Something went wrong. Please try again.');
       if (d.position) $('#done-h').innerHTML = `You’re <span class="serif">#${d.position.toLocaleString()}</span>`;
-      $('#done-p').textContent = `We’ll tell you when ${restaurant} is live.`;
+      $('#done-p').textContent = d.position && d.position <= 100 ? `You’re in the first 100 🎁 We’ll email you when ${restaurant} is live.` : `We’ll email you when ${restaurant} is live.`;
       $('#share').href = 'https://wa.me/?text=' + encodeURIComponent(`Punchbook is coming to Negombo 🍛 Pick up food at restaurant prices. Vote for your favourite place: https://punchbook.online/negombo`);
       const cols = ['#ffd27a', '#ff6b3d', '#8fe3b4', '#fff'];
       $('#medal').insertAdjacentHTML('beforeend', Array.from({length: 22}, (_, i) => { const a = i / 22 * 6.283, r = 80 + Math.random() * 60; return `<i class="conf" style="background:${cols[i % 4]};--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px;--r:${Math.random() * 600 - 300}deg"></i>`; }).join(''));
