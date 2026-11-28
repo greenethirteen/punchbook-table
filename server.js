@@ -24,7 +24,7 @@ const jsonBody=express.json({limit:'15mb',verify:(req,_res,buf)=>{req.rawBody=bu
 app.use((req,res,next)=>req.path==='/api/payments/payplus/notify'?next():jsonBody(req,res,next));
 app.get('/table-demo-qr.svg', async (req,res)=>{const svg=await QRCode.toString(`${publicBase(req)}/peppermint/t/12`,{type:'svg',margin:1,color:{dark:'#244633',light:'#ffffff'}});res.type('svg').send(svg)});
 function sendPage(res,name){res.set('Cache-Control','no-store');res.sendFile(process.cwd()+'/public/'+name)}
-app.get('/',(_req,res)=>sendPage(res,'index.html'));app.get(['/negombo','/negombo/thanks','/join-negombo'],(_req,res)=>sendPage(res,'negombo.html'));app.get(['/business','/restaurants'],(_req,res)=>sendPage(res,'business.html'));
+app.get('/',(_req,res)=>sendPage(res,'index.html'));app.get('/concept',(_req,res)=>sendPage(res,'concept.html'));app.get(['/negombo','/negombo/thanks','/join-negombo'],(_req,res)=>sendPage(res,'negombo.html'));app.get(['/business','/restaurants'],(_req,res)=>sendPage(res,'business.html'));
 const MENU_FILES={'/peppermint.html':'/peppermint','/amraleaf-v3.html':'/amraleaf','/glounge.html':'/glounge'};
 app.use((q,r,next)=>MENU_FILES[q.path]?r.redirect(301,MENU_FILES[q.path]):next());
 app.use(express.static('public',{etag:true,lastModified:true,setHeaders(res,filePath){res.set('Cache-Control',filePath.endsWith('.html')?'no-store':'no-cache, must-revalidate')}}));
