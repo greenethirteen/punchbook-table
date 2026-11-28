@@ -211,6 +211,124 @@ h1 .serif{font-size:1.1em}
 .acc b{color:#fff}
 .toast{position:absolute;left:50%;bottom:110px;z-index:90;transform:translate(-50%,20px);opacity:0;background:#fff;color:var(--bg);font-weight:700;font-size:14px;padding:10px 16px;border-radius:99px;transition:all .3s;white-space:nowrap;pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+/* design switcher */
+.switch{position:absolute;top:calc(36px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:2px;padding:3px;border-radius:99px;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.switch button{white-space:nowrap;border:0;background:none;color:rgba(255,255,255,.75);font-size:11px;font-weight:800;padding:4px 11px;border-radius:99px}
+.switch button.on{background:#fff;color:#0d1f17}
+.pad{padding-top:calc(74px + env(safe-area-inset-top))}
+.home-b,.home-c{display:none}
+.light .home-a{display:none}
+.vb .home-b{display:block}.vc .home-c{display:block}
+
+/* light theme (B and C) */
+.light{--bg:#f6f1e7;--ink:#171713;--soft:#6b6458;--faint:#e4dccb;--glass:#fff;--gold:#1f6b45;color:var(--ink)}
+.light .sky,.light .grain{display:none}
+.light .serif{color:#1f6b45}
+.light .wm,.light h1,.light h2,.light h3,.light b{color:var(--ink)}
+.light .pillbtn{background:#fff;color:var(--ink)}
+.light .search input{color:var(--ink)}
+.light .search input::placeholder,.light .fields input::placeholder{color:#9b9284}
+.light .cat span{color:var(--soft)}
+.light .cat.on img{box-shadow:0 0 0 2px #1f6b45,0 0 0 5px var(--bg)}
+.light .feat .tag{background:#fff;color:#1f6b45}
+.light .feat .nm,.light .feat b{color:#fff}
+.light .feat .cu{color:rgba(255,255,255,.8)}
+.light .row{background:#fff}
+.light .soon{background:#f3e3bd;color:#5a4410}
+.light .tabs{background:#fff;border-color:var(--faint);box-shadow:0 14px 30px -14px rgba(60,40,20,.35)}
+.light .tabs button{color:var(--soft)}
+.light .tabs button.on{color:var(--ink)}
+.light .tabs button.on svg{stroke:#1f6b45}
+.light .hero:after{background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,0) 35%,rgba(246,241,231,0) 60%,var(--bg))}
+.light .chip{background:#fff;color:var(--ink)}
+.light .chip.gold{background:#1f6b45;color:#fff;border-color:#1f6b45}
+.light .mtabs button{background:#fff;color:var(--soft)}
+.light .mtabs button.on{background:#171713;color:#fff;border-color:#171713}
+.light .add{background:#171713;color:#fff}
+.light .step button{color:#fff}
+.light .note{background:#fbf1d8;border-color:#ecd59a;color:#6b5010}
+.light .sheet{background:#fbf8f1;border-color:var(--faint)}
+.light .grab{background:#d8cfbd}
+.light .qty{background:#fff}
+.light .slots button{background:#fff}
+.light .slots button.on{background:#171713;color:#fff;border-color:#171713}
+.light .fields input{background:#fff;color:var(--ink)}
+.light .sum{background:#fff}
+.light .sum .z{color:#1f6b45}
+.light .big{background:#171713;color:#fff}
+.light .big.orange{background:var(--orange)}
+.light .big:after{background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.25) 50%,transparent 65%)}
+.light .card{background:linear-gradient(135deg,#1f4033,#2a5242);color:#fff}
+.light .card .num,.light .card span{color:#fff}
+.light .medal .in{background:var(--bg)}
+.light .code{color:#1f6b45;border-color:rgba(31,107,69,.4);background:#fff}
+.light .pstep .dot{background:var(--bg)}
+.light .pstep.done .dot{background:#1f6b45;border-color:#1f6b45}
+.light .pstep.done .dot svg{stroke:#fff}
+.light .pstep.now .dot{border-color:#1f6b45;box-shadow:0 0 0 6px rgba(31,107,69,.12)}
+.light .ord,.light .acc{background:#fff}
+.light .st{background:#e3efe6;color:#1f6b45}
+.light .st.ready{background:#1f6b45;color:#fff}
+.light .toast{background:#171713;color:#fff}
+.light .round{background:rgba(0,0,0,.35)}
+.light .err{color:#b4442a}
+.light .bagbar .n{background:rgba(0,0,0,.18)}
+.light .switch{background:rgba(23,23,19,.8)}
+
+/* B: editorial */
+.hb-hi{font-size:13px;font-weight:600;color:var(--soft);margin-top:18px}
+.home-b h1{font-size:42px;margin-top:6px}
+.sbar{display:flex;gap:8px;margin-top:16px}
+.sbar .search{flex:1;margin:0;height:50px}
+.sbar .filt{width:50px;height:50px;border-radius:16px;border:0;background:#171713;display:grid;place-items:center;flex:none}
+.sbar .filt svg{width:18px;height:18px;stroke:#fff}
+.pills{display:flex;gap:8px;margin:14px -20px 0;padding:0 20px;overflow-x:auto;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pills button{flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 6px;border-radius:99px;border:1px solid var(--faint);background:#fff;font-size:13px;font-weight:700;color:var(--ink)}
+.pills img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.pills button.on{background:#1f4033;color:#fff;border-color:#1f4033}
+.carousel{display:flex;gap:12px;margin:0 -20px;padding:0 20px 6px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.carousel::-webkit-scrollbar{display:none}
+.ccard{flex:none;width:250px;scroll-snap-align:start;border-radius:22px;overflow:hidden;background:#fff;border:1px solid #ece4d4;text-align:left;padding:0;box-shadow:0 18px 34px -24px rgba(60,40,20,.5);transition:transform .2s}
+.ccard:active{transform:scale(.98)}
+.ccard .ph{position:relative;height:150px}
+.ccard .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ccard .ph span{position:absolute;top:12px;left:12px;padding:5px 9px;border-radius:99px;background:#fff;color:#1f6b45;font-size:11px;font-weight:800}
+.ccard .bd{padding:12px 14px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ccard .bd b{display:block;font-size:17px;letter-spacing:-.02em}
+.ccard .bd small{display:block;font-size:12px;color:var(--soft);margin-top:2px}
+.ccard .m{text-align:center;padding:6px 9px;border-radius:12px;background:var(--bg);flex:none}
+.ccard .m b{font-size:16px;line-height:1}.ccard .m small{font-size:10px;margin:0}
+.strip{margin-top:16px;display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:#1f4033;color:#fff}
+.strip svg{width:22px;height:22px;flex:none;stroke:#ffd27a}
+.strip b{color:#fff!important;font-size:14px}
+.strip span{color:rgba(255,255,255,.75);font-size:13px}
+.vb .tabs{left:0;right:0;bottom:0;height:calc(78px + env(safe-area-inset-bottom));border-radius:0;border-width:1px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+
+/* C: big pictures */
+.home-c{margin:0}
+.chero{position:relative;height:420px;margin:0;color:#fff}
+.chero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.chero:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,31,23,.75),rgba(13,31,23,.1) 38%,rgba(13,31,23,.25) 62%,rgba(13,31,23,.92))}
+.chero .in{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;padding:calc(74px + env(safe-area-inset-top)) 20px 60px}
+.chero .wm,.chero b,.chero h1{color:#fff!important}
+.chero .pillbtn{background:rgba(13,31,23,.45);border-color:rgba(255,255,255,.3);color:#fff}
+.chero .pick{margin-top:auto}
+.chero .tg{display:inline-flex;padding:6px 10px;border-radius:99px;background:#ffd27a;color:#1b1712;font-size:11px;font-weight:800;letter-spacing:.04em}
+.chero h1{font-size:38px;margin-top:10px}
+.chero h1 .serif{color:#ffd27a}
+.chero .act{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:10px}
+.chero .act span{font-size:14px;color:rgba(255,255,255,.85)}
+.chero .act button{display:flex;align-items:center;gap:6px;height:42px;padding:0 16px;border-radius:99px;border:0;background:#fff;color:#0d1f17;font-weight:800;font-size:14px;flex:none}
+.csheet{position:relative;z-index:2;margin-top:-30px;background:var(--bg);border-radius:28px 28px 0 0;padding:18px 20px 0}
+.csheet .search{margin-top:0;background:#fff}
+.vc .tabs{left:50%;right:auto;width:auto;transform:translateX(-50%);border-radius:99px;background:#0d1f17;border:0;padding:0 8px;gap:4px;height:60px}
+.vc .tabs.hide{transform:translate(-50%,160%)}
+.vc .tabs button{flex-direction:row;width:auto;height:44px;padding:0 14px;border-radius:99px;color:#fff;font-size:0}
+.vc .tabs button.on{background:#ffd27a;color:#1b1712;font-size:13px;gap:8px}
+.vc .tabs button.on svg{stroke:#1b1712}
+.vc .tabs button svg{stroke:#fff}
+.vc .tabs .badge{font-size:10px}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -220,10 +338,11 @@ h1 .serif{font-size:1.1em}
 <div class="device" id="device">
   <div class="sky"></div><div class="grain"></div>
   <span class="concept">Concept · no real orders</span>
+  <div class="switch" role="tablist" aria-label="Design"><button type="button" data-v="a">A · Dark</button><button type="button" data-v="b">B · Light</button><button type="button" data-v="c">C · Photo</button></div>
 
   <!-- HOME -->
   <section class="view on" id="v-home">
-    <div class="pad">
+    <div class="pad home-a">
       <div class="top">
         <span class="wm">punchbook<b>.</b></span>
         <button class="pillbtn" type="button" id="loc"><svg viewBox="0 0 24 24" fill="none" stroke="#8fe3b4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Negombo</button>
@@ -235,6 +354,31 @@ h1 .serif{font-size:1.1em}
       <div id="open"></div>
       <div class="sec" id="soon-h"><h2>Coming soon</h2></div>
       <div id="soon"></div>
+    </div>
+      <div class="pad home-b">
+      <div class="top"><span class="wm">punchbook<b>.</b></span><button class="pillbtn" type="button" data-tab-go="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Orders</button></div>
+      <p class="hb-hi" id="b-hi">Good evening · Negombo</p>
+      <h1>Pick up at the <span class="serif">best prices.</span></h1>
+      <div class="sbar"><label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="qi" placeholder="Search restaurants or food" aria-label="Search restaurants or food" autocomplete="off"></label><button class="filt" type="button" aria-label="Filters"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button></div>
+      <div class="pills" id="b-cats"></div>
+      <div class="sec"><h2>Near you in Negombo</h2><small>Menu prices</small></div>
+      <div class="carousel" id="b-open"></div>
+      <div class="strip"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><div><b>You pay the menu price.</b><br><span>Up to LKR 400 less than other apps.*</span></div></div>
+      <div class="sec b-soon-h"><h2>Coming soon</h2></div>
+      <div id="b-soon"></div>
+    </div>
+    <div class="home-c">
+      <div class="chero"><img src="/images/pickup/k4.jpg" alt="">
+        <div class="in">
+          <div class="top"><span class="wm">punchbook<b>.</b></span><button class="pillbtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Negombo</button></div>
+          <div class="pick"><span class="tg">TONIGHT’S PICK</span><h1 id="c-h">Mix Kottu, <span class="serif">menu price.</span></h1><div class="act"><span id="c-s">Amra Leaf · Ready in 20 min</span><button type="button" id="c-go">LKR 2,295 →</button></div></div>
+        </div>
+      </div>
+      <div class="csheet">
+        <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="qi" placeholder="What are you craving?" aria-label="Search restaurants or food" autocomplete="off"></label>
+        <div class="sec"><h2>Pick up near you</h2><small>All at menu prices</small></div>
+        <div id="c-list"></div>
+      </div>
     </div>
   </section>
 
@@ -346,6 +490,7 @@ h1 .serif{font-size:1.1em}
 
   // ---------- data
   const hour = new Date().getHours();
+  const greetWord = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'; $('#b-hi').textContent = greetWord + ' · Negombo';
   $('#greet').innerHTML = (hour < 11 ? 'Morning! ' : hour < 16 ? 'Lunch? ' : 'Hungry? ') + 'Pick up at <span class="serif">menu prices.</span>';
   fetch('/api/pickup/restaurants').then(r => r.json()).then(async d => {
     R = d.restaurants || [];
@@ -365,10 +510,32 @@ h1 .serif{font-size:1.1em}
     const list = R.filter(matches), open = list.filter(r => r.accepting && !r.comingSoon), soon = list.filter(r => !(r.accepting && !r.comingSoon));
     $('#open').innerHTML = open.map(r => `<button class="feat" type="button" data-r="${r.id}"><img src="${esc(cover(r))}" alt=""><span class="tag">MENU PRICES</span><span class="meta"><span><span class="nm">${esc(r.name)}</span><span class="cu" style="display:block">${esc(r.cuisine)}</span></span><span class="mins"><b>${r.prepMinutes}</b><span>min</span></span></span></button>`).join('') || '<p class="empty">Nothing open matches that. Try another dish.</p>';
     $('#soon-h').hidden = !soon.length;
+    $('#b-cats').innerHTML = CATS.map((c, i) => `<button type="button" class="${cat === c ? 'on' : ''}" data-c="${i}"><img src="${c[1]}" alt="">${c[0]}</button>`).join('');
+    $('#b-open').innerHTML = open.map(r => `<button class="ccard" type="button" data-r="${r.id}"><span class="ph" style="display:block"><img src="${esc(cover(r))}" alt=""><span>Menu prices</span></span><span class="bd"><span><b>${esc(r.name)}</b><small>${esc(r.cuisine)}</small></span><span class="m"><b>${r.prepMinutes}</b><small>min</small></span></span></button>`).join('') || '<p class="empty">Nothing open matches that.</p>';
+    $('#b-soon').innerHTML = soon.map(r => `<button class="row" type="button" data-r="${r.id}"><img src="${esc(cover(r))}" alt=""><span class="t"><b>${esc(r.name)}</b><span>${esc(r.cuisine)} · ${esc(r.area)}</span></span><span class="soon">Soon</span></button>`).join('');
+    $$('.b-soon-h').forEach(x => x.hidden = !soon.length);
+    $('#c-list').innerHTML = list.map(r => { const live = r.accepting && !r.comingSoon; return `<button class="row" type="button" data-r="${r.id}" style="background:none;border:0;border-bottom:1px solid var(--faint);border-radius:0;padding:10px 0"><img src="${esc(cover(r))}" alt="" style="width:72px;height:72px;border-radius:18px"><span class="t"><b>${esc(r.name)}</b><span>${esc(r.cuisine)}</span><span style="margin-top:6px"><span class="${live ? 'st' : 'soon'}" style="display:inline-block">${live ? 'Open · ' + r.prepMinutes + ' min' : 'Coming soon'}</span></span></span></button>`; }).join('') || '<p class="empty">Nothing matches that.</p>';
+    const amra = (menus.amra || []).find(i => /mix kottu/i.test(i.name)) || (menus.amra || []).find(i => /kottu/i.test(i.name));
+    if (amra) { $('#c-h').innerHTML = esc(amra.name) + ', <span class="serif">menu price.</span>'; $('#c-go').textContent = money(amra.price) + ' →'; }
     $('#soon').innerHTML = soon.map(r => `<button class="row" type="button" data-r="${r.id}"><img src="${esc(cover(r))}" alt=""><span class="t"><b>${esc(r.name)}</b><span>${esc(r.cuisine)} · ${esc(r.area)}</span></span><span class="soon">Soon</span></button>`).join('');
   }
   $('#cats').addEventListener('click', e => { const b = e.target.closest('.cat'); if (!b) return; const c = CATS[b.dataset.c]; cat = cat === c ? null : c; renderHome(); });
-  $('#q').addEventListener('input', renderHome);
+  $('#q').addEventListener('input', () => { syncQ($('#q').value); renderHome(); });
+  const syncQ = v => $$('#q,.qi').forEach(i => { if (i.value !== v) i.value = v; });
+  $$('.qi').forEach(i => i.addEventListener('input', () => { syncQ(i.value); renderHome(); }));
+  $('#b-cats').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; const c = CATS[b.dataset.c]; cat = cat === c ? null : c; renderHome(); });
+  $$('[data-tab-go]').forEach(b => b.addEventListener('click', () => { renderOrders(); go(b.dataset.tabGo); }));
+  $('#c-go').addEventListener('click', () => openRest('amra'));
+  // design switcher
+  function setV(v) {
+    v = ['a', 'b', 'c'].includes(v) ? v : 'a';
+    const d = $('#device'); d.classList.remove('va', 'vb', 'vc', 'light'); d.classList.add('v' + v); if (v !== 'a') d.classList.add('light');
+    $$('.switch button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    document.querySelector('meta[name=theme-color]').content = v === 'a' ? '#0d1f17' : '#f6f1e7';
+    localStorage.setItem('pb-concept-v', v); history.replaceState(null, '', '?v=' + v);
+  }
+  $$('.switch button').forEach(b => b.addEventListener('click', () => setV(b.dataset.v)));
+  setV(new URLSearchParams(location.search).get('v') || localStorage.getItem('pb-concept-v') || 'a');
   $('#v-home').addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (b) openRest(b.dataset.r); });
   $('#loc').addEventListener('click', () => toast('Launching in Negombo first'));
 
