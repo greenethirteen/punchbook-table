@@ -228,18 +228,33 @@ h1 .serif{font-size:1.1em}
 .swatches{position:absolute;top:calc(62px + var(--st));left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:7px;padding:5px 8px;border-radius:99px;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .swatches button{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.25);padding:0;transition:transform .2s,border-color .2s}
 .swatches button.on{border-color:#fff;transform:scale(1.15)}
-.vm .pad{padding-top:calc(100px + var(--st))}
+.vm .pad{padding-top:calc(54px + var(--st))}
 .vm .tabs{left:50%;right:auto;width:auto;transform:translateX(-50%);border-radius:99px;background:rgba(var(--bgr),.72);border:1px solid rgba(255,255,255,.14);padding:0 8px;gap:4px;height:60px}
 .vm .tabs.hide{transform:translate(-50%,160%)}
 .vm .tabs button{flex-direction:row;width:auto;height:44px;padding:0 14px;border-radius:99px;color:#fff;font-size:0}
 .vm .tabs button.on{background:#ffd27a;color:#1b1712;font-size:13px;gap:8px}
 .vm .tabs button.on svg{stroke:#1b1712}
 .vm .tabs button svg{stroke:#fff}
+/* controls (outside the phone) */
+.controls{position:fixed;z-index:300;left:40px;top:40px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#fff}
+.controls .clab{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:6px}
+.controls .concept,.controls .switch,.controls .swatches{position:static;transform:none}
+.controls .switch,.controls .swatches{background:rgba(0,0,0,.45)}
+.controls .switch button{font-size:12px;padding:6px 12px}
+.controls .swatches{gap:9px;padding:7px 10px}
+.controls .swatches button{width:24px;height:24px}
+.cbtn{display:none}
+@media (max-width:599px){
+  .controls{left:12px;right:12px;top:auto;bottom:calc(96px + var(--sb));align-items:center;background:rgba(10,15,12,.92);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .25s,transform .25s}
+  .controls.open{opacity:1;pointer-events:auto;transform:none}
+  .cbtn{display:grid;place-items:center;position:fixed;z-index:310;right:12px;top:calc(10px + var(--st));width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .cbtn svg{width:18px;height:18px}
+}
 /* design switcher */
 .switch{position:absolute;top:calc(36px + var(--st));left:50%;transform:translateX(-50%);z-index:60;display:flex;gap:2px;padding:3px;border-radius:99px;background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .switch button{white-space:nowrap;border:0;background:none;color:rgba(255,255,255,.75);font-size:11px;font-weight:800;padding:4px 11px;border-radius:99px}
 .switch button.on{background:#fff;color:#0d1f17}
-.pad{padding-top:calc(74px + var(--st))}
+.pad{padding-top:calc(54px + var(--st))}
 .home-b,.home-c{display:none}
 .vb .home-a,.vc .home-a{display:none}
 .vb .home-b{display:block}.vc .home-c{display:block}
@@ -337,7 +352,7 @@ h1 .serif{font-size:1.1em}
 .chero{position:relative;height:420px;margin:0;color:#fff}
 .chero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .chero:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(var(--bgr),.75),rgba(var(--bgr),.1) 38%,rgba(var(--bgr),.25) 62%,rgba(var(--bgr),.92))}
-.chero .in{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;padding:calc(74px + var(--st)) 20px 60px}
+.chero .in{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;padding:calc(54px + var(--st)) 20px 60px}
 .chero .wm,.chero b,.chero h1{color:#fff!important}
 .chero .pillbtn{background:rgba(var(--bgr),.45);border-color:rgba(255,255,255,.3);color:#fff}
 .chero .pick{margin-top:auto}
@@ -362,12 +377,19 @@ h1 .serif{font-size:1.1em}
 <body>
 <p class="side"><b>Punchbook app concept</b>A clickable preview of the new home design. Real restaurants and menus, but nothing is ordered or charged. On your phone it fills the screen.</p>
 
+<aside class="controls" id="controls" aria-label="Concept controls">
+  <span class="concept">Concept · no real orders</span>
+  <p class="clab">Design</p>
+<div class="switch" role="tablist" aria-label="Design"><button type="button" data-v="m">Mix</button><button type="button" data-v="a">A · Dark</button><button type="button" data-v="b">B · Light</button><button type="button" data-v="c">C · Photo</button></div>
+  <div id="swwrap"><p class="clab">Background</p>
+<div class="swatches" id="swatches" aria-label="Background colour"><button type="button" data-p="cream" style="background:#f6f1e7" aria-label="Light cream"></button><button type="button" data-p="forest" style="background:#1f4a33" aria-label="Forest"></button><button type="button" data-p="midnight" style="background:#1c2f5a" aria-label="Midnight"></button><button type="button" data-p="charcoal" style="background:#2b2b2b" aria-label="Charcoal"></button><button type="button" data-p="espresso" style="background:#4a2d18" aria-label="Espresso"></button><button type="button" data-p="plum" style="background:#3e2357" aria-label="Plum"></button><button type="button" data-p="teal" style="background:#155550" aria-label="Teal"></button></div>
+  </div>
+</aside>
+<button class="cbtn" type="button" id="cbtn" aria-label="Design options" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 <div class="device" id="device">
   <div class="island" hidden></div><div class="homebar" hidden></div>
   <div class="sky"></div><div class="grain"></div>
-  <span class="concept">Concept · no real orders</span>
-  <div class="switch" role="tablist" aria-label="Design"><button type="button" data-v="m">Mix</button><button type="button" data-v="a">A · Dark</button><button type="button" data-v="b">B · Light</button><button type="button" data-v="c">C · Photo</button></div>
-  <div class="swatches" id="swatches" aria-label="Background colour" hidden><button type="button" data-p="cream" style="background:#f6f1e7" aria-label="Light cream"></button><button type="button" data-p="forest" style="background:#1f4a33" aria-label="Forest"></button><button type="button" data-p="midnight" style="background:#1c2f5a" aria-label="Midnight"></button><button type="button" data-p="charcoal" style="background:#2b2b2b" aria-label="Charcoal"></button><button type="button" data-p="espresso" style="background:#4a2d18" aria-label="Espresso"></button><button type="button" data-p="plum" style="background:#3e2357" aria-label="Plum"></button><button type="button" data-p="teal" style="background:#155550" aria-label="Teal"></button></div>
+
 
   <!-- HOME -->
   <section class="view on" id="v-home">
@@ -559,7 +581,7 @@ h1 .serif{font-size:1.1em}
   function setV(v) {
     v = ['m', 'a', 'b', 'c'].includes(v) ? v : 'm';
     const d = $('#device'); d.classList.remove('vm', 'va', 'vb', 'vc', 'light'); d.classList.add('v' + v); if (v === 'b' || v === 'c') d.classList.add('light');
-    $('#swatches').hidden = v !== 'm';
+    $('#swwrap').hidden = v !== 'm';
     setP(v === 'm' ? localStorage.getItem('pb-concept-p2') || 'cream' : 'forest', false);
     $$('.switch button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
     if (v === 'b' || v === 'c') document.querySelector('meta[name=theme-color]').content = '#f6f1e7';
@@ -687,6 +709,7 @@ h1 .serif{font-size:1.1em}
   $('#olist').addEventListener('click', e => { const b = e.target.closest('[data-o]'); if (b) showTrack(store.orders.find(o => o.id === b.dataset.o)); });
   function renderAcc() { $('#a-name').textContent = store.me.name || 'Guest'; $('#a-phone').textContent = store.me.phone || 'Add your name at checkout'; }
   $('#reset').addEventListener('click', () => { localStorage.removeItem('pb-concept'); location.reload(); });
+  $('#cbtn').addEventListener('click', () => { const o = $('#controls').classList.toggle('open'); $('#cbtn').setAttribute('aria-expanded', o); });
   updateBar();
   // Shrink the phone frame to fit shorter screens (desktop only).
   const fit = () => document.documentElement.style.setProperty('--fit', innerWidth >= 600 ? Math.min(1, (innerHeight - 40) / 888) : 1);
