@@ -167,6 +167,9 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
 
 @media (min-width:700px){.screen{justify-content:center}}
 @media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition-duration:.01ms!important}.tile,.chip{opacity:1;transform:none}}
+
+.store.is-soon{cursor:default;padding-top:16px}
+.store .soon-tag{position:absolute;top:-1px;right:-1px;background:#ffd27a;color:#1b1712;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:0 13px 0 9px;z-index:2}
 </style>
 </head>
 <body>
@@ -265,10 +268,10 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
     <p class="sub" id="done-p">We’ll tell you when it’s live.</p>
     <div class="save"><span class="n"><small>up to</small><br>LKR 400</span><p><b>Less per order*</b>Restaurant prices, not app prices.</p></div>
     <div class="stores">
-      <a class="store" href="/" data-store="ios" aria-label="Download on the App Store"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.37 12.6c-.02-2.24 1.83-3.32 1.91-3.37-1.04-1.52-2.66-1.73-3.24-1.75-1.38-.14-2.69.81-3.39.81-.7 0-1.78-.79-2.92-.77-1.5.02-2.89.87-3.66 2.21-1.56 2.71-.4 6.72 1.12 8.92.75 1.07 1.63 2.28 2.79 2.24 1.12-.05 1.54-.73 2.89-.73 1.35 0 1.73.73 2.91.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.33-.9-2.35-3.56zM14.15 6.02c.62-.75 1.03-1.78.92-2.82-.89.04-1.97.59-2.6 1.34-.57.66-1.07 1.72-.94 2.73.99.08 2.01-.5 2.62-1.25z"/></svg><span><small>Download on the</small><b>App Store</b></span></a>
-      <a class="store" href="https://play.google.com/store/apps/details?id=order.punchbook.com" data-store="android" aria-label="Get it on Google Play"><svg viewBox="0 0 24 24"><path fill="#00d7fe" d="M3.6 2.3c-.3.3-.4.7-.4 1.3v16.8c0 .6.2 1 .4 1.3l9.5-9.7z"/><path fill="#ffce00" d="M16.3 15.2 13.1 12l3.2-3.2 3.8 2.2c1.1.6 1.1 1.6 0 2.2z"/><path fill="#ff3a44" d="M16.3 15.2 13.1 12l-9.5 9.7c.4.4.9.4 1.6.1z"/><path fill="#00f076" d="M16.3 8.8 5.2 2.2c-.7-.4-1.2-.3-1.6.1l9.5 9.7z"/></svg><span><small>GET IT ON</small><b>Google Play</b></span></a>
+      <a class="store is-soon" data-store="ios" aria-label="Download on the App Store, coming soon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.37 12.6c-.02-2.24 1.83-3.32 1.91-3.37-1.04-1.52-2.66-1.73-3.24-1.75-1.38-.14-2.69.81-3.39.81-.7 0-1.78-.79-2.92-.77-1.5.02-2.89.87-3.66 2.21-1.56 2.71-.4 6.72 1.12 8.92.75 1.07 1.63 2.28 2.79 2.24 1.12-.05 1.54-.73 2.89-.73 1.35 0 1.73.73 2.91.7 1.2-.02 1.96-1.09 2.7-2.17.85-1.24 1.2-2.45 1.22-2.51-.03-.01-2.33-.9-2.35-3.56zM14.15 6.02c.62-.75 1.03-1.78.92-2.82-.89.04-1.97.59-2.6 1.34-.57.66-1.07 1.72-.94 2.73.99.08 2.01-.5 2.62-1.25z"/></svg><span><small>Download on the</small><b>App Store</b></span><em class="soon-tag">Coming soon</em></a>
+      <a class="store is-soon" data-store="android" aria-label="Get it on Google Play, coming soon"><svg viewBox="0 0 24 24"><path fill="#00d7fe" d="M3.6 2.3c-.3.3-.4.7-.4 1.3v16.8c0 .6.2 1 .4 1.3l9.5-9.7z"/><path fill="#ffce00" d="M16.3 15.2 13.1 12l3.2-3.2 3.8 2.2c1.1.6 1.1 1.6 0 2.2z"/><path fill="#ff3a44" d="M16.3 15.2 13.1 12l-9.5 9.7c.4.4.9.4 1.6.1z"/><path fill="#00f076" d="M16.3 8.8 5.2 2.2c-.7-.4-1.2-.3-1.6.1l9.5 9.7z"/></svg><span><small>GET IT ON</small><b>Google Play</b></span><em class="soon-tag">Coming soon</em></a>
     </div>
-    <p class="live">Already live at Amra Leaf, Negombo</p>
+    <p class="live">Android first, then iPhone. We’ll email you the day it’s out.</p>
     <a class="share" id="share" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.3-5.1-4.5-.2-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.2.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3.1.2.1.8-.1 1.5Z"/></svg>Share with friends</a>
     <p class="note">*vs. in-app prices on other food apps for the same order. Savings vary.</p>
   </section>
