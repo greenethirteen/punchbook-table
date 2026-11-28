@@ -305,7 +305,18 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
     $('#back').hidden = i === 0 || i === 5;
     if (i === 4) setTimeout(() => $('#contact').focus(), 450);
   };
-  show(0); addEventListener('resize', () => place(at));
+  function renderDone({position, restaurant} = {}) {
+    if (position) $('#done-h').innerHTML = `You’re <span class="serif">#${Number(position).toLocaleString()}</span>`;
+    if (restaurant) $('#done-p').textContent = position && position <= 100 ? `You’re in the first 100 🎁 We’ll email you when ${restaurant} is live.` : `We’ll email you when ${restaurant} is live.`;
+    $('#share').href = 'https://wa.me/?text=' + encodeURIComponent('Punchbook is coming to Negombo 🍛 Pick up food at restaurant prices. Vote for your favourite place: https://punchbook.online/negombo');
+    const cols = ['#ffd27a', '#ff6b3d', '#8fe3b4', '#fff'];
+    $('#medal').insertAdjacentHTML('beforeend', Array.from({length: 22}, (_, i) => { const a = i / 22 * 6.283, r = 80 + Math.random() * 60; return `<i class="conf" style="background:${cols[i % 4]};--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px;--r:${Math.random() * 600 - 300}deg"></i>`; }).join(''));
+  }
+  if (/\/thanks\/?$/.test(location.pathname)) {
+    let saved = {}; try { saved = JSON.parse(sessionStorage.getItem('pb-wl') || '{}'); } catch {}
+    renderDone(saved); show(5);
+  } else show(0);
+  addEventListener('resize', () => place(at));
 
   // tap tiles: select then advance
   const answers = {};
@@ -348,12 +359,9 @@ h2{font-size:clamp(38px,11vw,50px);line-height:.98;letter-spacing:-.05em;font-we
       const r = await fetch('/api/waitlist', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({restaurant, contact, ...answers, website: $('.hp').value, area: 'Negombo', source})});
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Something went wrong. Please try again.');
-      if (d.position) $('#done-h').innerHTML = `You’re <span class="serif">#${d.position.toLocaleString()}</span>`;
-      $('#done-p').textContent = d.position && d.position <= 100 ? `You’re in the first 100 🎁 We’ll email you when ${restaurant} is live.` : `We’ll email you when ${restaurant} is live.`;
-      $('#share').href = 'https://wa.me/?text=' + encodeURIComponent(`Punchbook is coming to Negombo 🍛 Pick up food at restaurant prices. Vote for your favourite place: https://punchbook.online/negombo`);
-      const cols = ['#ffd27a', '#ff6b3d', '#8fe3b4', '#fff'];
-      $('#medal').insertAdjacentHTML('beforeend', Array.from({length: 22}, (_, i) => { const a = i / 22 * 6.283, r = 80 + Math.random() * 60; return `<i class="conf" style="background:${cols[i % 4]};--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px;--r:${Math.random() * 600 - 300}deg"></i>`; }).join(''));
-      document.activeElement.blur(); show(5);
+      // Go to /negombo/thanks: a real page Google Ads can count as the sign-up.
+      try { sessionStorage.setItem('pb-wl', JSON.stringify({position: d.position, restaurant})); } catch {}
+      location.assign('/negombo/thanks' + location.search);
       window.gtag && gtag('event', 'sign_up', {method: 'negombo_waitlist'});
     } catch (x) { err.textContent = x.message; }
     finally { btn.disabled = false; }
