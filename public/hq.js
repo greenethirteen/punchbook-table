@@ -533,6 +533,6 @@ function renderWaitlist(){
 document.addEventListener('click',e=>{
   if(e.target.id!=='wl-csv'||!WL)return;
   const cell=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  const csv=[['Joined','Contact','Type','Restaurant','Area','Source'],...WL.entries.map(x=>[x.createdAt,x.contact,x.kind,x.restaurant,x.area,x.source])].map(r=>r.map(cell).join(',')).join('\n');
+  const csv=[['Joined','Contact','Type','Restaurant','Pickup a hassle?','Orders by','Area','Source'],...WL.entries.map(x=>[x.createdAt,x.contact,x.kind,x.restaurant,x.hassle,x.orderBy,x.area,x.source])].map(r=>r.map(cell).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='punchbook-waitlist.csv';a.click();
 });

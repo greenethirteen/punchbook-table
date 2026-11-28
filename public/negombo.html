@@ -3,452 +3,200 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Punchbook is coming to Negombo · Pick your restaurant</title>
-<meta name="description" content="Order ahead, pick up at the counter and pay the menu price. Tell us which Negombo restaurant you want on Punchbook next.">
-<meta name="theme-color" content="#1f4033">
+<title>Punchbook is coming to Negombo</title>
+<meta name="description" content="Order ahead, pick up at the counter and pay the menu price. Tell us which Negombo restaurant you want on Punchbook first.">
+<meta name="theme-color" content="#fbf5ea">
 <meta property="og:title" content="Punchbook is coming to Negombo">
-<meta property="og:description" content="No app markup. No queue. No calling. Pick the restaurant we bring next.">
-<meta property="og:image" content="https://punchbook.online/images/punchbook-icon-512.png">
+<meta property="og:description" content="Order ahead. Pay the menu price. Tell us which restaurant you want first.">
 <link rel="icon" href="/images/punchbook-icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--green:#1f4033;--green-2:#2a5242;--green-3:#356150;--ink:#1b1712;--orange:#f26a3d;--orange-2:#ff8a5c;--yellow:#ffd84d;--cream:#fbf5ea;--paper:#fffdf8;--mint:#e9f3e4;--ok:#2f7a3e;--muted:#7a6a5c;--line:#eadfcd}
+:root{--green:#1f4033;--ink:#1b1712;--orange:#f26a3d;--cream:#fbf5ea;--muted:#7a6a5c;--line:#e8dcc8}
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
-html{scroll-behavior:smooth}
-body{font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--cream);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+html,body{height:100%}
+body{font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--cream);-webkit-font-smoothing:antialiased;overflow:hidden}
 a{color:inherit}
-button,input{font:inherit;color:inherit}
-.wrap{width:min(560px,100% - 40px);margin-inline:auto}
-em{font-style:normal;color:var(--orange)}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
-.eyebrow i{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 0 rgba(242,106,61,.6);animation:ping 1.8s infinite}
-@keyframes ping{70%{box-shadow:0 0 0 10px rgba(242,106,61,0)}100%{box-shadow:0 0 0 0 rgba(242,106,61,0)}}
-.h2{font-size:clamp(34px,9vw,48px);line-height:.98;font-weight:900;letter-spacing:-.045em}
-.lede{font-size:17px;line-height:1.45;color:var(--muted);margin-top:14px}
-
-/* reveal */
-.rv{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
-.rv.in{opacity:1;transform:none}
-.d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}.d4{transition-delay:.32s}
-
-/* ---------- hero ---------- */
-.hero{position:relative;background:var(--green);color:#fff;overflow:hidden;padding:22px 0 0;min-height:100svh;display:flex;flex-direction:column}
-.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:var(--green-2);z-index:0}
-.hero:before{width:420px;height:420px;right:-180px;top:-140px}
-.hero:after{width:300px;height:300px;left:-170px;bottom:120px;background:var(--green-3);opacity:.5}
-.hero>*{position:relative;z-index:1}
-.top{display:flex;align-items:center;justify-content:space-between}
-.logo{display:grid;place-items:center;width:62px;height:62px;border-radius:17px;background:var(--green);border:2px solid rgba(255,255,255,.4);color:#fff;font-weight:800;font-size:17px;line-height:.86;letter-spacing:-.055em;text-decoration:none}
+input,button{font:inherit;color:inherit}
+.bar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--line);z-index:5}
+.bar i{display:block;height:100%;width:0;background:var(--green);transition:width .5s cubic-bezier(.2,.7,.2,1)}
+header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:26px 24px;max-width:540px;margin:0 auto;z-index:4}
+.logo{font-weight:900;font-size:21px;letter-spacing:-.05em;text-decoration:none}
 .logo b{color:var(--orange)}
-.where{font-size:12px;font-weight:700;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:8px 12px;border-radius:99px}
-.hero h1{font-size:clamp(46px,13.5vw,76px);line-height:.9;letter-spacing:-.06em;font-weight:900;margin-top:34px}
-.hero h1 .ln{display:block;overflow:hidden;padding-bottom:.06em}
-.hero h1 .ln>span{display:inline-block;transform:translateY(105%);animation:up .9s cubic-bezier(.2,.8,.2,1) forwards}
-.hero h1 .ln:nth-child(2)>span{animation-delay:.12s}.hero h1 .ln:nth-child(3)>span{animation-delay:.24s}
-@keyframes up{to{transform:none}}
-.hero .sub{font-size:18px;line-height:1.4;margin-top:18px;opacity:0;animation:fade .8s .5s forwards;max-width:420px}
-.hero .sub b{background:var(--yellow);color:var(--green);padding:0 6px;border-radius:5px;display:inline-block;transform:rotate(-1.5deg)}
-@keyframes fade{to{opacity:1}}
-.cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--orange);color:#fff;font-weight:800;font-size:17px;padding:17px 26px;border-radius:99px;text-decoration:none;border:0;cursor:pointer;box-shadow:0 12px 26px -10px rgba(242,106,61,.8);transition:transform .2s,box-shadow .2s}
-.cta:hover{transform:translateY(-2px)}
-.cta:active{transform:scale(.97)}
-.cta svg{transition:transform .2s}.cta:hover svg{transform:translateX(3px)}
-.hero .cta{margin-top:26px;opacity:0;animation:fade .8s .7s forwards}
-.joined{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:14px;opacity:.85;min-height:20px}
-.faces{display:flex}.faces span{width:26px;height:26px;border-radius:50%;border:2px solid var(--green);margin-left:-8px;display:grid;place-items:center;font-size:13px}
-.faces span:first-child{margin-left:0;background:#f6c27a}.faces span:nth-child(2){background:#9fd3b5}.faces span:nth-child(3){background:#ffb199}
-
-/* hero receipt */
-.stage{margin-top:auto;padding-top:36px;display:flex;justify-content:center}
-.receipt{width:min(320px,86%);background:var(--paper);color:var(--ink);border-radius:20px 20px 0 0;padding:20px 20px 26px;box-shadow:0 -10px 40px rgba(0,0,0,.25);transform:translateY(40px) rotate(-3deg);opacity:0;animation:rise 1s .55s cubic-bezier(.2,.8,.2,1) forwards;position:relative}
-@keyframes rise{to{transform:rotate(-3deg);opacity:1}}
-.receipt .rh{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
-.receipt .item{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;font-weight:700}
-.receipt .item small{display:block;font-size:12px;color:var(--muted);font-weight:500}
-.receipt .mk{display:flex;justify-content:space-between;margin-top:10px;color:#b4442a;font-weight:700;font-size:14px;position:relative}
-.receipt .mk:after{content:"";position:absolute;left:-4px;right:-4px;top:50%;height:3px;background:var(--orange);border-radius:3px;transform:scaleX(0);transform-origin:left;animation:strike .5s 1.7s forwards}
-@keyframes strike{to{transform:scaleX(1)}}
-.receipt hr{border:0;border-top:2px dashed var(--line);margin:14px 0}
-.receipt .tot{display:flex;justify-content:space-between;font-weight:900;font-size:20px;letter-spacing:-.02em}
-.stamp{position:absolute;right:-12px;top:-16px;background:var(--yellow);color:var(--green);font-weight:900;font-size:13px;padding:8px 12px;border-radius:10px;transform:rotate(9deg) scale(0);animation:stamp .45s 2s cubic-bezier(.3,1.7,.5,1) forwards;box-shadow:0 8px 18px -8px rgba(0,0,0,.4)}
-@keyframes stamp{to{transform:rotate(9deg) scale(1)}}
-
-/* ---------- problem ---------- */
-.problem{padding:84px 0 40px}
-.pcard{background:var(--paper);border:1px solid var(--line);border-radius:26px;padding:22px;margin-top:16px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;overflow:hidden;position:relative}
-.pcard:first-of-type{margin-top:30px}
-.pcard .big{font-size:44px;font-weight:900;letter-spacing:-.05em;line-height:1}
-.pcard .big small{font-size:18px;letter-spacing:-.02em}
-.pcard h3{font-size:18px;font-weight:800;letter-spacing:-.02em;margin-top:6px}
-.pcard p{color:var(--muted);font-size:14px;margin-top:4px;line-height:1.4}
-.pcard .art{width:96px;height:96px;border-radius:20px;display:grid;place-items:center;position:relative;overflow:hidden}
-.c-money .art{background:#ffe9e1}.c-money .big{color:#b4442a}
-.c-queue .art{background:#f2ecdf}
-.c-call .art{background:#e9eef7}
-/* money art: coins dropping */
-.coin{position:absolute;width:30px;height:30px;border-radius:50%;background:var(--orange);color:#fff;font-weight:900;font-size:12px;display:grid;place-items:center;top:-40px}
-.in .coin{animation:drop 2.6s infinite cubic-bezier(.5,0,.8,.6)}
-.coin:nth-child(2){left:44px;animation-delay:.5s!important}.coin:nth-child(3){left:14px;animation-delay:1.1s!important}.coin:nth-child(1){left:30px}
-@keyframes drop{0%{top:-40px;opacity:1}75%{opacity:1}100%{top:110px;opacity:0}}
-/* queue art */
-.q{position:absolute;bottom:14px;left:10px;right:10px;display:flex;gap:3px;align-items:flex-end}
-.q span{flex:1;background:#5f7d6c;border-radius:9px 9px 3px 3px;height:42px;position:relative}
-.q span:before{content:"";position:absolute;width:13px;height:13px;border-radius:50%;background:#5f7d6c;left:50%;top:-16px;transform:translateX(-50%)}
-.q span:last-child{background:var(--orange)}.q span:last-child:before{background:var(--orange)}
-.in .q span{animation:shuffle 1.4s infinite ease-in-out}
-.q span:nth-child(2){animation-delay:.15s!important}.q span:nth-child(3){animation-delay:.3s!important}.q span:nth-child(4){animation-delay:.45s!important}
-@keyframes shuffle{50%{transform:translateY(-3px)}}
-/* call art */
-.ph{width:46px;height:74px;border-radius:12px;background:#2b3240;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:700;text-align:center;line-height:1.2}
-.in .ph{animation:ring 1.6s infinite}
-@keyframes ring{0%,40%,100%{transform:rotate(0)}5%,15%,25%{transform:rotate(-8deg)}10%,20%,30%{transform:rotate(8deg)}}
-.ph b{display:block;font-size:13px;color:#ffb199}
-.sum{margin-top:22px;font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.3}
-
-/* ---------- fix ---------- */
-.fix{background:var(--green);color:#fff;padding:84px 0;border-radius:36px 36px 0 0;position:relative;overflow:hidden}
-.fix .lede{color:rgba(255,255,255,.75)}
-.demo{margin-top:34px;display:grid;grid-template-columns:1fr;gap:26px;align-items:center}
-.phone{width:250px;height:470px;margin:0 auto;border-radius:40px;background:#0f1512;padding:9px;box-shadow:0 30px 60px -20px rgba(0,0,0,.6)}
-.scr{width:100%;height:100%;border-radius:32px;background:var(--cream);overflow:hidden;position:relative;color:var(--ink)}
-.scr .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:76px;height:20px;border-radius:12px;background:#0f1512;z-index:3}
-.view{position:absolute;inset:0;padding:42px 16px 16px;opacity:0;transform:translateX(30px);transition:opacity .5s,transform .5s}
-.view.on{opacity:1;transform:none}
-.view.off{opacity:0;transform:translateX(-30px)}
-.v-t{font-size:20px;font-weight:900;letter-spacing:-.04em;line-height:1.05}
-.v-t em{color:var(--ok)}
-.food{margin-top:14px;border-radius:16px;background:#fff;border:1px solid var(--line);overflow:hidden}
-.food .img{height:96px;background:radial-gradient(circle at 50% 70%,#e9a35c 0 24%,transparent 25%),radial-gradient(circle at 35% 45%,#7bbf6a 0 6%,transparent 7%),radial-gradient(circle at 62% 42%,#f26a3d 0 6%,transparent 7%),linear-gradient(#f8dcae,#f3c98c)}
-.food .b{padding:10px 12px;font-size:12px}
-.food .b b{display:block;font-size:14px}
-.food .row{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-.add{background:var(--ink);color:#fff;border-radius:99px;padding:6px 12px;font-weight:800;font-size:11px}
-.slot{display:flex;gap:6px;margin-top:10px}
-.slot span{flex:1;text-align:center;border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 0;font-size:11px;font-weight:700}
-.slot span.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.bill{margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:12px}
-.bill div{display:flex;justify-content:space-between;padding:3px 0}
-.bill .z{color:var(--ok);font-weight:700}
-.bill .t{font-weight:900;font-size:15px;border-top:1px dashed var(--line);margin-top:6px;padding-top:8px}
-.paybtn{position:absolute;left:16px;right:16px;bottom:18px;background:var(--orange);color:#fff;text-align:center;font-weight:800;padding:12px;border-radius:99px;font-size:13px}
-.ready{display:grid;place-items:center;text-align:center;height:100%;padding-bottom:30px}
-.tick{width:70px;height:70px;border-radius:50%;background:var(--ok);display:grid;place-items:center;margin:0 auto 12px;transform:scale(0)}
-.view.on .tick{animation:pop .5s .2s cubic-bezier(.3,1.7,.5,1) forwards}
-@keyframes pop{to{transform:scale(1)}}
-.code{display:inline-block;margin-top:10px;font-weight:900;letter-spacing:.06em;border:2px dashed var(--line);padding:8px 14px;border-radius:12px;background:#fff}
-.steps{list-style:none;display:grid;gap:10px}
-.steps li{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);transition:background .4s,transform .4s}
-.steps li.on{background:#fff;color:var(--ink);transform:scale(1.02)}
-.steps li .n{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:900;background:rgba(255,255,255,.12)}
-.steps li.on .n{background:var(--orange);color:#fff}
-.steps li b{display:block;font-size:16px}
-.steps li small{font-size:13px;opacity:.75}
-.live{margin-top:30px;display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:14px 16px}
-.live .dot{width:12px;height:12px;border-radius:50%;background:#7fe0a4;flex:none;box-shadow:0 0 0 0 rgba(127,224,164,.6);animation:pingg 1.8s infinite}
-@keyframes pingg{70%{box-shadow:0 0 0 10px rgba(127,224,164,0)}100%{box-shadow:0 0 0 0 rgba(127,224,164,0)}}
-.live b{display:block}.live small{opacity:.75;font-size:13px}
-
-/* ---------- join ---------- */
-.join{padding:84px 0 60px;scroll-margin-top:10px}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:30px;padding:26px 22px;margin-top:28px;box-shadow:0 30px 60px -40px rgba(60,40,20,.4);position:relative;overflow:hidden}
-.prog{display:flex;gap:6px;margin-bottom:22px}
-.prog span{height:5px;flex:1;border-radius:9px;background:var(--line);overflow:hidden;position:relative}
-.prog span:after{content:"";position:absolute;inset:0;background:var(--orange);transform:scaleX(0);transform-origin:left;transition:transform .5s}
-.prog span.done:after{transform:scaleX(1)}
-.step{display:none}.step.on{display:block;animation:slidein .45s cubic-bezier(.2,.8,.2,1)}
-@keyframes slidein{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
-.q-t{font-size:24px;font-weight:900;letter-spacing:-.035em;line-height:1.1}
-.q-s{color:var(--muted);font-size:14px;margin-top:6px}
-.field{margin-top:18px;position:relative}
-.field input{width:100%;font-size:18px;padding:17px 18px;border-radius:16px;border:2px solid var(--line);background:#fff;outline:none;transition:border-color .2s,box-shadow .2s}
-.field input:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(31,64,51,.12)}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:9px 13px;font-size:14px;font-weight:700;cursor:pointer;transition:transform .15s,background .2s}
-.chip:hover{transform:translateY(-1px)}
-.chip.on{background:var(--green);color:#fff;border-color:var(--green)}
-.chip small{font-weight:600;opacity:.6;margin-left:4px}
-.err{color:#b4442a;font-size:14px;font-weight:600;margin-top:10px;min-height:20px}
-.card .cta{width:100%;margin-top:8px}
-.back{background:none;border:0;color:var(--muted);font-weight:700;font-size:14px;margin-top:14px;cursor:pointer;width:100%}
-.fine{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.45;text-align:center}
+.backbtn{background:none;border:0;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;padding:6px 0}
+.screens{position:relative;height:100svh}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:96px 24px 40px;max-width:488px;margin:0 auto;opacity:0;pointer-events:none;transform:translateY(24px);transition:opacity .45s cubic-bezier(.2,.7,.2,1),transform .45s cubic-bezier(.2,.7,.2,1)}
+.screen.on{opacity:1;pointer-events:auto;transform:none}
+.screen.past{transform:translateY(-24px)}
+.tag{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.tag i{width:7px;height:7px;border-radius:50%;background:var(--orange)}
+h1{font-size:clamp(42px,12vw,56px);line-height:.98;letter-spacing:-.05em;font-weight:900;margin-top:16px}
+h2{font-size:clamp(30px,8.4vw,38px);line-height:1.05;letter-spacing:-.04em;font-weight:900}
+em{font-style:normal;color:var(--green)}
+.sub{font-size:17px;line-height:1.45;color:var(--muted);margin-top:14px}
+.step{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:12px}
+input{width:100%;font-size:20px;padding:14px 0;border:0;border-bottom:2px solid var(--line);background:transparent;outline:none;margin-top:28px;border-radius:0;transition:border-color .2s}
+input::placeholder{color:#b5a898}
+input:focus{border-color:var(--green)}
+.go{margin-top:28px;border:0;border-radius:14px;background:var(--green);color:#fff;font-weight:700;font-size:17px;padding:17px 22px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;transition:opacity .2s,transform .1s}
+.go:active{transform:scale(.99)}
+.go:disabled{opacity:.6}
+.hint{font-size:13px;color:var(--muted);margin-top:12px}
+.err{color:#b4442a;font-size:14px;min-height:18px;margin-top:10px}
+.fine{font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px}
 .fine a{text-decoration:underline}
+.opts{display:grid;gap:10px;margin-top:28px}
+.opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;font-size:17px;font-weight:600;cursor:pointer;transition:border-color .2s,background .2s,transform .1s}
+.opt:hover{border-color:var(--green)}
+.opt:active{transform:scale(.99)}
+.opt.on{background:var(--green);border-color:var(--green);color:#fff}
+.opt span{font-size:20px;width:24px;text-align:center}
+.pitch{list-style:none;margin-top:24px;display:grid;gap:14px}
+.pitch li{display:flex;gap:12px;font-size:17px;line-height:1.4}
+.pitch li b{display:block}
+.pitch li small{color:var(--muted);font-size:15px}
+.pitch .ck{flex:none;width:24px;height:24px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:900;margin-top:1px}
+.note{font-size:12px;color:var(--muted);margin-top:16px;line-height:1.5}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-.picked{display:inline-block;background:var(--mint);color:var(--ok);font-weight:800;padding:5px 10px;border-radius:99px;font-size:13px;margin-top:10px}
-
-/* done */
-.done{text-align:center}
-.burst{position:relative;width:96px;height:96px;margin:4px auto 16px}
-.burst .tk{position:absolute;inset:0;border-radius:50%;background:var(--ok);display:grid;place-items:center;transform:scale(0);animation:pop .5s .1s cubic-bezier(.3,1.7,.5,1) forwards}
-.conf{position:absolute;left:50%;top:50%;width:9px;height:14px;border-radius:2px;opacity:0;animation:conf 1s .25s cubic-bezier(.2,.8,.3,1) forwards}
-@keyframes conf{0%{opacity:1;transform:translate(-50%,-50%) rotate(0)}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r))}}
-.pos{font-size:44px;font-weight:900;letter-spacing:-.05em;line-height:1}
-.pos em{color:var(--orange)}
-.board{text-align:left;margin-top:24px}
-.board h4{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-.bar{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;margin-top:10px;font-weight:700;font-size:14px}
-.bar .tr{grid-column:1/-1;height:9px;border-radius:9px;background:var(--line);overflow:hidden}
-.bar .tr i{display:block;height:100%;background:var(--green);border-radius:9px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
-.bar.me .tr i{background:var(--orange)}
-.bar small{color:var(--muted)}
-.share{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:22px;background:#25d366;color:#fff;border-radius:99px;padding:16px;font-weight:800;text-decoration:none;font-size:16px}
-.alt{margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);font-size:14px;color:var(--muted)}
-.alt a{color:var(--green);font-weight:800}
-
-footer{padding:30px 0 120px;text-align:center;color:var(--muted);font-size:13px}
-footer a{margin:0 8px}
-
-/* sticky mobile cta */
-.sticky{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:50;transform:translateY(140%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
-.sticky.show{transform:none}
-.sticky .cta{width:100%}
-
-@media (min-width:900px){
-  .wrap{width:min(1080px,100% - 80px)}
-  .hero{min-height:auto;padding-bottom:0}
-  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:end}
-  .hero-copy{padding-bottom:90px}
-  .stage{padding-top:60px}
-  .receipt{width:380px;padding:26px 26px 34px}
-  .hero .sub{font-size:20px}
-  .problem .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  .pcard{margin-top:30px!important;grid-template-columns:1fr;}
-  .pcard .art{order:-1}
-  .demo{grid-template-columns:1fr 1fr;gap:60px}
-  .join .wrap{width:min(620px,100% - 80px)}
-  .sticky{display:none}
-}
-@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.rv{opacity:1;transform:none}}
+.wa{display:inline-block;margin-top:26px;font-weight:700;color:var(--green);text-decoration:none;border-bottom:1.5px solid currentColor;padding-bottom:2px}
+.foot{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:12px;color:var(--muted);padding:0 24px calc(22px + env(safe-area-inset-bottom))}
+.foot a{text-decoration:none;font-weight:600;color:var(--green)}
+@media (prefers-reduced-motion:reduce){.screen,.bar i{transition:none}}
 </style>
 </head>
 <body>
+<div class="bar"><i id="bar"></i></div>
+<header><a class="logo" href="/" aria-label="Punchbook home">punchbook<b>.</b></a><button class="backbtn" id="back" type="button" hidden>← Back</button></header>
 
-<header class="hero">
-  <div class="wrap top">
-    <a class="logo" href="/" aria-label="Punchbook home"><span>punch<br>book<b>.</b></span></a>
-    <span class="where">📍 Negombo</span>
-  </div>
-  <div class="wrap hero-grid">
-    <div class="hero-copy">
-      <h1><span class="ln"><span>Negombo,</span></span><span class="ln"><span>your food.</span></span><span class="ln"><span><em>No markup.</em></span></span></h1>
-      <p class="sub">Order ahead, skip the queue and pay <b>the menu price</b>. Punchbook is coming to Negombo, and you pick where we go next.</p>
-      <a class="cta" href="#join" data-go>Pick a restaurant <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-      <div class="joined" id="joined" hidden><span class="faces"><span>🙂</span><span>😋</span><span>🤩</span></span><span id="joined-t"></span></div>
+<form class="screens" id="form" novalidate>
+  <section class="screen on" data-i="0">
+    <span class="tag"><i></i>Launching soon in Negombo</span>
+    <h1>Pick up at the <em>best prices.</em></h1>
+    <p class="sub">A new way to order takeaway in Negombo. Two quick questions, then pick the restaurant you want first.</p>
+    <button class="go" type="button" data-next>Start →</button>
+    <p class="hint">Takes 20 seconds.</p>
+  </section>
+
+  <section class="screen" data-i="1">
+    <p class="step">Question 1</p>
+    <h2>Is picking up takeaway in Negombo a hassle?</h2>
+    <div class="opts" data-q="hassle">
+      <button class="opt" type="button" data-v="Yes, often"><span>😤</span>Yes, often</button>
+      <button class="opt" type="button" data-v="Sometimes"><span>😐</span>Sometimes</button>
+      <button class="opt" type="button" data-v="Not really"><span>🙂</span>Not really</button>
     </div>
-    <div class="stage" aria-hidden="true">
-      <div class="receipt">
-        <div class="rh"><span>Other food app</span><span>Order #4821</span></div>
-        <div class="item"><span>Mix Kottu<small>Menu price</small></span><span>1,995</span></div>
-        <div class="mk"><span>App markup</span><span>+ 400</span></div>
-        <hr>
-        <div class="tot"><span>On Punchbook</span><span>1,995</span></div>
-        <div class="stamp">Save up to LKR 400</div>
-      </div>
+  </section>
+
+  <section class="screen" data-i="2">
+    <p class="step">Question 2</p>
+    <h2>How do you usually order?</h2>
+    <div class="opts" data-q="orderBy">
+      <button class="opt" type="button" data-v="Food apps"><span>📱</span>Food delivery apps</button>
+      <button class="opt" type="button" data-v="Phone call"><span>📞</span>I call the restaurant</button>
+      <button class="opt" type="button" data-v="Walk in"><span>🚶</span>I walk in and wait</button>
     </div>
-  </div>
-</header>
+  </section>
 
-<section class="problem">
-  <div class="wrap">
-    <span class="eyebrow rv"><i></i>Sound familiar?</span>
-    <h2 class="h2 rv d1" style="margin-top:14px">Getting food in Negombo shouldn’t be <em>this hard.</em></h2>
-    <div class="cards">
-      <div class="pcard c-money rv">
-        <div><div class="big"><small>LKR</small> 400</div><h3>Extra, just for using an app</h3><p>Food apps raise the price of every item. Same kottu, bigger bill.</p></div>
-        <div class="art" aria-hidden="true"><span class="coin">+</span><span class="coin">+</span><span class="coin">+</span></div>
-      </div>
-      <div class="pcard c-queue rv d1">
-        <div><div class="big">20 <small>min</small></div><h3>Standing in the queue</h3><p>Walk in, wait to order, then wait again for the food.</p></div>
-        <div class="art" aria-hidden="true"><div class="q"><span></span><span></span><span></span><span></span><span></span></div></div>
-      </div>
-      <div class="pcard c-call rv d2">
-        <div><div class="big">12:47</div><h3>On hold to order</h3><p>Line busy. “Sorry, can you repeat that?” Wrong order anyway.</p></div>
-        <div class="art" aria-hidden="true"><div class="ph">On hold<b>12:47</b></div></div>
-      </div>
-    </div>
-    <p class="sum rv">Punchbook fixes all three. 👇</p>
-  </div>
-</section>
+  <section class="screen" data-i="3">
+    <span class="tag"><i></i>Launching soon in Negombo</span>
+    <h2 id="pitch-h" style="margin-top:14px">Meet Punchbook.</h2>
+    <ul class="pitch">
+      <li><span class="ck">✓</span><span><b>Restaurant prices</b><small>Pay what’s on the menu. No app markup.</small></span></li>
+      <li><span class="ck">✓</span><span><b>Up to LKR 400 less per order*</b><small>Compared with other food apps.</small></span></li>
+      <li><span class="ck">✓</span><span><b>Order ahead, skip the queue</b><small>Your food is ready when you walk in.</small></span></li>
+    </ul>
+    <button class="go" type="button" data-next>Get early access →</button>
+    <p class="note">*For the same order on other food apps. Savings vary by restaurant and order.</p>
+  </section>
 
-<section class="fix">
-  <div class="wrap">
-    <span class="eyebrow rv" style="color:#fff"><i></i>How it works</span>
-    <h2 class="h2 rv d1" style="margin-top:14px">Order. Pay.<br><em>Pick up.</em></h2>
-    <p class="lede rv d2">One app for your favourite Negombo restaurants. Your food is ready when you walk in, at the price on the menu.</p>
-    <div class="demo">
-      <div class="phone rv" aria-hidden="true"><div class="scr"><div class="notch"></div>
-        <div class="view" data-v="0">
-          <div class="v-t">Amra Leaf<br><span style="font-size:12px;font-weight:600;color:var(--muted)">Negombo · Ready in 15 min</span></div>
-          <div class="food"><div class="img"></div><div class="b"><b>Mix Kottu</b>Chicken, egg, veg<div class="row"><b style="display:inline">LKR 1,995</b><span class="add">+ Add</span></div></div></div>
-          <div style="font-size:11px;font-weight:800;margin-top:14px;color:var(--muted);letter-spacing:.08em">PICKUP TIME</div>
-          <div class="slot"><span class="on">ASAP</span><span>7:15</span><span>7:30</span></div>
-        </div>
-        <div class="view" data-v="1">
-          <div class="v-t">Your bag</div>
-          <div class="bill"><div><span>Mix Kottu</span><span>1,995</span></div><div class="z"><span>App markup</span><span>LKR 0</span></div><div class="z"><span>Service charge</span><span>None</span></div><div class="t"><span>Total</span><span>LKR 1,995</span></div></div>
-          <div class="paybtn">Pay LKR 1,995</div>
-        </div>
-        <div class="view" data-v="2"><div class="ready"><div><div class="tick"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div class="v-t">Ready for pickup</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Show this at the counter</div><div class="code">PB-7KQ2M</div></div></div></div>
-      </div></div>
-      <ol class="steps">
-        <li data-s="0"><span class="n">1</span><span><b>Order ahead</b><small>Choose your food and a pickup time.</small></span></li>
-        <li data-s="1"><span class="n">2</span><span><b>Pay the menu price</b><small>No markup. Card, in the app.</small></span></li>
-        <li data-s="2"><span class="n">3</span><span><b>Walk in, pick up</b><small>Show your code. No queue, no calls.</small></span></li>
-      </ol>
-    </div>
-    <div class="live rv"><span class="dot"></span><span><b>Already live at Amra Leaf</b><small>Chilaw Road, Negombo. Who’s next? You decide.</small></span></div>
-  </div>
-</section>
+  <section class="screen" data-i="4">
+    <p class="step">Almost done</p>
+    <h2>Which restaurant do you want on Punchbook first?</h2>
+    <input id="restaurant" name="restaurant" maxlength="80" autocomplete="off" placeholder="Type a restaurant name" aria-label="Restaurant" list="rlist"><datalist id="rlist"></datalist>
+    <p class="err" id="e1" role="alert"></p>
+    <button class="go" type="button" data-next>Next →</button>
+  </section>
 
-<section class="join" id="join">
-  <div class="wrap">
-    <span class="eyebrow rv"><i></i>Your pick</span>
-    <h2 class="h2 rv d1" style="margin-top:14px">Which restaurant should we <em>bring next?</em></h2>
-    <p class="lede rv d2">Tell us your favourite. The most-requested places go first, and you’ll hear the moment they’re live.</p>
+  <section class="screen" data-i="5">
+    <p class="step">Last step</p>
+    <h2>Where should we tell you when it’s live?</h2>
+    <input id="contact" name="contact" maxlength="120" autocomplete="tel" placeholder="WhatsApp number or email" aria-label="WhatsApp number or email">
+    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <p class="err" id="e2" role="alert"></p>
+    <button class="go" type="submit" id="send">Join the list</button>
+    <p class="fine">We’ll only message you about Punchbook in Negombo. <a href="/privacy-policy">Privacy</a></p>
+  </section>
 
-    <form class="card rv d2" id="form" novalidate>
-      <div class="prog" aria-hidden="true"><span class="done"></span><span id="p2"></span><span id="p3"></span></div>
+  <section class="screen" data-i="6" aria-live="polite">
+    <span class="tag"><i></i>You’re on the list</span>
+    <h1 id="done-h">You’re in.</h1>
+    <p class="sub" id="done-p"></p>
+    <a class="wa" id="share" target="_blank" rel="noopener">Share with a friend on WhatsApp →</a>
+  </section>
+</form>
 
-      <div class="step on" data-step="1">
-        <label class="q-t" for="restaurant">Your favourite Negombo restaurant</label>
-        <p class="q-s">Anywhere you’d order from. Café, kottu spot, bakery, anything.</p>
-        <div class="field"><input id="restaurant" name="restaurant" autocomplete="off" maxlength="80" placeholder="e.g. your go-to kottu place" list="rlist"><datalist id="rlist"></datalist></div>
-        <div class="chips" id="chips"></div>
-        <p class="err" id="e1" role="alert"></p>
-        <button class="cta" type="button" id="next">Next <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-      </div>
-
-      <div class="step" data-step="2">
-        <label class="q-t" for="contact">Where should we tell you?</label>
-        <p class="q-s">Your WhatsApp number or email. We’ll message you when it’s live.</p>
-        <span class="picked" id="picked"></span>
-        <div class="field"><input id="contact" name="contact" autocomplete="tel" inputmode="email" maxlength="120" placeholder="07X XXX XXXX or you@email.com"></div>
-        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <p class="err" id="e2" role="alert"></p>
-        <button class="cta" type="submit" id="send">Count me in 🎉</button>
-        <button class="back" type="button" id="back">← Change restaurant</button>
-        <p class="fine">We only use this to tell you about Punchbook in Negombo. No spam, never shared. <a href="/privacy-policy">Privacy policy</a></p>
-      </div>
-
-      <div class="step done" data-step="3" aria-live="polite">
-        <div class="burst" id="burst"><div class="tk"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div></div>
-        <div class="pos">You’re <em id="pos">in</em></div>
-        <p class="q-s" id="done-s" style="font-size:16px;margin-top:10px">We’ll message you the moment it’s live.</p>
-        <div class="board" id="board" hidden><h4>Most requested in Negombo</h4><div id="bars"></div></div>
-        <a class="share" id="share" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.1-1.9-.1-.4-.1-1-.3-1.7-.6-3-1.3-5-4.3-5.1-4.5-.2-.2-1.2-1.6-1.2-3s.8-2.2 1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.2.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3.1.2.1.8-.1 1.5Z"/></svg>Tell friends on WhatsApp</a>
-        <p class="q-s" style="margin-top:10px;font-size:13px">More votes = we get there faster.</p>
-        <div class="alt">Hungry now? Punchbook is already live at Amra Leaf. <a href="/">Get the app →</a></div>
-      </div>
-    </form>
-  </div>
-</section>
-
-<footer><a href="/">Punchbook</a>·<a href="/privacy-policy">Privacy</a>·<a href="/business">For restaurants</a><p style="margin-top:10px">*Up to LKR 400 compared with in-app prices on other food apps for the same order. Savings vary.</p></footer>
-
-<div class="sticky" id="sticky"><a class="cta" href="#join" data-go>Pick a restaurant <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div>
+<p class="foot" id="foot">Already live at Amra Leaf, Negombo · <a href="/">Get the app</a></p>
 
 <script>
 (() => {
-  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const $ = s => document.querySelector(s), screens = [...document.querySelectorAll('.screen')];
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-  // Reveal on scroll
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold: .18});
-  $$('.rv').forEach(el => io.observe(el));
-
-  // Sticky CTA: show after the hero, hide while the form is on screen
-  const sticky = $('#sticky'), heroCta = $('.hero .cta'), join = $('#join');
-  let heroOut = false, joinIn = false;
-  const upd = () => sticky.classList.toggle('show', heroOut && !joinIn);
-  new IntersectionObserver(([e]) => { heroOut = !e.isIntersecting; upd(); }).observe(heroCta);
-  new IntersectionObserver(([e]) => { joinIn = e.isIntersecting; upd(); }, {threshold: .05}).observe(join);
-  $$('[data-go]').forEach(a => a.addEventListener('click', () => setTimeout(() => $('#restaurant').focus({preventScroll: true}), 700)));
-
-  // How-it-works phone: cycles through the three steps while on screen
-  const views = $$('.view'), steps = $$('.steps li');
-  let cur = -1, timer;
+  let at = 0;
   const show = i => {
-    views.forEach((v, j) => { v.classList.toggle('on', j === i); v.classList.toggle('off', j === cur && j !== i); });
-    steps.forEach((s, j) => s.classList.toggle('on', j === i));
-    cur = i;
+    screens.forEach((s, j) => { s.classList.toggle('on', j === i); s.classList.toggle('past', j < i); s.inert = j !== i; });
+    at = i;
+    $('#bar').style.width = Math.round(i / 6 * 100) + '%';
+    $('#back').hidden = i === 0 || i === 6;
+    $('#foot').hidden = i !== 0 && i !== 6;
+    const f = screens[i].querySelector('input:not(.hp)');
+    if (f) setTimeout(() => f.focus(), 350);
   };
-  steps.forEach((s, i) => s.addEventListener('click', () => { show(i); clearInterval(timer); timer = setInterval(() => show((cur + 1) % 3), 2600); }));
-  new IntersectionObserver(([e]) => {
-    clearInterval(timer);
-    if (e.isIntersecting) { if (cur < 0) show(0); timer = setInterval(() => show((cur + 1) % 3), 2600); }
-  }, {threshold: .3}).observe($('.demo'));
+  show(0);
 
-  // Waitlist data: social proof + popular picks
-  let top = [];
-  const renderChips = () => {
-    $('#chips').innerHTML = top.slice(0, 6).map(t => `<button type="button" class="chip" data-n="${esc(t.name)}">${esc(t.name)}<small>${t.votes}</small></button>`).join('');
-    $('#rlist').innerHTML = top.map(t => `<option value="${esc(t.name)}">`).join('');
-  };
-  fetch('/api/waitlist/top').then(r => r.json()).then(d => {
-    top = d.top || []; renderChips();
-    if (d.total >= 25) { $('#joined').hidden = false; $('#joined-t').textContent = `${d.total.toLocaleString()} people in Negombo already joined`; }
-  }).catch(() => {});
-  $('#chips').addEventListener('click', e => {
-    const c = e.target.closest('.chip'); if (!c) return;
-    $('#restaurant').value = c.dataset.n;
-    $$('.chip').forEach(x => x.classList.toggle('on', x === c));
-  });
-  $('#restaurant').addEventListener('input', () => $$('.chip').forEach(x => x.classList.toggle('on', x.dataset.n.toLowerCase() === $('#restaurant').value.trim().toLowerCase())));
+  fetch('/api/waitlist/top').then(r => r.json()).then(d => { $('#rlist').innerHTML = (d.top || []).map(t => `<option value="${esc(t.name)}">`).join(''); }).catch(() => {});
 
-  // Two-step form
-  const go = n => {
-    $$('.step').forEach(s => s.classList.toggle('on', s.dataset.step == n));
-    $('#p2').classList.toggle('done', n >= 2); $('#p3').classList.toggle('done', n >= 3);
-  };
+  const answers = {};
+  const PITCH = {'Food apps': 'Same food. Up to LKR 400 less.', 'Phone call': 'No more calling to order.', 'Walk in': 'No more waiting in line.'};
+  document.querySelectorAll('.opts').forEach(g => g.addEventListener('click', e => {
+    const o = e.target.closest('.opt'); if (!o) return;
+    g.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === o));
+    answers[g.dataset.q] = o.dataset.v;
+    if (g.dataset.q === 'orderBy') $('#pitch-h').textContent = PITCH[o.dataset.v] || 'Meet Punchbook.';
+    setTimeout(() => show(at + 1), 260);
+  }));
   const next = () => {
-    const v = $('#restaurant').value.trim();
-    if (!v) { $('#e1').textContent = 'Type a restaurant, or tap one above.'; $('#restaurant').focus(); return; }
-    $('#e1').textContent = ''; $('#picked').textContent = '🍽️ ' + v; go(2); setTimeout(() => $('#contact').focus(), 350);
+    if (at === 4) {
+      if (!$('#restaurant').value.trim()) { $('#e1').textContent = 'Type a restaurant name.'; return $('#restaurant').focus(); }
+      $('#e1').textContent = '';
+    }
+    show(at + 1);
   };
-  $('#next').addEventListener('click', next);
+  document.querySelectorAll('[data-next]').forEach(b => b.addEventListener('click', next));
   $('#restaurant').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); next(); } });
-  $('#back').addEventListener('click', () => go(1));
+  $('#back').addEventListener('click', () => show(at - 1));
 
-  const validContact = v => /^(?:\+?94|0)?7\d{8}$/.test(v.replace(/[\s()-]/g, '')) || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+  const valid = v => /^(?:\+?94|0)?7\d{8}$/.test(v.replace(/[\s()-]/g, '')) || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
   $('#form').addEventListener('submit', async e => {
     e.preventDefault();
-    const contact = $('#contact').value.trim(), restaurant = $('#restaurant').value.trim();
-    if (!validContact(contact)) { $('#e2').textContent = 'Enter a mobile like 077 123 4567, or an email.'; $('#contact').focus(); return; }
-    $('#e2').textContent = ''; const btn = $('#send'); btn.disabled = true; btn.textContent = 'Saving…';
+    if (at !== 5) return next();
+    const restaurant = $('#restaurant').value.trim(), contact = $('#contact').value.trim(), err = $('#e2');
+    if (!valid(contact)) { err.textContent = 'Enter a mobile like 077 123 4567, or an email.'; return $('#contact').focus(); }
+    err.textContent = ''; const btn = $('#send'); btn.disabled = true; btn.textContent = 'Joining…';
     try {
       const p = new URLSearchParams(location.search);
       const source = ['utm_source', 'utm_campaign', 'utm_term'].map(k => p.get(k)).filter(Boolean).join(' / ') || (p.has('gclid') ? 'google ads' : document.referrer ? new URL(document.referrer).host : 'direct');
-      const r = await fetch('/api/waitlist', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({restaurant, contact, website: $('.hp').value, area: 'Negombo', source})});
+      const r = await fetch('/api/waitlist', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({restaurant, contact, ...answers, website: $('.hp').value, area: 'Negombo', source})});
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || 'Something went wrong. Please try again.');
-      done(d, restaurant);
-      window.gtag && gtag('event', 'sign_up', {method: 'negombo_waitlist'}); // Google Ads conversion, once the tag is added
-    } catch (err) {
-      $('#e2').textContent = err.message;
-    } finally { btn.disabled = false; btn.textContent = 'Count me in 🎉'; }
+      if (d.position) $('#done-h').textContent = `You’re #${d.position.toLocaleString()}.`;
+      $('#done-p').textContent = `We’ll message you when ${restaurant} is on Punchbook.`;
+      $('#share').href = 'https://wa.me/?text=' + encodeURIComponent('Punchbook is coming to Negombo: order ahead and pay the menu price. Tell them which restaurant you want: https://punchbook.online/negombo');
+      document.activeElement.blur(); show(6);
+      window.gtag && gtag('event', 'sign_up', {method: 'negombo_waitlist'});
+    } catch (x) { err.textContent = x.message; }
+    finally { btn.disabled = false; btn.textContent = 'Join the list'; }
   });
-
-  function done(d, restaurant) {
-    go(3);
-    $('#pos').textContent = d.position ? '#' + d.position.toLocaleString() : 'in';
-    $('#done-s').textContent = `We’ll message you the moment ${restaurant} is on Punchbook.`;
-    const cols = ['#f26a3d', '#ffd84d', '#2f7a3e', '#ff8a5c', '#1f4033', '#9fd3b5'];
-    $('#burst').insertAdjacentHTML('beforeend', Array.from({length: 18}, (_, i) => {
-      const a = i / 18 * Math.PI * 2, r = 70 + Math.random() * 40;
-      return `<i class="conf" style="background:${cols[i % 6]};--x:${Math.cos(a) * r}px;--y:${Math.sin(a) * r}px;--r:${Math.random() * 540 - 270}deg"></i>`;
-    }).join(''));
-    const t = (d.top || []).slice(0, 5);
-    if (t.length) {
-      const max = Math.max(...t.map(x => x.votes)), me = restaurant.toLowerCase();
-      $('#bars').innerHTML = t.map(x => `<div class="bar${x.name.toLowerCase() === me ? ' me' : ''}"><span>${esc(x.name)}</span><small>${x.votes} vote${x.votes === 1 ? '' : 's'}</small><span class="tr"><i data-w="${Math.max(6, x.votes / max * 100)}"></i></span></div>`).join('');
-      $('#board').hidden = false;
-      requestAnimationFrame(() => setTimeout(() => $$('#bars i').forEach(i => i.style.width = i.dataset.w + '%'), 150));
-    }
-    const msg = `I just asked Punchbook to bring ${restaurant} to their app 🍛 Order ahead in Negombo, pay the menu price, no queue. Vote for your favourite: https://punchbook.online/negombo`;
-    $('#share').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
-    $('#form').scrollIntoView({behavior: 'smooth', block: 'start'});
-  }
 })();
 </script>
 </body>

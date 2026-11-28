@@ -62,10 +62,13 @@ export async function createWaitlist({ dataDir, staff }) {
       const existing = list.find(e => e.contact === contact);
       if (existing) {
         existing.restaurant = restaurant; existing.updatedAt = new Date().toISOString();
+        if (b.hassle) existing.hassle = clean(b.hassle, 40);
+        if (b.orderBy) existing.orderBy = clean(b.orderBy, 40);
       } else {
         list.push({
           id: crypto.randomUUID(), contact, kind: phone ? 'phone' : 'email', restaurant,
           area: clean(b.area, 40) || 'Negombo', source: clean(b.source, 120),
+          hassle: clean(b.hassle, 40), orderBy: clean(b.orderBy, 40),
           createdAt: new Date().toISOString(),
         });
       }
@@ -80,8 +83,8 @@ export async function createWaitlist({ dataDir, staff }) {
 
     app.get('/api/waitlist.csv', staff.requireAdmin, (_req, res) => {
       const cell = v => `"${String(v ?? '').replace(/"/g, '""').replace(/^([=+\-@])/, "'$1")}"`;
-      const rows = [['Joined', 'Contact', 'Type', 'Restaurant', 'Area', 'Source'],
-        ...list.map(e => [e.createdAt, e.contact, e.kind, e.restaurant, e.area, e.source])];
+      const rows = [['Joined', 'Contact', 'Type', 'Restaurant', 'Pickup a hassle?', 'Orders by', 'Area', 'Source'],
+        ...list.map(e => [e.createdAt, e.contact, e.kind, e.restaurant, e.hassle, e.orderBy, e.area, e.source])];
       res.set('Content-Disposition', 'attachment; filename="punchbook-waitlist.csv"')
         .type('text/csv').send(rows.map(r => r.map(cell).join(',')).join('\n'));
     });
